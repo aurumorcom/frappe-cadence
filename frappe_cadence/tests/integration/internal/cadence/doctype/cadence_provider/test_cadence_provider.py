@@ -1,7 +1,7 @@
 import frappe
 from frappe.tests import IntegrationTestCase
 from unittest.mock import patch, MagicMock
-from frappe_cadence.cadence.doctype.cadence_provider.cadence_provider import BaseCadenceProvider
+from frappe_cadence.cadence.doctype.cadence_provider.cadence_provider import report_event
 
 class TestCadenceProviderIntegration(IntegrationTestCase):
     @classmethod
@@ -52,7 +52,7 @@ class TestCadenceProviderIntegration(IntegrationTestCase):
 
     def test_report_event_replied(self):
         # Emulate webhook
-        BaseCadenceProvider.report_event(
+        report_event(
             event_type="message_replied",
             context={"mcc_name": self.mcc_name},
             data={"id": "evt_123"}
@@ -77,7 +77,7 @@ class TestCadenceProviderIntegration(IntegrationTestCase):
         mock_doc = MagicMock()
         mock_get_doc.return_value = mock_doc
         
-        BaseCadenceProvider.report_event("message_replied", {"mcc_name": "MCC-001"})
+        report_event("message_replied", {"mcc_name": "MCC-001"})
         
         mock_set_value.assert_called_once_with("Multi Channel Cadence", "MCC-001", "status", "Replied")
         mock_doc.insert.assert_called_once()
@@ -89,7 +89,7 @@ class TestCadenceProviderIntegration(IntegrationTestCase):
         mock_doc = MagicMock()
         mock_get_doc.return_value = mock_doc
         
-        BaseCadenceProvider.report_event("bounce", {"mcc_name": "MCC-001"})
+        report_event("bounce", {"mcc_name": "MCC-001"})
         
         mock_set_value.assert_called_once_with("Multi Channel Cadence", "MCC-001", "status", "Bounced")
         mock_doc.insert.assert_called_once()
@@ -101,7 +101,7 @@ class TestCadenceProviderIntegration(IntegrationTestCase):
         mock_doc = MagicMock()
         mock_get_doc.return_value = mock_doc
         
-        BaseCadenceProvider.report_event("message_sent", {"communication_name": "COMM-001", "mcc_name": "MCC-001"})
+        report_event("message_sent", {"communication_name": "COMM-001", "mcc_name": "MCC-001"})
         
         mock_set_value.assert_called_once_with("Communication", "COMM-001", "delivery_status", "Sent")
         mock_doc.insert.assert_called_once()
@@ -109,7 +109,7 @@ class TestCadenceProviderIntegration(IntegrationTestCase):
         mock_set_value.reset_mock()
         mock_doc.insert.reset_mock()
         
-        BaseCadenceProvider.report_event("message_opened", {"communication_name": "COMM-001", "mcc_name": "MCC-001"})
+        report_event("message_opened", {"communication_name": "COMM-001", "mcc_name": "MCC-001"})
         
         mock_set_value.assert_called_once_with("Communication", "COMM-001", "read_status", "Read")
         mock_doc.insert.assert_called_once()
