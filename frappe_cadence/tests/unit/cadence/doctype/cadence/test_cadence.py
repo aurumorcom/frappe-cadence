@@ -100,3 +100,20 @@ class TestCadenceAstToFilters(UnitTestCase):
         # Compound (And)
         tree = ast.parse('doc.status == "New" and doc.email is "set"', mode='eval')
         self.assertEqual(cadence._ast_to_filters(tree.body), [["status", "=", "New"], ["email", "is", "set"]])
+
+class TestCadenceOnUpdate(UnitTestCase):
+    @patch("frappe_controller.utils.background_jobs.enqueue")
+    def test_on_update_enqueues_evaluation_only(self, mock_enqueue):
+        from frappe_cadence.cadence.doctype.cadence.cadence import Cadence
+
+        cadence = Cadence({"doctype": "Cadence", "name": "CAD-001"})
+        cadence.ensure_playbook = MagicMock()
+
+        cadence.on_update()
+
+        cadence.ensure_playbook.assert_called_once()
+        mock_enqueue.assert_called_once_with(
+            "frappe_cadence.cadence.doctype.cadence.cadence.evaluate_cadence_for_leads",
+            queue="low",
+            cadence_name="CAD-001"
+        )
