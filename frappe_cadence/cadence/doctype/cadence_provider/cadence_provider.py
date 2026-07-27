@@ -50,109 +50,55 @@ def populate_mccs_with_new_provider(provider_name):
             doc.save(ignore_permissions=True)
 
 
-class BaseCadenceProvider:
+def report_event(event_type: str, context: dict, data: dict = None):
     """
-    Abstract base class for Cadence Providers.
-    Any integration (Apollo, Outreach, etc.) must implement this interface.
-    """
+    Providers call this function when an external event occurs (e.g. from a webhook).
+    This function is responsible for updating the internal Frappe state based on the event.
     
-    def on_mcc_created(self, mcc_doc):
-        pass
-
-    def on_mcc_update(self, mcc_doc, old_status, new_status):
-        pass
-
-    def on_cadence_update(self, doc, method=None):
-        pass
-
-    def after_insertd(self, comm_doc):
-        pass
-
-    def on_communication_update(self, comm_doc, old_status, new_status):
-        pass
-
-    @classmethod
-    def report_event(cls, event_type: str, context: dict, data: dict = None):
-        """
-        Providers call this method when an external event occurs (e.g. from a webhook).
-        This method is responsible for updating the internal Frappe state based on the event.
-        
-        event_type: 'message_replied', 'bounce', 'message_sent', 'message_opened', etc.
-        context: e.g. {"mcc_name": "MCC-001", "communication_name": "COMM-001"}
-        data: The raw payload from the provider (optional)
-        """
-        mcc_name = context.get("mcc_name")
-        comm_name = context.get("communication_name")
-        
-        if event_type == "message_replied":
+    event_type: 'message_replied', 'bounce', 'message_sent', 'message_opened', etc.
+    context: e.g. {"mcc_name": "MCC-001", "communication_name": "COMM-001"}
+    data: The raw payload from the provider (optional)
+    """
+    mcc_name = context.get("mcc_name")
+    comm_name = context.get("communication_name")
+    
+    if event_type == "message_replied":
+        if mcc_name:
+            frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Replied")
+            frappe.get_doc({
+                "doctype": "History",
+                "reference_doctype": "Multi Channel Cadence",
+                "reference_name": mcc_name,
+                "markdown": "Replied",
+                "url": data.get("url", "https://example.com") if data else "https://example.com"
+            }).insert(ignore_permissions=True)
+            
+    elif event_type == "bounce":
+        if mcc_name:
+            frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Bounced")
+            frappe.get_doc({
+                "doctype": "History",
+                "reference_doctype": "Multi Channel Cadence",
+                "reference_name": mcc_name,
+                "markdown": "Bounced",
+                "url": data.get("url", "https://example.com") if data else "https://example.com"
+            }).insert(ignore_permissions=True)
+            
+    elif event_type in ["message_sent", "message_opened"]:
+        if comm_name:
+            status_field = "delivery_status" if event_type == "message_sent" else "read_status"
+            new_status = "Sent" if event_type == "message_sent" else "Read"
+            
+            frappe.db.set_value("Communication", comm_name, status_field, new_status)
+            
             if mcc_name:
-                frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Replied")
                 frappe.get_doc({
                     "doctype": "History",
                     "reference_doctype": "Multi Channel Cadence",
                     "reference_name": mcc_name,
-                    "markdown": "Replied",
+                    "markdown": "Message Sent" if event_type == "message_sent" else "Message Opened",
                     "url": data.get("url", "https://example.com") if data else "https://example.com"
                 }).insert(ignore_permissions=True)
-                
-        elif event_type == "bounce":
-            if mcc_name:
-                frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Bounced")
-                frappe.get_doc({
-                    "doctype": "History",
-                    "reference_doctype": "Multi Channel Cadence",
-                    "reference_name": mcc_name,
-                    "markdown": "Bounced",
-                    "url": data.get("url", "https://example.com") if data else "https://example.com"
-                }).insert(ignore_permissions=True)
-                
-        elif event_type in ["message_sent", "message_opened"]:
-            if comm_name:
-                status_field = "delivery_status" if event_type == "message_sent" else "read_status"
-                new_status = "Sent" if event_type == "message_sent" else "Read"
-                
-                frappe.db.set_value("Communication", comm_name, status_field, new_status)
-                
-                if mcc_name:
-                    frappe.get_doc({
-                        "doctype": "History",
-                        "reference_doctype": "Multi Channel Cadence",
-                        "reference_name": mcc_name,
-                        "markdown": "Message Sent" if event_type == "message_sent" else "Message Opened",
-                        "url": data.get("url", "https://example.com") if data else "https://example.com"
-                    }).insert(ignore_permissions=True)
-
-
-def get_provider_instance(provider_name):
-    hooks = frappe.get_hooks("cadence_providers")
-    if not hooks or provider_name not in hooks:
-        raise ValueError(_("Provider {0} not found in cadence_providers hooks").format(provider_name))
-    
-    class_path = hooks[provider_name]
-    if isinstance(class_path, list):
-        class_path = class_path[-1] # take the last one if multiple are defined
-        
-    provider_class = frappe.get_attr(class_path)
-    return provider_class()
-
-
-def broadcast_event(provider_name, event_method, *args, **kwargs):
-    try:
-        provider = get_provider_instance(provider_name)
-        method = getattr(provider, event_method)
-        method(*args, **kwargs)
-    except Exception as e:
-        frappe.log_error(title=f"Cadence Provider Event Error: {event_method}", message=frappe.get_traceback())
-
-
-def on_cadence_update(doc, method=None):
-    active_providers = frappe.get_all(
-        "Cadence Provider",
-        filters={"enabled": 1},
-        pluck="name"
-    )
-    for provider_name in active_providers:
-        broadcast_event(provider_name, "on_cadence_update", doc=doc, method=method)
 
 
 def resolve_providers_for_mcc(mcc_name: str) -> Dict[str, str]:
