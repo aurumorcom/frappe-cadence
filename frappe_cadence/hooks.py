@@ -76,15 +76,6 @@ doctype_list_js = {"Communication" : "cadence/doctype/communication/communicatio
 # automatically load and sync documents of this doctype from downstream apps
 # importable_doctypes = [doctype_1]
 
-# Jinja
-# ----------
-
-# add methods and filters to jinja environment
-# jinja = {
-# 	"methods": [
-# 		"frappe_cadence.cadence.doctype.cadence.cadence.get_sequence_message"
-# 	]
-# }
 
 # Installation
 # ------------
@@ -154,17 +145,8 @@ doc_events = {
 	"WhatsApp Template": {
 		"on_update": "frappe_cadence.cadence.doctype.whatsapp_template.whatsapp_template.on_update"
 	},
-	"Email Cadence": {
-		"after_insert": "frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.on_update",
-		"on_update": "frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.on_update",
-		"on_trash": "frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.on_trash"
-	},
 	"CRM Lead": {
 		"on_update": "frappe_cadence.cadence.doctype.cadence.cadence.on_update"
-	},
-	"Communication": {
-		"after_insert": "frappe_cadence.cadence.doctype.communication.communication.after_insert",
-		"on_update": "frappe_cadence.cadence.doctype.communication.communication.on_update"
 	},
 	"Playbook Execution": {
 		"on_update": "frappe_cadence.cadence.doctype.playbook_execution.playbook_execution.on_update"
@@ -186,10 +168,6 @@ controller_events = {
 		"timeout": 300
 	},
 	"frappe_cadence.cadence.doctype.cadence_provider.cadence_provider.populate_mccs_with_new_provider": {
-		"retries": 1,
-		"timeout": 600
-	},
-	"frappe_cadence.cadence.doctype.cadence.cadence.update_sequences": {
 		"retries": 1,
 		"timeout": 600
 	},
