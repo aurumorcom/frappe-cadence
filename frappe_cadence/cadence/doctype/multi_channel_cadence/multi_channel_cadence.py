@@ -41,9 +41,6 @@ class MultiChannelCadence(Document):
                 "cadence_provider": provider
             })
 
-    def after_insert(self):
-        pass
-
     def on_update(self):
         cadence = frappe.get_doc("Cadence", self.cadence_name)
         
