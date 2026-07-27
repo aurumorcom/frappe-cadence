@@ -42,15 +42,7 @@ class MultiChannelCadence(Document):
             })
 
     def after_insert(self):
-        unique_providers = list(set(row.cadence_provider for row in (self.get("provider") or []) if row.cadence_provider))
-        for provider in unique_providers:
-            enqueue(
-                "frappe_cadence.cadence.doctype.cadence_provider.cadence_provider.broadcast_event",
-                queue="low",
-                provider_name=provider,
-                event_method="on_mcc_created",
-                mcc_doc=self
-            )
+        pass
 
     def on_update(self):
         cadence = frappe.get_doc("Cadence", self.cadence_name)
@@ -80,19 +72,6 @@ class MultiChannelCadence(Document):
                         comm.save(ignore_permissions=True)
         
         if self.has_value_changed("status"):
-            old_status = old_doc.status if old_doc else None
-            unique_providers = list(set(row.cadence_provider for row in (self.get("provider") or []) if row.cadence_provider))
-            for provider in unique_providers:
-                enqueue(
-                    "frappe_cadence.cadence.doctype.cadence_provider.cadence_provider.broadcast_event",
-                    queue="low",
-                    provider_name=provider,
-                    event_method="on_mcc_update",
-                    mcc_doc=self,
-                    old_status=old_status,
-                    new_status=self.status
-                )
-
             if self.status in ["Scheduled", "In Progress"]:
                 existing_jobs = False
                 jobs = frappe.get_all("FS Job", filters={"status": ["in", ["queued", "started", "deferred"]]}, fields=["name", "arguments"])

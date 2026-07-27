@@ -185,10 +185,6 @@ controller_events = {
 		"retries": 3,
 		"timeout": 300
 	},
-	"frappe_cadence.cadence.doctype.cadence_provider.cadence_provider.broadcast_event": {
-		"retries": 1,
-		"timeout": 60
-	},
 	"frappe_cadence.cadence.doctype.cadence_provider.cadence_provider.populate_mccs_with_new_provider": {
 		"retries": 1,
 		"timeout": 600

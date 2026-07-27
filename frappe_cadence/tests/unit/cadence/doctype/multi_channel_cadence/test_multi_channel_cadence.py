@@ -96,34 +96,6 @@ class TestMultiChannelCadenceLifecycle(UnitTestCase):
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.enqueue")
     @patch("frappe.get_doc")
-    def test_mcc_status_update_triggers_broadcast(self, mock_get_doc, mock_enqueue, mock_get_all):
-        mock_get_all.return_value = []
-        mock_cadence = MagicMock()
-        mock_cadence.provider = "Dummy"
-        mock_get_doc.return_value = mock_cadence
-        
-        mcc = MultiChannelCadence({"doctype": "Multi Channel Cadence"})
-        mcc.cadence_name = "Cadence-1"
-        mcc.status = "Scheduled"
-        mcc.provider = [MagicMock(cadence_provider="Dummy")]
-        mcc.get_doc_before_save = MagicMock(return_value=MagicMock(status="Draft", provider=[]))
-        mcc.has_value_changed = MagicMock(return_value=True)
-        
-        mcc.on_update()
-        
-        mock_enqueue.assert_any_call(
-            "frappe_cadence.cadence.doctype.cadence_provider.cadence_provider.broadcast_event",
-            queue="low",
-            provider_name="Dummy",
-            event_method="on_mcc_update",
-            mcc_doc=mcc,
-            old_status="Draft",
-            new_status="Scheduled"
-        )
-
-    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
-    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.enqueue")
-    @patch("frappe.get_doc")
     def test_provider_agnostic_mcc_lifecycle(self, mock_get_doc, mock_enqueue, mock_get_all):
         mock_get_all.return_value = []
         mock_cadence = MagicMock()
@@ -142,10 +114,6 @@ class TestMultiChannelCadenceLifecycle(UnitTestCase):
         mcc.has_value_changed = MagicMock(return_value=True)
         
         mcc.on_update()
-        
-        # enqueue should NOT be called for broadcast_event
-        for call in mock_enqueue.call_args_list:
-            self.assertNotEqual(call[0][0], "frappe_cadence.cadence.doctype.cadence_provider.cadence_provider.broadcast_event")
 
         # It should enqueue the native process_schedule
         mock_enqueue.assert_any_call(
