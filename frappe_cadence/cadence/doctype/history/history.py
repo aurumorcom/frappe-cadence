@@ -1,11 +1,40 @@
 # Copyright (c) 2024, Roo and contributors
 # For license information, please see license.txt
 
+import requests
 import frappe
 from frappe.model.document import Document
+from frappe.utils.file_manager import save_file
 
 class History(Document):
-	pass
+	def validate(self):
+		self.download_screenshot_if_url()
+
+	def download_screenshot_if_url(self):
+		if not self.screenshot:
+			return
+
+		if self.screenshot.startswith("http://") or self.screenshot.startswith("https://"):
+			if frappe.db.exists("File", {"file_url": self.screenshot}):
+				return
+
+			try:
+				response = requests.get(self.screenshot, timeout=10)
+				if response.status_code == 200:
+					clean_url = self.screenshot.split("?")[0]
+					clean_filename = clean_url.split("/")[-1] or f"{self.name or 'screenshot'}.png"
+
+					file_doc = save_file(
+						fname=clean_filename,
+						content=response.content,
+						dt=self.doctype,
+						dn=self.name,
+						is_private=0,
+					)
+
+					self.screenshot = file_doc.file_url
+			except Exception as e:
+				frappe.log_error(f"Failed to download screenshot: {e}", "History Screenshot Download Error")
 
 @frappe.whitelist()
 def get_history(reference_doctype: str, reference_name: str, since_date=None) -> list:
