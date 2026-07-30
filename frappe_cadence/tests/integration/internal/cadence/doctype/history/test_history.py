@@ -54,6 +54,7 @@ class TestHistory(IntegrationTestCase):
 		}).insert()
 
 		self.assertEqual(group_doc.url, "https://example.com")
+		self.assertTrue(group_doc.name.startswith("HIST-GRP-"))
 		self.assertEqual(len(group_doc.history), 1)
 		self.assertEqual(group_doc.history[0].history, history_doc.name)
 
