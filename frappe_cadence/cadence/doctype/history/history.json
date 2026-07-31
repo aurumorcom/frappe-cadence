@@ -23,7 +23,6 @@
   {
    "fieldname": "markdown",
    "fieldtype": "Text Editor",
-   "in_standard_filter": 1,
    "label": "Markdown"
   },
   {
