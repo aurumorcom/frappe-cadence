@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:HIST-GRP-{YYYY}-{#####}",
+ "autoname": "hash",
  "creation": "2024-03-27 12:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -46,7 +46,7 @@
  "modified_by": "Administrator",
  "module": "Cadence",
  "name": "History Group",
- "naming_rule": "Expression",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
