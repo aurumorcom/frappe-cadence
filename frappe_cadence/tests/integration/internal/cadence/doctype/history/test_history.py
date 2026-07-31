@@ -196,3 +196,21 @@ class TestHistory(IntegrationTestCase):
 
 		# Document creation should succeed, keeping original URL
 		self.assertEqual(history_doc.screenshot, remote_url)
+
+	def test_history_and_group_hash_autoname(self):
+		history_doc = frappe.get_doc({
+			"doctype": "History",
+			"url": "https://example.com/hash_test",
+			"markdown": "Hash test markdown"
+		}).insert()
+
+		group_doc = frappe.get_doc({
+			"doctype": "History Group",
+			"url": "https://example.com/hash_group_test",
+			"history": [{"history": history_doc.name}]
+		}).insert()
+
+		self.assertEqual(len(history_doc.name), 10)
+		self.assertEqual(len(group_doc.name), 10)
+		self.assertFalse(history_doc.name.startswith("HIST-"))
+		self.assertFalse(group_doc.name.startswith("HIST-GRP-"))
