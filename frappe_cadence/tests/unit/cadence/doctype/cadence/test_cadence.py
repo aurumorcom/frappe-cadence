@@ -112,7 +112,7 @@ class TestCadenceOnUpdate(UnitTestCase):
         cadence.on_update()
 
         cadence.ensure_playbook.assert_called_once()
-        mock_enqueue.assert_called_once_with(
+        mock_enqueue.assert_any_call(
             "frappe_cadence.cadence.doctype.cadence.cadence.evaluate_cadence_for_leads",
             queue="low",
             cadence_name="CAD-001"

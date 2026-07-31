@@ -27,6 +27,12 @@ class TestCadenceIntegration(IntegrationTestCase):
         frappe.db.rollback()
         super().tearDownClass()
 
+    def setUp(self):
+        super().setUp()
+        frappe.db.sql("INSERT INTO `tabSeries` (`name`, `current`) VALUES ('', 50000) ON DUPLICATE KEY UPDATE `current` = IF(`current` < 50000, 50000, `current`)")
+        frappe.db.sql("INSERT INTO `tabSeries` (`name`, `current`) VALUES ('MCC-2026-', 50000) ON DUPLICATE KEY UPDATE `current` = IF(`current` < 50000, 50000, `current`)")
+        frappe.db.sql("INSERT INTO `tabSeries` (`name`, `current`) VALUES ('CAD-2026-', 50000) ON DUPLICATE KEY UPDATE `current` = IF(`current` < 50000, 50000, `current`)")
+
     def tearDown(self):
         frappe.db.rollback()
         super().tearDown()
