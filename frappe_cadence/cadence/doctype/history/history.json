@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:HIST-{YYYY}-{#####}",
+ "autoname": "hash",
  "creation": "2024-03-27 12:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -23,7 +23,6 @@
   {
    "fieldname": "markdown",
    "fieldtype": "Text Editor",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Markdown"
   },
@@ -59,7 +58,7 @@
  "modified_by": "Administrator",
  "module": "Cadence",
  "name": "History",
- "naming_rule": "Expression",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
