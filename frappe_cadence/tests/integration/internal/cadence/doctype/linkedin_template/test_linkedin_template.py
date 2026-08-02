@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from unittest.mock import patch, MagicMock
 
 
 # On IntegrationTestCase, the doctype test records and all
@@ -30,6 +31,29 @@ class IntegrationTestLinkedInTemplate(IntegrationTestCase):
 	Integration tests for LinkedInTemplate.
 	Use this class for testing interactions between multiple components.
 	"""
+
+	@patch("frappe.log_error")
+	@patch("frappe_cadence.cadence.linkedin_template.emit_event")
+	@patch("frappe_cadence.cadence.linkedin_template.frappe.get_doc")
+	@patch("frappe.db.exists", return_value=True)
+	def test_sift_callback_failure_recovery(self, mock_exists, mock_get_doc, mock_emit, mock_log_error):
+		from frappe_cadence.cadence.linkedin_template import callback
+		from unittest.mock import MagicMock
+		frappe.local.request = frappe._dict(json={
+			"type": "response.failed",
+			"metadata": {"name": "COMM-001"},
+			"error": "Sift Generation Failed"
+		})
+		mock_comm = MagicMock()
+		mock_get_doc.return_value = mock_comm
+
+		result = callback()
+
+		self.assertEqual(result.get("status"), "failed")
+		self.assertEqual(mock_comm.delivery_status, "Failed")
+		self.assertIn("AI Generation Failed", mock_comm.content)
+		mock_comm.save.assert_called_once_with(ignore_permissions=True)
+		mock_emit.assert_called_once_with("callback", {"communication_id": "COMM-001", "error": "Sift Generation Failed"})
 
 	def test_sift_id_in_linkedin_template(self):
 		import frappe
