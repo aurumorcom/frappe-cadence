@@ -130,11 +130,6 @@ class Cadence(Document):
 
 		self.ensure_playbook()
 		enqueue(
-			"frappe_cadence.cadence.doctype.cadence_provider.cadence_provider.on_cadence_update",
-			queue="low",
-			doc=self
-		)
-		enqueue(
 			"frappe_cadence.cadence.doctype.cadence.cadence.evaluate_cadence_for_leads",
 			queue="low",
 			cadence_name=self.name
