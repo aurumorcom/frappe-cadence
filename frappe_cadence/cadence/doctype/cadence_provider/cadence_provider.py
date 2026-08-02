@@ -6,6 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 import hashlib
 from typing import Dict, Optional
+from frappe_controller.utils.controller import emit_event
 
 class CadenceProvider(Document):
     def on_update(self):
@@ -55,7 +56,7 @@ def report_event(event_type: str, context: dict, data: dict = None):
     Providers call this function when an external event occurs (e.g. from a webhook).
     This function is responsible for updating the internal Frappe state based on the event.
     
-    event_type: 'message_replied', 'bounce', 'message_sent', 'message_opened', etc.
+    event_type: 'message_replied', 'bounce', 'unsubscribed', 'message_sent', 'message_opened', etc.
     context: e.g. {"mcc_name": "MCC-001", "communication_name": "COMM-001"}
     data: The raw payload from the provider (optional)
     """
@@ -64,7 +65,7 @@ def report_event(event_type: str, context: dict, data: dict = None):
     
     if event_type == "message_replied":
         if mcc_name:
-            frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Replied")
+            frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Completed")
             frappe.get_doc({
                 "doctype": "History",
                 "reference_doctype": "Multi Channel Cadence",
@@ -72,10 +73,15 @@ def report_event(event_type: str, context: dict, data: dict = None):
                 "markdown": "Replied",
                 "url": data.get("url", "https://example.com") if data else "https://example.com"
             }).insert(ignore_permissions=True)
+            emit_event("mcc_completed", {"mcc_name": mcc_name})
+            emit_event("cadence_step_completed", {"mcc_name": mcc_name})
+        if comm_name:
+            frappe.db.set_value("Communication", comm_name, "status", "Replied")
+            frappe.db.set_value("Communication", comm_name, "delivery_status", "Sent")
             
     elif event_type == "bounce":
         if mcc_name:
-            frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Bounced")
+            frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Error")
             frappe.get_doc({
                 "doctype": "History",
                 "reference_doctype": "Multi Channel Cadence",
@@ -83,6 +89,21 @@ def report_event(event_type: str, context: dict, data: dict = None):
                 "markdown": "Bounced",
                 "url": data.get("url", "https://example.com") if data else "https://example.com"
             }).insert(ignore_permissions=True)
+            emit_event("mcc_error", {"mcc_name": mcc_name})
+        if comm_name:
+            frappe.db.set_value("Communication", comm_name, "delivery_status", "Failed")
+
+    elif event_type == "unsubscribed":
+        if mcc_name:
+            frappe.db.set_value("Multi Channel Cadence", mcc_name, "status", "Unsubscribed")
+            frappe.get_doc({
+                "doctype": "History",
+                "reference_doctype": "Multi Channel Cadence",
+                "reference_name": mcc_name,
+                "markdown": "Unsubscribed",
+                "url": data.get("url", "https://example.com") if data else "https://example.com"
+            }).insert(ignore_permissions=True)
+            emit_event("mcc_unsubscribed", {"mcc_name": mcc_name})
             
     elif event_type in ["message_sent", "message_opened"]:
         if comm_name:
