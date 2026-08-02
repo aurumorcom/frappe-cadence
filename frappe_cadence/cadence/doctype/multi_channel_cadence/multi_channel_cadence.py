@@ -31,6 +31,7 @@ class MultiChannelCadence(Document):
     # end: auto-generated types
 
     def before_insert(self):
+        self.status = "Provisioning"
         from frappe_cadence.cadence.doctype.cadence_provider.cadence_provider import resolve_providers_for_mcc
         seed = self.name if self.name else f"{self.cadence_name}-{self.recipient}"
         resolved = resolve_providers_for_mcc(seed)
@@ -108,9 +109,8 @@ class MultiChannelCadence(Document):
                             previous_schedule_name=previous_schedule_name
                         )
                 else:
-                    if self.status == "Scheduled":
+                    if self.status in ["Scheduled", "In Progress"]:
                         emit_event("mcc_scheduled", {"doctype": self.doctype, "name": self.name})
-                    elif self.status == "In Progress":
                         emit_event("mcc_in_progress", {"doctype": self.doctype, "name": self.name})
 
 def on_update(doc, method):
@@ -143,7 +143,7 @@ def on_trash(doc, method):
 
   # Since we don't have the email_cadence link anymore,
   # we should check if any OTHER email cadences for this lead and cadence still exist
-  other_exists = frappe.db.exists("Email Cadence", {
+  other_exists = frappe.db.exists("Multi Channel Cadence", {
    "cadence_name": doc.cadence_name,
    "recipient": doc.recipient,
    "name": ("!=", doc.name)
@@ -162,7 +162,10 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
     """
     # 1. MCC State Check
     mcc = frappe.get_doc("Multi Channel Cadence", cadence_name)
-    if mcc.status not in ["Scheduled", "In Progress"]:
+    if mcc.status in ["Completed", "Error", "Unsubscribed"]:
+        return
+
+    if mcc.status in ["Draft", "Provisioning"]:
         wait_for_event(
             event_key="mcc_scheduled" if mcc.status != "In Progress" else "mcc_in_progress",
             condition=f"argument.get('doctype') == 'Multi Channel Cadence' and argument.get('name') == '{cadence_name}'"
@@ -299,12 +302,13 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             from frappe_cadence.cadence.doctype.history.history import get_history
             from frappe_cadence.cadence.doctype.user_bio.user_bio import get_user_bio
             
-            sender_bio_content = get_user_bio(mcc.owner, cadence_name)
+            sender_user = mcc.sender or mcc.owner
+            sender_bio_content = get_user_bio(sender_user, mcc.cadence_name)
             if not sender_bio_content:
-                wait_for_event("user_bio_created", condition=f"argument.get('reference_user') == '{mcc.owner}'")
+                wait_for_event("user_bio_created", condition=f"argument.get('reference_user') == '{sender_user}'")
                 return
                 
-            sender = frappe.db.get_value("User", mcc.owner, ["full_name"], as_dict=True) or {}
+            sender = frappe.db.get_value("User", sender_user, ["full_name"], as_dict=True) or {}
             sender_name = sender.get("full_name") or ""
             sender_bio = markdownify(sender_bio_content)
             
@@ -321,7 +325,7 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             payload["input"].extend(history_messages)
 
             # Use /responses endpoint instead of /agents and map cadence model
-            payload["model"] = cadence.sift_id or "default-model"
+            payload["model"] = getattr(template, "sift_id", None) or "default-model"
             
             cache_val = frappe.cache().get_value(f"ai_req:{cadence_name}:{schedule_name}")
             
