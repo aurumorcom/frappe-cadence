@@ -1,124 +1,149 @@
-# C3 Component Architecture & Entity Model
+# C3: Component Diagram
 
-This document defines the C3 Component ERD model for [`apps/frappe_cadence/frappe_cadence/hooks.py`](apps/frappe_cadence/frappe_cadence/hooks.py:1).
+## 🎯 Component Architecture
+This document defines the C3 Component model for the `frappe_cadence` application, breaking down the internal modules and controllers.
 
-## Component & Entity Relationship Diagram
+## 📊 Component ERD
 
 ```mermaid
 erDiagram
-    "Cadence" ||--o{ "Cadence Multi Channel Schedule" : "contains_step_schedules"
-    "Cadence" ||--o{ "Multi Channel Cadence" : "instantiates_lead_execution"
-    "Multi Channel Cadence" ||--o{ "MCC Cadence Provider" : "contains_provider_snapshots"
-    "Cadence Provider" ||--o{ "Cadence Provider Channel" : "configures_channel_support"
-    "MCC Cadence Provider" }|..|| "Cadence Provider" : "references_configured_provider"
-    "Multi Channel Cadence" ||--o{ "Communication" : "dispatches_step_communications"
-    "User Bio" }|..|| "User" : "belongs_to_sender"
-    "User Bio" }|..|| "Cadence" : "scoped_to_cadence"
-    "Email Template" ||--o{ "Email Template Annotation" : "has_ai_annotations"
-    "SMS Template" ||--o{ "SMS Template Annotation" : "has_ai_annotations"
-    "LinkedIn Template" ||--o{ "LinkedIn Template Annotation" : "has_ai_annotations"
-    "WhatsApp Template" ||--o{ "WhatsApp Template Annotation" : "has_ai_annotations"
-    "History Group" ||--o{ "History Group History" : "groups_history_logs"
-    "History" }|..|| "CRM Lead" : "tracks_prospect_history"
-    "Sift API" ||--|| "Sift Settings" : "loads_api_credentials"
+    Cadence ||--o{ CadenceMultiChannelSchedule : "contains_step_schedules"
+    Cadence ||--o{ MultiChannelCadence : "instantiates_lead_execution"
+    MultiChannelCadence ||--o{ MCCCadenceProvider : "contains_provider_snapshots"
+    CadenceProvider ||--o{ CadenceProviderChannel : "configures_channel_support"
+    MCCCadenceProvider }|..|| CadenceProvider : "references_configured_provider"
+    MultiChannelCadence ||--o{ Communication : "dispatches_step_communications"
+    UserBio }|..|| User : "belongs_to_sender"
+    UserBio }|..|| Cadence : "scoped_to_cadence"
+    EmailTemplate ||--o{ EmailTemplateAnnotation : "has_ai_annotations"
+    SMSTemplate ||--o{ SMSTemplateAnnotation : "has_ai_annotations"
+    LinkedInTemplate ||--o{ LinkedInTemplateAnnotation : "has_ai_annotations"
+    WhatsAppTemplate ||--o{ WhatsAppTemplateAnnotation : "has_ai_annotations"
+    HistoryGroup ||--o{ HistoryGroupHistory : "groups_history_logs"
+    History }|..|| CRMLead : "tracks_prospect_history"
+    SiftAPI ||--|| SiftSettings : "loads_api_credentials"
+
+    Cadence {
+        string cadence_code PK
+        string cadence_name
+        string rule
+        string assign_condition
+    }
+
+    CadenceMultiChannelSchedule {
+        string name PK
+        string parent FK
+        string channel
+        int step_number
+        int delay_days
+    }
+
+    MultiChannelCadence {
+        string name PK
+        string cadence_name FK
+        string recipient
+        string status
+    }
+
+    MCCCadenceProvider {
+        string name PK
+        string parent FK
+        string channel
+        string cadence_provider FK
+    }
+
+    CadenceProvider {
+        string name PK
+        int enabled
+        int priority
+    }
+
+    CadenceProviderChannel {
+        string name PK
+        string parent FK
+        string channel
+        int enabled
+    }
+
+    Communication {
+        string name PK
+        string delivery_status
+        string status
+    }
+
+    UserBio {
+        string name PK
+        string reference_user FK
+        string content
+    }
+
+    EmailTemplate {
+        string name PK
+        string subject
+        string response
+        string sift_id
+    }
+
+    SMSTemplate {
+        string name PK
+        string message
+        string sift_id
+    }
+
+    LinkedInTemplate {
+        string name PK
+        string message
+        string sift_id
+    }
+
+    WhatsAppTemplate {
+        string name PK
+        string message
+        string sift_id
+    }
+
+    HistoryGroup {
+        string name PK
+    }
+
+    HistoryGroupHistory {
+        string name PK
+        string parent FK
+    }
+
+    History {
+        string name PK
+        string reference_doctype
+        string reference_name
+    }
+
+    SiftSettings {
+        string name PK
+        string sift_base_url
+    }
+
+    SiftAPI {
+        string endpoint_url
+    }
+
+    User {
+        string name PK
+    }
+
+    CRMLead {
+        string name PK
+    }
 ```
 
-## Component Detailed Specifications
-
-### 1. Core Cadence Orchestration DocTypes
-
-#### `"Cadence"`
-- **File**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence/cadence.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence/cadence.py:33)
-- **Primary Key**: `cadence_code` (Data, Unique)
-- **Attributes**:
-  - `cadence_name`: Data (Required)
-  - `enabled`: Check (Default: 1)
-  - `reference_playbook`: Link -> `Playbook`
-  - `assign_condition`: Small Text (Python expressions)
-  - `assign_condition_json`: Code (Hidden parsed AST filters)
-  - `rule`: Select (`Round Robin`, `Load Balancing`)
-  - `users`: Table MultiSelect -> `Assignment Rule User`
-  - `last_user`: Link -> `User`
-  - `cadence_schedules`: Table -> `Cadence Multi Channel Schedule`
-
-#### `"Cadence Multi Channel Schedule"`
-- **File**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence_multi_channel_schedule/cadence_multi_channel_schedule.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence_multi_channel_schedule/cadence_multi_channel_schedule.py:1)
-- **Type**: Child Table (`istable: 1`) attached to `Cadence`
-- **Attributes**:
-  - `channel`: Select (`Email`, `SMS`, `LinkedIn`, `WhatsApp`)
-  - `step_number`: Int
-  - `delay_days`: Int
-  - `template_doctype`: Select (`Email Template`, `SMS Template`, `LinkedIn Template`, `WhatsApp Template`)
-  - `template_name`: Dynamic Link
-  - `prompt_template`: Text
-
-#### `"Multi Channel Cadence"`
-- **File**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:32)
-- **Primary Key**: Name (Expression / Naming Rule)
-- **Attributes**:
-  - `cadence_name`: Link -> `Cadence`
-  - `lead`: Link -> `CRM Lead`
-  - `sender`: Link -> `User`
-  - `status`: Select (`Provisioning`, `Draft`, `Scheduled`, `In Progress`, `Completed`, `Error`, `Paused`)
-  - `provider`: Table -> `MCC Cadence Provider`
-
-#### `"MCC Cadence Provider"`
-- **File**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/mcc_cadence_provider/mcc_cadence_provider.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/mcc_cadence_provider/mcc_cadence_provider.py:1)
-- **Type**: Child Table (`istable: 1`) attached to `Multi Channel Cadence`
-- **Attributes**:
-  - `channel`: Select (`Email`, `SMS`, `LinkedIn`, `WhatsApp`)
-  - `provider`: Link -> `Cadence Provider`
-
-### 2. Multi-Channel Provider Routing DocTypes
-
-#### `"Cadence Provider"`
-- **File**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence_provider/cadence_provider.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence_provider/cadence_provider.py:10)
-- **Primary Key**: Name
-- **Attributes**:
-  - `provider_name`: Data
-  - `enabled`: Check
-  - `priority`: Int
-  - `channels`: Table -> `Cadence Provider Channel`
-
-#### `"Cadence Provider Channel"`
-- **File**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence_provider_channel/cadence_provider_channel.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence_provider_channel/cadence_provider_channel.py:1)
-- **Type**: Child Table (`istable: 1`) attached to `Cadence Provider`
-- **Attributes**:
-  - `channel`: Select (`Email`, `SMS`, `LinkedIn`, `WhatsApp`)
-  - `enabled`: Check
-
-### 3. Contextual Personalization & Sift Integration
-
-#### `"User Bio"`
-- **File**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/user_bio/user_bio.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/user_bio/user_bio.py:5)
-- **Attributes**:
-  - `reference_user`: Link -> `User`
-  - `reference_cadence`: Link -> `Cadence` (Optional override)
-  - `content`: Text Editor / Markdown
-
-#### `"Sift Settings"`
-- **File**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/sift_settings/sift_settings.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/sift_settings/sift_settings.py:1)
-- **Type**: Single DocType
-- **Attributes**:
-  - `api_key`: Password
-  - `endpoint_url`: Data
-  - `webhook_secret`: Password
-
-#### Channel Templates & Annotations
-- **Email Template & Annotation**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/email_template_annotation/email_template_annotation.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/email_template_annotation/email_template_annotation.py:1)
-- **SMS Template & Annotation**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/sms_template_annotation/sms_template_annotation.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/sms_template_annotation/sms_template_annotation.py:1)
-- **LinkedIn Template & Annotation**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/linkedin_template_annotation/linkedin_template_annotation.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/linkedin_template_annotation/linkedin_template_annotation.py:1)
-- **WhatsApp Template & Annotation**: [`apps/frappe_cadence/frappe_cadence/cadence/doctype/whatsapp_template_annotation/whatsapp_template_annotation.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/whatsapp_template_annotation/whatsapp_template_annotation.py:1)
-
-### 4. Background Job & Whitelisted API Modules
-
-- **Sift Integration Module**: [`apps/frappe_cadence/frappe_cadence/integrations/sift.py`](apps/frappe_cadence/frappe_cadence/integrations/sift.py:4)
-  - `optimize(template_doctype, template_name)`
-  - `predict(template_doctype, template_name)`
-  - `optimize_callback(**kwargs)`
-  - `predict_callback(**kwargs)`
-- **Channel Template Callbacks**:
-  - `frappe_cadence.cadence.email_template.callback`
-  - `frappe_cadence.cadence.sms_template.callback`
-  - `frappe_cadence.cadence.linkedin_template.callback`
-  - `frappe_cadence.cadence.whatsapp_template.callback`
+## 📝 Component Descriptions
+- **Cadence**: Master orchestration DocType tracking schedules, assignment rules, and linked playbook executions.
+- **CadenceMultiChannelSchedule**: Child table specifying individual channel steps (Email, SMS, etc.) and delay intervals.
+- **MultiChannelCadence**: Active execution tracking for a specific `CRMLead`, managing state from `Provisioning` to `Completed` or `Error`.
+- **MCCCadenceProvider**: Snapshot of resolved communication providers at the time of execution.
+- **CadenceProvider**: Configuration for an external provider's routing priority.
+- **CadenceProviderChannel**: Specific channels enabled for a particular provider.
+- **UserBio**: Sender's personal bio injected into Sift API prompts for personalized messaging.
+- **Communication**: Standard Frappe DocType used to track outgoing messages and delivery statuses.
+- **EmailTemplate**, **SMSTemplate**, etc.: Channel-specific templates holding the base prompt or static message, and the `sift_id` AI model reference.
+- **History**, **HistoryGroup**: Entities for tracking the chronological sequence of events and engagement.
+- **SiftSettings**: Single DocType securely storing Sift API keys and base URLs.
