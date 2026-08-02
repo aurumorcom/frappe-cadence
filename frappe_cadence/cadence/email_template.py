@@ -15,7 +15,16 @@ def callback():
             return {"status": "ignored"}
             
         if event_type and event_type.endswith(".failed"):
-            frappe.log_error(title="Sift Callback Failed", message=payload.get("error") or "Unknown error")
+            error_msg = payload.get("error") or "Unknown error"
+            frappe.log_error(title="Sift Callback Failed", message=error_msg)
+            communication_id = payload.get("metadata", {}).get("name")
+            if communication_id:
+                if frappe.db.exists("Communication", communication_id):
+                    comm = frappe.get_doc("Communication", communication_id)
+                    comm.delivery_status = "Failed"
+                    comm.content = f"AI Generation Failed: {error_msg}"
+                    comm.save(ignore_permissions=True)
+                emit_event("callback", {"communication_id": communication_id, "error": error_msg})
             return {"status": "failed"}
             
         communication_id = payload.get("metadata", {}).get("name")

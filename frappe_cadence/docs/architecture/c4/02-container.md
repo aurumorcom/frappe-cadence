@@ -1,28 +1,54 @@
-# C2 Container Architecture Model
+# C2: Container Diagram
 
-This document defines the C2 Container diagram for [`apps/frappe_cadence/frappe_cadence/hooks.py`](apps/frappe_cadence/frappe_cadence/hooks.py:1) and its infrastructural dependencies.
+## 🎯 Container Architecture
+This document defines the runnable services, databases, queues, and external API integrations for the `frappe_cadence` application.
 
-## Container Diagram
+## 📊 Container ERD
 
 ```mermaid
 erDiagram
-    "Frappe Desk UI" ||--o{ "Frappe WSGI App" : "sends_http_requests_and_api_calls"
-    "Frappe WSGI App" ||--o{ "MariaDB Database" : "reads_and_writes_doctypes"
-    "Frappe WSGI App" ||--o{ "Background Worker Pool" : "enqueues_background_jobs"
-    "Background Worker Pool" ||--o{ "MariaDB Database" : "executes_schedule_and_updates_states"
-    "Background Worker Pool" ||--o{ "Sift Service" : "sends_prompt_and_optimization_requests"
-    "Background Worker Pool" ||--o{ "External Channel Gateways" : "dispatches_multi_channel_messages"
-    "Sift Service" ||--o{ "Frappe WSGI App" : "delivers_ai_callback_webhooks"
-    "External Channel Gateways" ||--o{ "Frappe WSGI App" : "delivers_engagement_event_webhooks"
+    FrappeDeskUI ||--|| FrappeWSGIApp : "HTTPS / JSON"
+    FrappeWSGIApp ||--|| MariaDBDatabase : "SQL"
+    FrappeWSGIApp ||--o{ BackgroundWorkerPool : "Redis / RQ"
+    BackgroundWorkerPool }|--|| MariaDBDatabase : "reads_and_writes"
+    BackgroundWorkerPool }|--|| SiftService : "HTTPS / REST"
+    BackgroundWorkerPool }|--|| ExternalChannelGateways : "HTTPS / REST / SMTP"
+    SiftService ||--o{ FrappeWSGIApp : "Webhooks"
+    ExternalChannelGateways ||--o{ FrappeWSGIApp : "Webhooks"
+
+    FrappeDeskUI {
+        string type "Web Browser / SPA"
+        string framework "Frappe JS"
+    }
+
+    FrappeWSGIApp {
+        string runtime "Python 3 / Gunicorn"
+        string framework "Frappe Framework"
+    }
+
+    MariaDBDatabase {
+        string engine "MariaDB / InnoDB"
+        string storage "Persistent Volume"
+    }
+
+    BackgroundWorkerPool {
+        string broker "Redis"
+        string runner "Frappe RQ Worker"
+    }
+
+    SiftService {
+        string external_endpoint "Sift AI API"
+    }
+
+    ExternalChannelGateways {
+        string external_endpoint "Vendor APIs (Twilio, SendGrid, etc.)"
+    }
 ```
 
-## Container Specifications
-
-| Container | Technology / Protocol | Purpose / Responsibility |
-| :--- | :--- | :--- |
-| `Frappe Desk UI` | Web Browser, HTML5, Frappe JS | Client interface for managing Cadences, Multi-Channel Schedules, Templates, User Bios, and Providers. |
-| `Frappe WSGI App` | Python 3, Frappe Framework | Handles HTTP controllers, whitelisted API endpoints, and webhook callback receivers ([`apps/frappe_cadence/frappe_cadence/cadence/email_template.py`](apps/frappe_cadence/frappe_cadence/cadence/email_template.py:5), [`apps/frappe_cadence/frappe_cadence/integrations/sift.py`](apps/frappe_cadence/frappe_cadence/integrations/sift.py:151)). |
-| `MariaDB Database` | MariaDB / InnoDB Engine | Relational database storing all Cadence DocTypes (`Cadence`, `Multi Channel Cadence`, `User Bio`, `Cadence Provider`, `History`, `Communication`, etc.). |
-| `Background Worker Pool` | Redis Queue, `frappe_controller` Job Manager | Executes background evaluation and step dispatch jobs like `process_schedule`, `evaluate_cadence_for_leads`, and `populate_mccs_with_new_provider` ([`apps/frappe_cadence/frappe_cadence/hooks.py`](apps/frappe_cadence/frappe_cadence/hooks.py:182)). |
-| `Sift Service` | HTTPS REST / Webhooks | External Sift engine performing automated template optimization and prompt predictions (`sift.optimize`, `sift.predict`). |
-| `External Channel Gateways` | REST / SMTP / Vendor APIs | Third-party messaging gateways handling outbound delivery and inbound delivery/reply webhook notifications. |
+## 📝 Container Descriptions
+- **FrappeDeskUI**: User-facing web application serving the interactive UI for managing Cadences, Templates, and Analytics.
+- **FrappeWSGIApp**: Core backend API handling business logic, whitelisted endpoints, and inbound webhooks.
+- **MariaDBDatabase**: Primary transactional datastore for domain aggregates (`Cadence`, `Multi Channel Cadence`, `Communication`, etc.).
+- **BackgroundWorkerPool**: Message broker and background workers managing asynchronous job execution (`process_schedule`, assignments).
+- **SiftService**: External AI service providing prompt personalization and optimization.
+- **ExternalChannelGateways**: External third-party APIs for dispatching emails, SMS, LinkedIn messages, and WhatsApp.

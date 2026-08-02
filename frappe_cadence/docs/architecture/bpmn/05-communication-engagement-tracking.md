@@ -16,9 +16,9 @@ flowchart TD
     
     MatchMCC --> EvaluateEventType{"Evaluate Event Type / Delivery Status"}
     EvaluateEventType -- sent / opened / clicked --> LogEngagement["Log Activity in History & History Group"]
-    EvaluateEventType -- replied --> MarkReplied["Update Communication (status = 'Replied') & MCC (status = 'Completed')"]
-    EvaluateEventType -- bounced --> MarkBounced["Update Communication (status = 'Bounced') & MCC (status = 'Error')"]
-    EvaluateEventType -- unsubscribed --> MarkUnsub["Update Multi Channel Cadence (status = 'Paused')"]
+    EvaluateEventType -- replied --> MarkReplied["Update Communication (status = 'Replied', delivery_status = 'Sent') & MCC (status = 'Completed')"]
+    EvaluateEventType -- bounced --> MarkBounced["Update Communication (delivery_status = 'Failed') & MCC (status = 'Error')"]
+    EvaluateEventType -- unsubscribed --> MarkUnsub["Update Multi Channel Cadence (status = 'Unsubscribed')"]
     
     LogEngagement --> UpdateHistory["Append Metrics to History Log"]
     MarkReplied --> CancelPendingSteps["Cancel Remaining Queued process_schedule Jobs"]
@@ -36,6 +36,6 @@ flowchart TD
 2. **Engagement Evaluation**:
    - Categorizes events into informational engagement (`opened`, `clicked`) versus cadence terminal events (`replied`, `bounced`, `unsubscribed`).
 3. **MCC State & Queue Cancellation**:
-   - Terminal events transition [`frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:32) to `Completed`, `Error`, or `Paused` and cancel pending scheduled steps.
+   - Terminal events transition [`frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:32) to `Completed`, `Error`, or `Unsubscribed` and emit events to terminate pending scheduled steps.
 4. **History Logging**:
    - Writes timeline interactions into [`frappe_cadence.cadence.doctype.history.history`](apps/frappe_cadence/frappe_cadence/cadence/doctype/history/history.py:10) for reporting and analytics.

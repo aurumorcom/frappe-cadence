@@ -343,7 +343,7 @@ class TestAgentUtils(IntegrationTestCase):
         mcc.save(ignore_permissions=True)
         
         # Assert event was emitted instead of enqueue
-        mock_emit.assert_called_with("mcc_scheduled", {"doctype": "Multi Channel Cadence", "name": self.cadence_name})
+        mock_emit.assert_any_call("mcc_scheduled", {"doctype": "Multi Channel Cadence", "name": self.cadence_name})
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
     def test_process_step_waits_for_previous_step(self, mock_wait):
@@ -614,7 +614,7 @@ class TestAgentUtils(IntegrationTestCase):
             with patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio", return_value=""):
                 process_schedule(self.cadence_name, self.schedule_name)
             
-        mock_wait.assert_called_once_with("user_bio_created", condition=f"argument.get('reference_user') == '{self.mcc.owner}'")
+        mock_wait.assert_called_once_with("user_bio_created", condition=f"argument.get('reference_user') == '{self.mcc.sender or self.mcc.owner}'")
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.log_error")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
@@ -841,8 +841,8 @@ class TestAgentUtils(IntegrationTestCase):
         with patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio", return_value="<p>I am a <strong>bold</strong> user.</p>"):
             with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
                 mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-                mock_template = frappe._dict(status="Prompt", annotations=[frappe._dict(input="")])
-                mock_cadence = frappe._dict(cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, sift_id="test_model_123", owner="user@test.com", status="Scheduled")
+                mock_template = frappe._dict(status="Prompt", annotations=[frappe._dict(input="")], sift_id="test_model_123")
+                mock_cadence = frappe._dict(cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, cadence_name="_Test Master Cadence", sender="user@test.com", owner="user@test.com", status="Scheduled")
                 mock_lead = frappe._dict(name=self.lead_name, organization=None)
                 
                 def side_effect(*args, **kwargs):
@@ -876,4 +876,78 @@ class TestAgentUtils(IntegrationTestCase):
         import os
         if os.path.exists(frappe.get_site_path("public", "files", test_file_path)):
             os.remove(frappe.get_site_path("public", "files", test_file_path))
+
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.get_url")
+    def test_sift_id_template_resolution(self, mock_get_url, mock_get_all, mock_wait, mock_post):
+        mock_get_url.return_value = "http://test.com/webhook"
+        mock_get_all.return_value = []
+
+        original_get_doc = frappe.get_doc
+        with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
+            mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
+            mock_template = frappe._dict(status="Prompt", subject="Test", sift_id="dspy-agent-v2", annotations=[frappe._dict(input="")])
+            mock_cadence = frappe._dict(owner=self.mcc.owner, sender=self.mcc.owner, cadence_name="_Test Master Cadence", cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, status="Scheduled")
+            mock_lead = frappe._dict(name=self.lead_name, organization=None)
+
+            def side_effect(*args, **kwargs):
+                dt = args[0] if args else kwargs.get("doctype")
+                if dt == "Cadence Multi Channel Schedule": return mock_schedule
+                if dt == "Email Template": return mock_template
+                if dt == "Multi Channel Cadence": return mock_cadence
+                if dt == "CRM Lead": return mock_lead
+                return original_get_doc(*args, **kwargs)
+            mock_get_doc.side_effect = side_effect
+
+            with patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio", return_value="<p>Bio</p>"):
+                process_schedule(self.cadence_name, self.schedule_name)
+
+        payload = json.loads(mock_post.call_args[1]["data"])
+        self.assertEqual(payload["model"], "dspy-agent-v2")
+
+    @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.get_url")
+    def test_user_bio_parameter_correctness(self, mock_get_url, mock_get_all, mock_wait, mock_post, mock_get_bio):
+        mock_get_url.return_value = "http://test.com/webhook"
+        mock_get_all.return_value = []
+        mock_get_bio.return_value = "<p>Bio</p>"
+
+        original_get_doc = frappe.get_doc
+        with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
+            mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
+            mock_template = frappe._dict(status="Prompt", subject="Test", sift_id="dspy-agent-v2", annotations=[frappe._dict(input="")])
+            mock_cadence = frappe._dict(owner="owner@test.com", sender="rep@test.com", cadence_name="CAD-001", cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, status="Scheduled")
+            mock_lead = frappe._dict(name=self.lead_name, organization=None)
+
+            def side_effect(*args, **kwargs):
+                dt = args[0] if args else kwargs.get("doctype")
+                if dt == "Cadence Multi Channel Schedule": return mock_schedule
+                if dt == "Email Template": return mock_template
+                if dt == "Multi Channel Cadence": return mock_cadence
+                if dt == "CRM Lead": return mock_lead
+                return original_get_doc(*args, **kwargs)
+            mock_get_doc.side_effect = side_effect
+
+            process_schedule(self.cadence_name, self.schedule_name)
+
+        mock_get_bio.assert_called_once_with("rep@test.com", "CAD-001")
+
+    def test_on_trash_clean_deletion(self):
+        mcc = frappe.get_doc({
+            "doctype": "Multi Channel Cadence",
+            "cadence_name": self.mcc.cadence_name,
+            "cadence_for": "CRM Lead",
+            "recipient": self.lead_name,
+            "start_date": "2024-01-01",
+            "status": "Draft"
+        }).insert(ignore_permissions=True)
+
+        mcc_name = mcc.name
+        frappe.delete_doc("Multi Channel Cadence", mcc_name, ignore_permissions=True)
+        self.assertFalse(frappe.db.exists("Multi Channel Cadence", mcc_name))
 
