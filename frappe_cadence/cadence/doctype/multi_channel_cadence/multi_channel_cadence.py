@@ -31,7 +31,8 @@ class MultiChannelCadence(Document):
     # end: auto-generated types
 
     def before_insert(self):
-        self.status = "Provisioning"
+        if not self.status:
+            self.status = "Provisioning"
         from frappe_cadence.cadence.doctype.cadence_provider.cadence_provider import resolve_providers_for_mcc
         seed = self.name if self.name else f"{self.cadence_name}-{self.recipient}"
         resolved = resolve_providers_for_mcc(seed)
