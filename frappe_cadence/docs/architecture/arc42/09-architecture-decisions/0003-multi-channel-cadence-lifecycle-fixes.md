@@ -1,10 +1,10 @@
-# ADR 0003: Multi Channel Cadence Lifecycle Fixes
+# ADR 0003: Multi-Channel Cadence Lifecycle Fixes
 
 ## Status
 Accepted
 
 ## Date
-2024-05-24
+2026-08-02
 
 ## Context
 During an architectural audit of the `frappe_cadence` module against the BPMN specifications, several critical lifecycle breaks were identified. Specifically, background worker threads hanging indefinitely when external Sift AI callbacks failed, invalid state transitions when handling external provider engagement webhooks, and `PlaybookExecution` sync mismatch when initializing a `Multi Channel Cadence` in the `Provisioning` state. These issues led to silent job failures and memory leaks in the Redis worker pool.

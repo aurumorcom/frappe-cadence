@@ -12,7 +12,8 @@ flowchart TD
     
     EnqueueSteps --> StartProcessSchedule(["Execute process_schedule() Job"])
     StartProcessSchedule --> CheckMCCStatus{"Is Multi Channel Cadence status Active?"}
-    CheckMCCStatus -- No: Draft/Paused/Provisioning --> WaitMCCEvent["wait_for_event('doc:Multi Channel Cadence:on_update')"]
+    CheckMCCStatus -- Terminal: Completed/Error/Unsubscribed --> EndTerminal(["End: Terminal Cadence State - Exit"])
+    CheckMCCStatus -- Inactive: Draft/Provisioning --> WaitMCCEvent["wait_for_event('mcc_scheduled' / 'mcc_in_progress')"]
     CheckMCCStatus -- Yes --> CheckPrevStep{"Previous Step Schedule Specified?"}
     
     WaitMCCEvent --> CheckMCCStatus
@@ -28,14 +29,14 @@ flowchart TD
     IsTemplateEnabled -- No --> WaitTemplateEvent["wait_for_event('doc:Email Template:on_update')"]
     WaitTemplateEvent --> FetchTemplate
     
-    IsTemplateEnabled -- Yes --> FetchUserBio["Execute get_user_bio() for Sender"]
+    IsTemplateEnabled -- Yes --> FetchUserBio["Execute get_user_bio(mcc.sender, mcc.cadence_name)"]
     FetchUserBio --> HasUserBio{"Is User Bio Available?"}
     HasUserBio -- No --> WaitBioEvent["wait_for_event('doc:User Bio:on_update')"]
     WaitBioEvent --> FetchUserBio
     
     HasUserBio -- Yes --> HasPromptTemplate{"Step uses Prompt Template & Sift AI?"}
     HasPromptTemplate -- Yes --> CheckSiftCache{"Personalization in Redis Cache?"}
-    CheckSiftCache -- No --> PostSiftWebhook["POST Webhook to Sift AI API"]
+    CheckSiftCache -- No --> PostSiftWebhook["POST Webhook to Sift AI API with template.sift_id model"]
     PostSiftWebhook --> WaitSiftCallback["wait_for_event('sift_callback_received')"]
     WaitSiftCallback --> CheckSiftCache
     CheckSiftCache -- Yes --> RenderMessage["Render Message with Sift AI Output"]

@@ -20,7 +20,7 @@ flowchart TD
     QueryMCC --> EvaluateStatus{"Playbook Execution status?"}
     
     EvaluateStatus -- success --> SetDraft["Update Multi Channel Cadence (status = 'Draft')"]
-    EvaluateStatus -- error --> SetError["Update Multi Channel Cadence (status = 'Error')"]
+    EvaluateStatus -- error / canceled --> SetError["Update Multi Channel Cadence (status = 'Error')"]
     EvaluateStatus -- other --> EndPending(["End: Pending Playbook Execution"])
     
     SetDraft --> TriggerMCCUpdate["Trigger Multi Channel Cadence on_update & Step Execution"]
@@ -35,4 +35,4 @@ flowchart TD
 2. **Asynchronous Execution Event**:
    - `Playbook Execution on_update` hook in [`playbook_execution.py`](apps/frappe_cadence/frappe_cadence/cadence/doctype/playbook_execution/playbook_execution.py:4) listens for state transitions.
 3. **Provisioning Transition**:
-   - When status reaches `success`, linked [`frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:32) documents move from `Provisioning` to `Draft`, unlocking background schedule processing.
+   - When status reaches `success`, linked [`frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:32) documents move from `Provisioning` to `Draft`, unlocking background schedule processing. If status is `error` or `canceled`, the document transitions to `Error`.
