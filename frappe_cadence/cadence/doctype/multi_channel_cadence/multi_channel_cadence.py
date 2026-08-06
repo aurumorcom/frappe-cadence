@@ -359,8 +359,8 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             
             if not cache_val:
                 if template_provider == "n8n":
-                    from frappe_cadence.integrations.n8n import send_request
-                    send_request(template, payload, channel, cadence_name, schedule_name)
+                    from frappe_cadence.integrations.n8n import trigger_execution
+                    trigger_execution(template, payload, channel, cadence_name, schedule_name)
                 else:
                     sift_settings = frappe.get_single("Sift Settings")
                     sift_base_url = sift_settings.sift_base_url

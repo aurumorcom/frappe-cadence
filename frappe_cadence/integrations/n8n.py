@@ -30,9 +30,9 @@ def _get_webhook_secret(template) -> Optional[str]:
             return getattr(template, "webhook_secret", None)
     return getattr(template, "webhook_secret", None)
 
-def send_request(template, payload: dict, channel: str, cadence_name: str, schedule_name: str) -> bool:
+def trigger_execution(template, payload: dict, channel: str, cadence_name: str, schedule_name: str) -> bool:
     """
-    Sends the AI agent generation payload to the n8n webhook URL configured on the template.
+    Sends the AI agent generation payload to the production n8n webhook URL configured on the template.
     """
     request_url = template.get("request_url")
     if not request_url:
@@ -66,6 +66,49 @@ def send_request(template, payload: dict, channel: str, cadence_name: str, sched
         frappe.log_error(
             title="n8n Integration Error",
             message=f"Failed to send request to n8n ({request_url}): {str(e)}"
+        )
+        return False
+
+def trigger_test_execution(template, payload: dict) -> bool:
+    """
+    Sends the AI agent generation payload to the n8n test webhook URL corresponding to the template's request_url.
+    """
+    request_url = template.get("request_url")
+    if not request_url:
+        frappe.log_error(
+            title="n8n Integration Test Error",
+            message=f"Request URL not configured on {template.doctype} {template.name}"
+        )
+        return False
+
+    test_url = get_test_request_url(request_url)
+    webhook_secret = _get_webhook_secret(template)
+
+    headers = {"Content-Type": "application/json"}
+    if webhook_secret:
+        headers["Authorization"] = f"Bearer {webhook_secret}"
+
+    callback_url = get_url("/api/method/frappe_cadence.integrations.n8n.optimize_callback")
+    payload["background"] = True
+    payload["webhook"] = {
+        "url": callback_url,
+        "events": ["completed", "failed"],
+        "metadata": {
+            "doctype": template.doctype,
+            "name": template.name
+        }
+    }
+
+    payload_json = json.dumps(payload, separators=(',', ':'))
+
+    try:
+        response = requests.post(test_url, headers=headers, data=payload_json, timeout=10)
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        frappe.log_error(
+            title="n8n Test Webhook Endpoint Error",
+            message=f"Failed to send test request to n8n test webhook ({test_url}): {str(e)}"
         )
         return False
 
@@ -242,16 +285,16 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
         sift_id_val = getattr(template, "sift_id", None)
         payload["model"] = sift_id_val if isinstance(sift_id_val, str) and sift_id_val else "default-model"
 
-        success = send_request(template, payload, channel, mcc_doc.name, schedule_name)
+        success = trigger_test_execution(template, payload)
         if success:
-            frappe.msgprint("Real inference request sent to n8n workflow successfully.", alert=True, indicator="green")
+            frappe.msgprint("Test inference request sent to n8n test workflow successfully. Waiting for n8n test response.", alert=True, indicator="green")
             return {"status": "success"}
         else:
             template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
             template.save(ignore_permissions=True)
-            frappe.msgprint("Failed to send real inference request to n8n workflow.", alert=True, indicator="orange")
-            return {"status": "failed", "error": "Failed to send request to n8n workflow."}
+            frappe.msgprint("Failed to send test request: n8n test webhook is not active. Please click 'Test workflow' in n8n and try again.", alert=True, indicator="orange")
+            return {"status": "failed", "error": "n8n test webhook endpoint is not listening."}
 
     except Exception as e:
         template.status = "Enabled" if template.enabled else "Disabled"
@@ -282,7 +325,7 @@ def optimize_callback(**kwargs) -> Dict[str, str]:
         frappe.log_error("n8n Optimize Callback Failed", error)
         if template_doctype and template_name:
             template = frappe.get_doc(template_doctype, template_name)
-            template.status = "Enabled"
+            template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
             template.save(ignore_permissions=True)
         return {"status": "failed"}
@@ -290,7 +333,7 @@ def optimize_callback(**kwargs) -> Dict[str, str]:
     if event_type in ("completed", "agent.completed", "response.completed"):
         if template_doctype and template_name:
             template = frappe.get_doc(template_doctype, template_name)
-            template.status = "Disabled"
+            template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
             template.save(ignore_permissions=True)
             return {"status": "success"}
