@@ -11,7 +11,7 @@ frappe.ui.form.on("WhatsApp Template", {
 		});
 	},
 	refresh: function(frm) {
-		toggle_fields(frm);
+		set_status(frm);
 		const is_n8n_provider = frm.doc.provider === "n8n";
 		const is_dspy_provider = frm.doc.provider === "DSPy";
 
@@ -53,20 +53,11 @@ frappe.ui.form.on("WhatsApp Template", {
 		}
 	},
 	provider: function(frm) {
-		toggle_fields(frm);
-		frm.refresh_fields();
+		set_status(frm);
 	}
 });
 
-function toggle_fields(frm) {
-	frm.set_df_property("message", "read_only", 0);
-	frm.set_df_property("enabled", "read_only", 0);
-	frm.set_df_property("provider", "read_only", 0);
-	frm.set_df_property("request_url", "read_only", 0);
-	frm.set_df_property("webhook_secret", "read_only", 0);
-	frm.set_df_property("status", "read_only", 1);
-	frm.set_df_property("status", "hidden", 1);
-
+function set_status(frm) {
 	if (frm.doc.status) {
 		const indicator_map = {
 			"Enabled": "green",
