@@ -33,12 +33,12 @@ frappe.ui.form.on("WhatsApp Template", {
 					}
 				});
 			});
+		}
+
+		if (is_dspy_provider) {
 			frm.add_custom_button(__("Predict"), function() {
-				const method = is_n8n_provider
-					? "frappe_cadence.integrations.n8n.predict"
-					: "frappe_cadence.integrations.sift.predict";
 				frappe.call({
-					method: method,
+					method: "frappe_cadence.integrations.sift.predict",
 					args: {
 						template_doctype: frm.doc.doctype,
 						template_name: frm.doc.name
