@@ -176,8 +176,14 @@ def predict(template_doctype: str, template_name: str) -> None:
     
     has_pending = False
     
+    from markdownify import markdownify
+
     tpl_subject = getattr(template, "subject", "") or ""
     tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
+    if not isinstance(tpl_response, str):
+        tpl_response = str(tpl_response) if tpl_response else ""
+
+    tpl_response_md = markdownify(tpl_response) if tpl_response else ""
 
     for ann in annotations:
         if is_annotation_pending(ann):
@@ -186,7 +192,7 @@ def predict(template_doctype: str, template_name: str) -> None:
             
             payload = {
                 "subject": tpl_subject,
-                "response": tpl_response,
+                "response": tpl_response_md,
                 "model": template.sift_id,
                 "background": True,
                 "webhook": {
