@@ -206,7 +206,7 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
     template_name = schedule.reference_name
     template = frappe.get_doc(template_doctype, template_name)
     
-    if template.status == "Disabled":
+    if template.status != "Enabled":
         event_key = f"{template_doctype.lower().replace(' ', '_')}_enabled"
         wait_for_event(
             event_key=event_key,
@@ -350,7 +350,7 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                             headers["Authorization"] = f"Bearer {sift_api_key}"
                         
                         # Add webhook info to payload so Sift knows where to callback
-                        webhook_url = get_url(f"/api/method/frappe_cadence.cadence.{channel.lower()}_template.callback")
+                        webhook_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
                         payload["background"] = True
                         payload["webhook"] = {
                             "url": webhook_url,
