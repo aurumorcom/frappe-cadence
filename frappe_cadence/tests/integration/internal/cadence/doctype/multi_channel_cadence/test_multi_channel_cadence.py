@@ -505,7 +505,7 @@ class TestAgentUtils(IntegrationTestCase):
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             
             mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-            mock_template = frappe._dict(status="Prompt", subject="Test", annotations=[frappe._dict(input="")])
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", subject="Test", annotations=[frappe._dict(input="")])
             mock_cadence = frappe._dict(owner=self.mcc.owner, cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, sift_id="test_sift_id", status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
             
@@ -557,7 +557,7 @@ class TestAgentUtils(IntegrationTestCase):
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             
             mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-            mock_template = frappe._dict(status="Prompt", subject="Test", annotations=[frappe._dict(input="")])
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", subject="Test", annotations=[frappe._dict(input="")])
             mock_cadence = frappe._dict(owner=self.mcc.owner, cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, sift_id="test_sift_id", status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
             
@@ -598,7 +598,7 @@ class TestAgentUtils(IntegrationTestCase):
         original_get_doc = frappe.get_doc
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-            mock_template = frappe._dict(status="Prompt", subject="Test", annotations=[frappe._dict(input="")])
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", subject="Test", annotations=[frappe._dict(input="")])
             mock_cadence = frappe._dict(owner=self.mcc.owner, cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, sift_id="test_sift_id", status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
             
@@ -648,7 +648,7 @@ class TestAgentUtils(IntegrationTestCase):
         original_get_doc = frappe.get_doc
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-            mock_template = frappe._dict(status="Prompt", subject="Test")
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", subject="Test")
             mock_cadence = frappe._dict(owner=self.mcc.owner, cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, sift_id="test_sift_id", status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
             
@@ -687,7 +687,7 @@ class TestAgentUtils(IntegrationTestCase):
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             
             mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-            mock_template = frappe._dict(status="Prompt", subject="Test", annotations=[frappe._dict(input="")])
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", subject="Test", annotations=[frappe._dict(input="")])
             mock_cadence = frappe._dict(owner=self.mcc.owner, cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, sift_id="test_sift_id", status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
             
@@ -739,7 +739,7 @@ class TestAgentUtils(IntegrationTestCase):
         original_get_doc = frappe.get_doc
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-            mock_template = frappe._dict(status="Prompt", subject="Test", annotations=[frappe._dict(input="")])
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", subject="Test", annotations=[frappe._dict(input="")])
             mock_cadence = frappe._dict(owner=self.mcc.owner, cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, sift_id="test_sift_id", status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
             
@@ -783,7 +783,7 @@ class TestAgentUtils(IntegrationTestCase):
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             
             mock_schedule = frappe._dict(reference_doctype="LinkedIn Template", reference_name="Test LinkedIn Template")
-            mock_template = frappe._dict(status="Prompt", annotations=[frappe._dict(input="")])
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", annotations=[frappe._dict(input="")])
             mock_cadence = frappe._dict(cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, sift_id="test_sift_id", status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
             
@@ -841,7 +841,7 @@ class TestAgentUtils(IntegrationTestCase):
         with patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio", return_value="<p>I am a <strong>bold</strong> user.</p>"):
             with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
                 mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-                mock_template = frappe._dict(status="Prompt", annotations=[frappe._dict(input="")], sift_id="test_model_123")
+                mock_template = frappe._dict(status="Enabled", provider="DSPy", annotations=[frappe._dict(input="")], sift_id="test_model_123")
                 mock_cadence = frappe._dict(cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, cadence_name="_Test Master Cadence", sender="user@test.com", owner="user@test.com", status="Scheduled")
                 mock_lead = frappe._dict(name=self.lead_name, organization=None)
                 
@@ -888,7 +888,7 @@ class TestAgentUtils(IntegrationTestCase):
         original_get_doc = frappe.get_doc
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-            mock_template = frappe._dict(status="Prompt", subject="Test", sift_id="dspy-agent-v2", annotations=[frappe._dict(input="")])
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", subject="Test", sift_id="dspy-agent-v2", annotations=[frappe._dict(input="")])
             mock_cadence = frappe._dict(owner=self.mcc.owner, sender=self.mcc.owner, cadence_name="_Test Master Cadence", cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
 
@@ -920,7 +920,7 @@ class TestAgentUtils(IntegrationTestCase):
         original_get_doc = frappe.get_doc
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
             mock_schedule = frappe._dict(reference_doctype="Email Template", reference_name="Test Email Template")
-            mock_template = frappe._dict(status="Prompt", subject="Test", sift_id="dspy-agent-v2", annotations=[frappe._dict(input="")])
+            mock_template = frappe._dict(status="Enabled", provider="DSPy", subject="Test", sift_id="dspy-agent-v2", annotations=[frappe._dict(input="")])
             mock_cadence = frappe._dict(owner="owner@test.com", sender="rep@test.com", cadence_name="CAD-001", cadence_for="CRM Lead", recipient=self.lead_name, name=self.cadence_name, status="Scheduled")
             mock_lead = frappe._dict(name=self.lead_name, organization=None)
 
@@ -948,6 +948,6 @@ class TestAgentUtils(IntegrationTestCase):
         }).insert(ignore_permissions=True)
 
         mcc_name = mcc.name
-        frappe.delete_doc("Multi Channel Cadence", mcc_name, ignore_permissions=True)
+        frappe.delete_doc("Multi Channel Cadence", mcc_name, force=True, ignore_permissions=True)
         self.assertFalse(frappe.db.exists("Multi Channel Cadence", mcc_name))
 
