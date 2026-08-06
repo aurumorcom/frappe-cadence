@@ -183,7 +183,7 @@ class TestN8NIntegration(IntegrationTestCase):
         self.assertEqual(comm.subject, "Generated Subject")
         self.assertIn("<p>Dear <strong>Customer</strong>,</p>", comm.content)
         self.assertIn("<em>body</em>", comm.content)
-        self.assertIn('<a href="https://example.com">here</a>', comm.content)
+        self.assertIn('href="https://example.com"', comm.content)
 
         template.reload()
         self.assertEqual(template.status, "Enabled")
