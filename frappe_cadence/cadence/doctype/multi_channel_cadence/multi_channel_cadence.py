@@ -285,7 +285,12 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                 required_fields.append("subject")
                 
             tpl_subject = getattr(template, "subject", "") or ""
+            if not isinstance(tpl_subject, str):
+                tpl_subject = str(tpl_subject) if tpl_subject else ""
+
             tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
+            if not isinstance(tpl_response, str):
+                tpl_response = str(tpl_response) if tpl_response else ""
 
             payload = {
                 "subject": tpl_subject,

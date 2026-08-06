@@ -504,6 +504,10 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_template = MagicMock()
         mock_template.status = "Enabled"
         mock_template.provider = "n8n"
+        mock_template.subject = "Test N8N Subject"
+        mock_template.response = "Test N8N Response"
+        mock_template.response_html = None
+        mock_template.use_html = False
         mock_template.request_url = "https://n8n.example.com/webhook"
         mock_template.get.side_effect = lambda k, default=None: getattr(mock_template, k, default)
         mock_template.get_password.return_value = "n8n_secret_123"
