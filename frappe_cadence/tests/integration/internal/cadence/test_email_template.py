@@ -173,3 +173,51 @@ class TestEmailTemplate(IntegrationTestCase):
         }).insert(ignore_permissions=True)
         self.assertTrue(doc.name)
         self.assertEqual(doc.provider, "n8n")
+
+    def test_prompt_fields_removed_from_email_template(self):
+        meta = frappe.get_meta("Email Template")
+        for fieldname in ["prompt_section", "user_prompt", "system_prompt", "output_schema"]:
+            self.assertIsNone(meta.get_field(fieldname), f"Field {fieldname} should be removed from Email Template")
+
+    def test_all_templates_enabled_field_exists(self):
+        for doctype in ["Email Template", "SMS Template", "WhatsApp Template", "LinkedIn Template"]:
+            meta = frappe.get_meta(doctype)
+            self.assertIsNotNone(meta.get_field("enabled"), f"enabled field missing on {doctype}")
+
+    def test_email_template_enabled_status_sync(self):
+        doc = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "Test Enabled Sync Template",
+            "subject": "Test Sync",
+            "response": "Content Sync",
+            "enabled": 1
+        }).insert(ignore_permissions=True)
+        self.assertEqual(doc.status, "Enabled")
+
+        doc.enabled = 0
+        doc.save(ignore_permissions=True)
+        self.assertEqual(doc.status, "Disabled")
+
+        doc.enabled = 1
+        doc.save(ignore_permissions=True)
+        self.assertEqual(doc.status, "Enabled")
+
+    def test_link_search_includes_enabled_template(self):
+        doc = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "Test Search Link Enabled Template",
+            "subject": "Test Search",
+            "response": "Content Search",
+            "enabled": 1
+        }).insert(ignore_permissions=True)
+
+        from frappe.desk.search import search_link
+        results = search_link(
+            doctype="Email Template",
+            txt="Test Search Link Enabled Template",
+            query=None,
+            filters=None
+        )
+        result_names = [r[0] if isinstance(r, (list, tuple)) else r.get("value") for r in results]
+        self.assertIn(doc.name, result_names)
+
