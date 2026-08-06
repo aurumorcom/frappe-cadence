@@ -1,4 +1,4 @@
-frappe.listview_settings["Email Cadence"] = {
+frappe.listview_settings["Multi Channel Cadence"] = {
 	get_indicator: function (doc) {
 		var colors = {
 			Unsubscribed: "red",
