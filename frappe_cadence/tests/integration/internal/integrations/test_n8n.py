@@ -157,8 +157,9 @@ class TestN8NIntegration(IntegrationTestCase):
         payload = json.loads(mock_post.call_args[1]["data"])
         self.assertNotIn("subject", payload)
         self.assertNotIn("response", payload)
-        self.assertEqual(payload.get("metadata", {}).get("doctype"), "Multi Channel Cadence")
-        self.assertEqual(payload.get("metadata", {}).get("name"), mcc.name)
+        self.assertNotIn("metadata", payload)
+        self.assertEqual(payload.get("webhook", {}).get("metadata", {}).get("doctype"), "Email Template")
+        self.assertEqual(payload.get("webhook", {}).get("metadata", {}).get("name"), template.name)
 
         schema = payload["response_format"]["json_schema"]["schema"]
         self.assertIn("subject", schema["properties"])
