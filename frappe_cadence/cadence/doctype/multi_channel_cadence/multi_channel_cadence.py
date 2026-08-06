@@ -70,7 +70,7 @@ class MultiChannelCadence(Document):
                         comm.reference_cadence_provider = provider
                         comm.save(ignore_permissions=True)
         
-        if self.has_value_changed("status"):
+        if self.has_value_changed("status") or self.status == "Draft":
             if self.status in ["Draft", "Scheduled", "In Progress"]:
                 _enqueue_schedule_jobs(self, cadence)
                 
