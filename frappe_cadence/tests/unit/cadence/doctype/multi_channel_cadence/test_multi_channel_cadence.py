@@ -282,6 +282,8 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_template.status = "Enabled"
         mock_template.provider = "DSPy"
         mock_template.sift_id = "agent-mcc"
+        mock_template.subject = ""
+        mock_template.get.side_effect = lambda k, default=None: "" if k in ["response", "response_html", "use_html", "message"] else None
         
         mock_lead = MagicMock()
         mock_lead.name = "LEAD-001"
