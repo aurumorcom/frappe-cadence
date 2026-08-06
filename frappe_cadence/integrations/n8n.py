@@ -311,6 +311,37 @@ def optimize_callback(**kwargs) -> Dict[str, str]:
     if event_type in ("completed", "agent.completed", "response.completed"):
         if template_doctype and template_name:
             template = frappe.get_doc(template_doctype, template_name)
+            channel = template_doctype.replace(" Template", "") if template_doctype else "Email"
+
+            data = kwargs.get("data", [])
+            output_text = ""
+            if isinstance(data, list) and len(data) > 0:
+                content_list = data[0].get("content", [])
+                if content_list and isinstance(content_list, list) and len(content_list) > 0:
+                    output_text = content_list[0].get("text", "")
+            elif isinstance(data, dict):
+                content_list = data.get("content", [])
+                if content_list and isinstance(content_list, list) and len(content_list) > 0:
+                    output_text = content_list[0].get("text", "")
+
+            if output_text:
+                try:
+                    parsed_json = json.loads(output_text)
+                    from frappe.utils import md_to_html
+                    raw_content = parsed_json.get("content") or ""
+                    comm_doc = frappe.get_doc({
+                        "doctype": "Communication",
+                        "communication_medium": channel,
+                        "subject": parsed_json.get("subject") or f"Draft {channel} Message",
+                        "content": md_to_html(raw_content) if raw_content else "",
+                        "delivery_status": "Scheduled"
+                    })
+                    comm_doc.run_method("validate")
+                    if hasattr(comm_doc, "_validate_mandatory"):
+                        comm_doc._validate_mandatory()
+                except Exception as ex:
+                    frappe.log_error("n8n Optimize Response Validation Error", str(ex))
+
             template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
             template.save(ignore_permissions=True)
