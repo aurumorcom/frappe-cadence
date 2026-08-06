@@ -12,15 +12,30 @@ class SMSTemplate(Document):
         from frappe_cadence.cadence.doctype.sms_template_annotation.sms_template_annotation import SMSTemplateAnnotation
 
         annotations: DF.Table[SMSTemplateAnnotation]
+        enabled: DF.Check
         message: DF.TextEditor | None
         provider: DF.Literal["Frappe", "DSPy", "n8n"]
         request_url: DF.Data | None
         sift_id: DF.Data | None
         sms_template_code: DF.Data | None
-        status: DF.Literal["Enabled", "Disabled"]
+        status: DF.Literal["Enabled", "Disabled", "Optimizing", "Predicting"]
         title: DF.Data
         webhook_secret: DF.Password | None
     # end: auto-generated types
+
+def before_save(doc, method=None):
+    enabled_val = getattr(doc, "enabled", 0)
+    if doc.has_value_changed("enabled"):
+        doc.status = "Enabled" if enabled_val else "Disabled"
+    elif doc.has_value_changed("status"):
+        if doc.status == "Disabled":
+            if hasattr(doc, "enabled"):
+                doc.enabled = 0
+        elif doc.status == "Enabled":
+            if hasattr(doc, "enabled"):
+                doc.enabled = 1
+    elif doc.status not in ["Optimizing", "Predicting"]:
+        doc.status = "Enabled" if enabled_val else "Disabled"
 
 def on_update(doc, method=None):
     doc_before_save = doc.get_doc_before_save()
