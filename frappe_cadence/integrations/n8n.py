@@ -261,8 +261,7 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
         history_messages = get_history(mcc_doc.cadence_for, mcc_doc.recipient, since_date=three_months_ago)
         payload["input"].extend(history_messages)
 
-        sift_id_val = getattr(template, "sift_id", None)
-        payload["model"] = sift_id_val if isinstance(sift_id_val, str) and sift_id_val else "default-model"
+        payload["model"] = getattr(template, "model", None) or None
 
         success = trigger_test_execution(template, payload)
         if success:
@@ -351,9 +350,7 @@ def predict(template_doctype: str, template_name: str) -> Dict[str, Any]:
             messages = build_annotation_messages(ann)
 
             payload = {
-                "subject": tpl_subject,
-                "response": tpl_response,
-                "model": getattr(template, "sift_id", None) or "n8n-workflow",
+                "model": getattr(template, "model", None) or None,
                 "background": True,
                 "webhook": {
                     "url": webhook_url,
