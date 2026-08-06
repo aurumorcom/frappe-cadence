@@ -175,35 +175,6 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
     template.save(ignore_permissions=True)
 
     try:
-        reference_cadence_provider = None
-        for row in (mcc_doc.get("provider") or []):
-            if row.channel == channel:
-                reference_cadence_provider = row.cadence_provider
-                break
-
-        draft_comm = frappe.get_all("Communication", filters={
-            "reference_doctype": "Multi Channel Cadence",
-            "reference_name": mcc_doc.name,
-            "cadence_schedule": schedule_name,
-            "status": "Open"
-        })
-
-        if draft_comm:
-            comm_name = draft_comm[0].name
-        else:
-            comm = frappe.get_doc({
-                "doctype": "Communication",
-                "communication_medium": channel,
-                "subject": f"Draft {channel} Message",
-                "reference_doctype": "Multi Channel Cadence",
-                "reference_name": mcc_doc.name,
-                "cadence_schedule": schedule_name,
-                "status": "Open",
-                "reference_cadence_provider": reference_cadence_provider
-            })
-            comm.insert(ignore_permissions=True)
-            comm_name = comm.name
-
         from markdownify import markdownify
 
         if channel == "Email":
@@ -212,24 +183,12 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
                     "type": "string",
                     "description": "The subject line of the email"
                 },
-                "salutation": {
-                    "type": "string",
-                    "description": "The salutation or greeting"
-                },
-                "body": {
+                "content": {
                     "type": "string",
                     "description": "The main body content of the email"
-                },
-                "call_to_action": {
-                    "type": "string",
-                    "description": "The call to action"
-                },
-                "sign_off": {
-                    "type": "string",
-                    "description": "The sign-off or closing"
                 }
             }
-            required_fields = ["subject", "salutation", "body", "call_to_action", "sign_off"]
+            required_fields = ["subject", "content"]
         else:
             schema_properties = {
                 "content": {
@@ -250,10 +209,9 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
         tpl_response_md = markdownify(tpl_response) if tpl_response else ""
 
         payload = {
-            "subject": tpl_subject,
-            "response": tpl_response_md,
             "metadata": {
-                "name": comm_name
+                "doctype": "Multi Channel Cadence",
+                "name": mcc_doc.name
             },
             "response_format": {
                 "type": "json_schema",
