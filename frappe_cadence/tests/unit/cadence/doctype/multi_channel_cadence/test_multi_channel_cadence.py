@@ -511,6 +511,7 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_template = MagicMock()
         mock_template.status = "Enabled"
         mock_template.provider = "n8n"
+        mock_template.model = "agent-n8n-model"
         mock_template.subject = "Test N8N Subject"
         mock_template.response = "Test N8N Response"
         mock_template.response_html = None
@@ -528,6 +529,9 @@ class TestMultiChannelCadence(UnitTestCase):
 
         mock_get_all.return_value = []
 
+        mock_sys_settings = MagicMock()
+        mock_sys_settings.time_zone = "Asia/Kolkata"
+
         original_get_doc = frappe.get_doc
         def get_doc_side_effect(*args, **kwargs):
             if len(args) == 2 and args[0] == "Cadence Multi Channel Schedule":
@@ -540,12 +544,16 @@ class TestMultiChannelCadence(UnitTestCase):
                 return mock_lead
             elif len(args) == 1 and isinstance(args[0], dict) and args[0].get("doctype") == "Communication":
                 return mock_comm
+            elif args and args[0] == "System Settings":
+                return mock_sys_settings
             return original_get_doc(*args, **kwargs)
 
         original_get_single = frappe.get_single
         def get_single_side_effect(*args, **kwargs):
             if args[0] == "Sift Settings":
                 return MagicMock()
+            elif args[0] == "System Settings":
+                return mock_sys_settings
             return original_get_single(*args, **kwargs)
 
         original_get_value = frappe.db.get_value
