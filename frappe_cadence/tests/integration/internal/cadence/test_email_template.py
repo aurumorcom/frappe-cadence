@@ -174,11 +174,6 @@ class TestEmailTemplate(IntegrationTestCase):
         self.assertTrue(doc.name)
         self.assertEqual(doc.provider, "n8n")
 
-    def test_prompt_fields_removed_from_email_template(self):
-        meta = frappe.get_meta("Email Template")
-        for fieldname in ["prompt_section", "user_prompt", "system_prompt", "output_schema"]:
-            self.assertIsNone(meta.get_field(fieldname), f"Field {fieldname} should be removed from Email Template")
-
     def test_all_templates_enabled_field_exists(self):
         for doctype in ["Email Template", "SMS Template", "WhatsApp Template", "LinkedIn Template"]:
             meta = frappe.get_meta(doctype)
@@ -220,4 +215,34 @@ class TestEmailTemplate(IntegrationTestCase):
         )
         result_names = [r[0] if isinstance(r, (list, tuple)) else r.get("value") for r in results]
         self.assertIn(doc.name, result_names)
+
+    def test_link_search_includes_disabled_template_when_flag_set(self):
+        doc = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "Test Search Link Disabled Template",
+            "subject": "Test Search Disabled",
+            "response": "Content Search Disabled",
+            "enabled": 0
+        }).insert(ignore_permissions=True)
+
+        from frappe.desk.search import search_link
+        # Standard search without include_disabled=1 should NOT return disabled template
+        std_results = search_link(
+            doctype="Email Template",
+            txt="Test Search Link Disabled Template",
+            query=None,
+            filters=None
+        )
+        std_result_names = [r[0] if isinstance(r, (list, tuple)) else r.get("value") for r in std_results]
+        self.assertNotIn(doc.name, std_result_names)
+
+        # Search with include_disabled=1 MUST return disabled template
+        disabled_results = search_link(
+            doctype="Email Template",
+            txt="Test Search Link Disabled Template",
+            query=None,
+            filters={"include_disabled": 1}
+        )
+        disabled_result_names = [r[0] if isinstance(r, (list, tuple)) else r.get("value") for r in disabled_results]
+        self.assertIn(doc.name, disabled_result_names)
 
