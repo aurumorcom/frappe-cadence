@@ -24,18 +24,15 @@ class LinkedInTemplate(Document):
     # end: auto-generated types
 
 def before_save(doc, method=None):
-    enabled_val = getattr(doc, "enabled", 0)
     if doc.has_value_changed("enabled"):
-        doc.status = "Enabled" if enabled_val else "Disabled"
+        doc.status = "Enabled" if doc.enabled else "Disabled"
     elif doc.has_value_changed("status"):
         if doc.status == "Disabled":
-            if hasattr(doc, "enabled"):
-                doc.enabled = 0
+            doc.enabled = 0
         elif doc.status == "Enabled":
-            if hasattr(doc, "enabled"):
-                doc.enabled = 1
+            doc.enabled = 1
     elif doc.status not in ["Optimizing", "Predicting"]:
-        doc.status = "Enabled" if enabled_val else "Disabled"
+        doc.status = "Enabled" if doc.enabled else "Disabled"
 
 def on_update(doc, method=None):
     doc_before_save = doc.get_doc_before_save()
