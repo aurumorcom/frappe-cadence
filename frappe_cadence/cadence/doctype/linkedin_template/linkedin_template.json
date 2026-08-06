@@ -33,8 +33,10 @@
     "default": "Enabled",
     "fieldname": "status",
     "fieldtype": "Select",
+    "hidden": 1,
     "label": "Status",
-    "options": "Enabled\nDisabled"
+    "options": "Enabled\nDisabled\nOptimizing\nPredicting",
+    "read_only": 1
    },
    {
     "default": "Frappe",
