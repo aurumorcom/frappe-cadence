@@ -209,10 +209,6 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
         tpl_response_md = markdownify(tpl_response) if tpl_response else ""
 
         payload = {
-            "metadata": {
-                "doctype": "Multi Channel Cadence",
-                "name": mcc_doc.name
-            },
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {
