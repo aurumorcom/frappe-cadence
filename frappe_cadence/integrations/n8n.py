@@ -175,49 +175,28 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
     template.save(ignore_permissions=True)
 
     try:
-        reference_cadence_provider = None
-        for row in (mcc_doc.get("provider") or []):
-            if row.channel == channel:
-                reference_cadence_provider = row.cadence_provider
-                break
-
-        draft_comm = frappe.get_all("Communication", filters={
-            "reference_doctype": "Multi Channel Cadence",
-            "reference_name": mcc_doc.name,
-            "cadence_schedule": schedule_name,
-            "status": "Open"
-        })
-
-        if draft_comm:
-            comm_name = draft_comm[0].name
-        else:
-            comm = frappe.get_doc({
-                "doctype": "Communication",
-                "communication_medium": channel,
-                "subject": f"Draft {channel} Message",
-                "reference_doctype": "Multi Channel Cadence",
-                "reference_name": mcc_doc.name,
-                "cadence_schedule": schedule_name,
-                "status": "Open",
-                "reference_cadence_provider": reference_cadence_provider
-            })
-            comm.insert(ignore_permissions=True)
-            comm_name = comm.name
-
-        schema_properties = {
-            "content": {
-                "type": "string",
-                "description": "The main body content of the message"
-            }
-        }
-        required_fields = ["content"]
+        from markdownify import markdownify
 
         if channel == "Email":
-            schema_properties["subject"] = {
-                "type": "string",
-                "description": "The subject of the message"
+            schema_properties = {
+                "subject": {
+                    "type": "string",
+                    "description": "The subject line of the email"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "The main body content of the email"
+                }
             }
-            required_fields.append("subject")
+            required_fields = ["subject", "content"]
+        else:
+            schema_properties = {
+                "content": {
+                    "type": "string",
+                    "description": "The main body content of the message"
+                }
+            }
+            required_fields = ["content"]
 
         tpl_subject = getattr(template, "subject", "") or ""
         if not isinstance(tpl_subject, str):
@@ -227,12 +206,9 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
         if not isinstance(tpl_response, str):
             tpl_response = str(tpl_response) if tpl_response else ""
 
+        tpl_response_md = markdownify(tpl_response) if tpl_response else ""
+
         payload = {
-            "subject": tpl_subject,
-            "response": tpl_response,
-            "metadata": {
-                "name": comm_name
-            },
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {
@@ -248,7 +224,6 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
             }
         }
 
-        from markdownify import markdownify
         from frappe.utils import add_months, today
         from frappe_cadence.cadence.doctype.history.history import get_history
         from frappe_cadence.cadence.doctype.user_bio.user_bio import get_user_bio
@@ -272,18 +247,17 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
                 "content": f"Template Subject: {tpl_subject}"
             })
 
-        if tpl_response:
+        if tpl_response_md:
             payload["input"].append({
                 "role": "user",
-                "content": f"Template Response:\n{tpl_response}"
+                "content": f"Template Response:\n{tpl_response_md}"
             })
 
         three_months_ago = add_months(today(), -3)
         history_messages = get_history(mcc_doc.cadence_for, mcc_doc.recipient, since_date=three_months_ago)
         payload["input"].extend(history_messages)
 
-        sift_id_val = getattr(template, "sift_id", None)
-        payload["model"] = sift_id_val if isinstance(sift_id_val, str) and sift_id_val else "default-model"
+        payload["model"] = getattr(template, "model", None) or None
 
         success = trigger_test_execution(template, payload)
         if success:
@@ -333,6 +307,37 @@ def optimize_callback(**kwargs) -> Dict[str, str]:
     if event_type in ("completed", "agent.completed", "response.completed"):
         if template_doctype and template_name:
             template = frappe.get_doc(template_doctype, template_name)
+            channel = template_doctype.replace(" Template", "") if template_doctype else "Email"
+
+            data = kwargs.get("data", [])
+            output_text = ""
+            if isinstance(data, list) and len(data) > 0:
+                content_list = data[0].get("content", [])
+                if content_list and isinstance(content_list, list) and len(content_list) > 0:
+                    output_text = content_list[0].get("text", "")
+            elif isinstance(data, dict):
+                content_list = data.get("content", [])
+                if content_list and isinstance(content_list, list) and len(content_list) > 0:
+                    output_text = content_list[0].get("text", "")
+
+            if output_text:
+                try:
+                    parsed_json = json.loads(output_text)
+                    from frappe.utils import md_to_html
+                    raw_content = parsed_json.get("content") or ""
+                    comm_doc = frappe.get_doc({
+                        "doctype": "Communication",
+                        "communication_medium": channel,
+                        "subject": parsed_json.get("subject") or f"Draft {channel} Message",
+                        "content": md_to_html(raw_content) if raw_content else "",
+                        "delivery_status": "Scheduled"
+                    })
+                    comm_doc.run_method("validate")
+                    if hasattr(comm_doc, "_validate_mandatory"):
+                        comm_doc._validate_mandatory()
+                except Exception as ex:
+                    frappe.log_error("n8n Optimize Response Validation Error", str(ex))
+
             template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
             template.save(ignore_permissions=True)
@@ -372,9 +377,7 @@ def predict(template_doctype: str, template_name: str) -> Dict[str, Any]:
             messages = build_annotation_messages(ann)
 
             payload = {
-                "subject": tpl_subject,
-                "response": tpl_response,
-                "model": getattr(template, "sift_id", None) or "n8n-workflow",
+                "model": getattr(template, "model", None) or None,
                 "background": True,
                 "webhook": {
                     "url": webhook_url,

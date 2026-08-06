@@ -149,7 +149,15 @@ def handle_callback() -> dict:
             comm.subject = parsed_json.get("subject")
         else:
             comm.subject = f"{comm.communication_medium} Message"
-        comm.content = parsed_json.get("content")
+
+        if parsed_json.get("content"):
+            raw_content = parsed_json.get("content")
+        else:
+            parts = [parsed_json.get(f) for f in ["salutation", "body", "call_to_action", "sign_off"] if parsed_json.get(f)]
+            raw_content = "\n\n".join(parts) if parts else ""
+
+        from frappe.utils import md_to_html
+        comm.content = md_to_html(raw_content) if raw_content else ""
         comm.delivery_status = "Scheduled"
         comm.save(ignore_permissions=True)
 

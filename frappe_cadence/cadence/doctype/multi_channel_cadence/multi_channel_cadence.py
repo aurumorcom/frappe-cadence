@@ -269,20 +269,28 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             cadence = frappe.get_doc("Multi Channel Cadence", cadence_name)
             lead = frappe.get_doc(cadence.cadence_for, cadence.recipient)
             
-            schema_properties = {
-                "content": {
-                    "type": "string",
-                    "description": "The main body content of the message"
-                }
-            }
-            required_fields = ["content"]
-            
+            from markdownify import markdownify
+
             if channel == "Email":
-                schema_properties["subject"] = {
-                    "type": "string",
-                    "description": "The subject of the message"
+                schema_properties = {
+                    "subject": {
+                        "type": "string",
+                        "description": "The subject line of the email"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "The main body content of the email"
+                    }
                 }
-                required_fields.append("subject")
+                required_fields = ["subject", "content"]
+            else:
+                schema_properties = {
+                    "content": {
+                        "type": "string",
+                        "description": "The main body content of the message"
+                    }
+                }
+                required_fields = ["content"]
                 
             tpl_subject = getattr(template, "subject", "") or ""
             if not isinstance(tpl_subject, str):
@@ -291,10 +299,10 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
             if not isinstance(tpl_response, str):
                 tpl_response = str(tpl_response) if tpl_response else ""
+            
+            tpl_response_md = markdownify(tpl_response) if tpl_response else ""
 
             payload = {
-                "subject": tpl_subject,
-                "response": tpl_response,
                 "metadata": {
                     "name": comm_name
                 },
@@ -313,7 +321,6 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                 },
             }
             
-            from markdownify import markdownify
             from frappe_cadence.cadence.doctype.history.history import get_history
             from frappe_cadence.cadence.doctype.user_bio.user_bio import get_user_bio
             
@@ -340,10 +347,10 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                     "content": f"Template Subject: {tpl_subject}"
                 })
 
-            if tpl_response:
+            if tpl_response_md:
                 payload["input"].append({
                     "role": "user",
-                    "content": f"Template Response:\n{tpl_response}"
+                    "content": f"Template Response:\n{tpl_response_md}"
                 })
             
             # Fetch and format History records
@@ -351,9 +358,12 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             history_messages = get_history(cadence.cadence_for, cadence.recipient, since_date=three_months_ago)
             payload["input"].extend(history_messages)
 
-            # Use /responses endpoint instead of /agents and map cadence model
-            sift_id_val = getattr(template, "sift_id", None)
-            payload["model"] = sift_id_val if isinstance(sift_id_val, str) and sift_id_val else "default-model"
+            if template_provider == "n8n":
+                payload["model"] = getattr(template, "model", None)
+            elif template_provider == "DSPy":
+                payload["model"] = getattr(template, "sift_id", None)
+            else:
+                payload["model"] = None
             
             cache_val = frappe.cache().get_value(f"ai_req:{cadence_name}:{schedule_name}")
             

@@ -704,6 +704,8 @@ class TestAgentUtils(IntegrationTestCase):
             
         payload = json.loads(mock_post.call_args[1]["data"])
         schema = payload["response_format"]["json_schema"]["schema"]
+        self.assertNotIn("subject", payload)
+        self.assertNotIn("response", payload)
         self.assertIn("subject", schema["properties"])
         self.assertIn("content", schema["properties"])
         self.assertIn("subject", schema["required"])
