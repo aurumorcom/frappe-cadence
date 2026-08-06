@@ -153,37 +153,33 @@ class TestN8NIntegration(IntegrationTestCase):
         # Should call test_request_url
         self.assertEqual(called_url, "https://n8n.capybaara.com/webhook-test/ce63ee3b-90f5-41cb-9538-1418302eac7d")
 
-        # Verify Communication draft was created
-        schedule_name = cadence.cadence_schedules[0].name
-        comm = frappe.get_doc("Communication", {
-            "reference_doctype": "Multi Channel Cadence",
-            "reference_name": mcc.name,
-            "cadence_schedule": schedule_name
-        })
-        self.assertTrue(comm.name)
+        # Verify payload sent to n8n
+        payload = json.loads(mock_post.call_args[1]["data"])
+        self.assertNotIn("subject", payload)
+        self.assertNotIn("response", payload)
+        self.assertEqual(payload.get("metadata", {}).get("doctype"), "Multi Channel Cadence")
+        self.assertEqual(payload.get("metadata", {}).get("name"), mcc.name)
 
-        # Test callback resets template status
+        schema = payload["response_format"]["json_schema"]["schema"]
+        self.assertIn("subject", schema["properties"])
+        self.assertIn("content", schema["properties"])
+
+        # Test optimize_callback validates output and resets template status without creating Communication docs
         callback_payload = {
             "type": "response.completed",
             "metadata": {
-                "name": comm.name
+                "doctype": "Email Template",
+                "name": template.name
             },
             "data": [{
                 "content": [{
-                    "text": '{"subject": "Generated Subject", "salutation": "Dear **Customer**,", "body": "Generated *body* content.", "call_to_action": "Click [here](https://example.com).", "sign_off": "Best,\\n**Support**"}'
+                    "text": '{"subject": "Generated Subject", "content": "Generated Content"}'
                 }]
             }]
         }
 
-        with patch("frappe.request", MagicMock(json=callback_payload)):
-            cb_res = handle_callback()
-            self.assertEqual(cb_res.get("status"), "success")
-
-        comm.reload()
-        self.assertEqual(comm.subject, "Generated Subject")
-        self.assertIn("<p>Dear <strong>Customer</strong>,</p>", comm.content)
-        self.assertIn("<em>body</em>", comm.content)
-        self.assertIn('href="https://example.com"', comm.content)
+        cb_res = optimize_callback(**callback_payload)
+        self.assertEqual(cb_res.get("status"), "success")
 
         template.reload()
         self.assertEqual(template.status, "Enabled")
