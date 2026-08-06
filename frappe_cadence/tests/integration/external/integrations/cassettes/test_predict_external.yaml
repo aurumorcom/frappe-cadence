@@ -1,7 +1,7 @@
 interactions:
 - request:
     body: '{"model": "sift-agent-external-123", "background": true, "webhook": {"url":
-      "http://crm-dev.aurumor.com:8000/api/method/frappe_cadence.utils.sift.predict_callback",
+      "http://crm-dev.aurumor.com:8000/api/method/frappe_cadence.integrations.sift.predict_callback",
       "metadata": {"annotation_id": "5ue6l9p6c6", "annotation_doctype": "Email Template
       Annotation"}}, "input": [{"role": "system", "content": "Sender Name: Administrator\nSender
       Bio:\n"}], "response_format": {"type": "json_schema", "json_schema": {"name":
