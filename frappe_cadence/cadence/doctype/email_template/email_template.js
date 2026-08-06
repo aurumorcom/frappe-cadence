@@ -47,13 +47,9 @@ frappe.ui.form.on("Email Template", {
 });
 
 function toggle_fields(frm) {
-	const is_n8n_provider = frm.doc.provider === "n8n";
-	const is_dspy_provider = frm.doc.provider === "DSPy";
-	const is_ai = is_n8n_provider || is_dspy_provider;
-
-	frm.set_df_property("subject", "read_only", is_ai);
-	frm.set_df_property("use_html", "read_only", is_ai);
-	frm.set_df_property("response", "read_only", is_ai);
+	frm.set_df_property("subject", "read_only", 0);
+	frm.set_df_property("use_html", "read_only", 0);
+	frm.set_df_property("response", "read_only", 0);
 	frm.set_df_property("status", "read_only", 1);
 	frm.set_df_property("status", "hidden", 1);
 
