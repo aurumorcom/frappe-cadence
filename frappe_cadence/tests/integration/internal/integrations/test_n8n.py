@@ -183,3 +183,59 @@ class TestN8NIntegration(IntegrationTestCase):
 
         template.reload()
         self.assertEqual(template.status, "Enabled")
+
+    @patch("frappe.utils.redis_wrapper.RedisWrapper.xadd")
+    @patch("frappe.publish_realtime")
+    @patch("frappe_cadence.cadence.doctype.history.history.get_history")
+    @patch("frappe_cadence.integrations.n8n.requests.post")
+    def test_n8n_optimize_reverts_status_on_failure(self, mock_post, mock_get_history, mock_publish, mock_xadd):
+        mock_get_history.return_value = []
+
+        template = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "N8N Test Optimize Failure Revert Email",
+            "__newname": "N8N Test Optimize Failure Revert Email",
+            "title": "N8N Test Optimize Failure Revert Email",
+            "subject": "Failure Revert Subject",
+            "provider": "n8n",
+            "enabled": 1,
+            "status": "Enabled"
+        }).insert(ignore_permissions=True)
+        template.db_set("request_url", "https://n8n.capybaara.com/webhook/invalid-url")
+
+        cadence = frappe.get_doc({
+            "doctype": "Cadence",
+            "cadence_name": "N8N Test Cadence Fail",
+            "cadence_code": "CAD-TEST-FAIL-001",
+            "cadence_schedules": [
+                {
+                    "reference_doctype": "Email Template",
+                    "reference_name": template.name,
+                    "send_after_days": 1
+                }
+            ]
+        }).insert(ignore_permissions=True)
+
+        lead = frappe.get_doc({
+            "doctype": "CRM Lead",
+            "lead_name": "N8N Lead Fail",
+            "first_name": "N8N Fail",
+            "email_id": "n8n_fail_lead@example.com"
+        }).insert(ignore_permissions=True)
+
+        mcc = frappe.get_doc({
+            "doctype": "Multi Channel Cadence",
+            "cadence_name": cadence.name,
+            "cadence_for": "CRM Lead",
+            "recipient": lead.name,
+            "status": "Scheduled"
+        }).insert(ignore_permissions=True)
+
+        mock_post.side_effect = Exception("Connection timed out")
+
+        res = optimize("Email Template", template.name)
+        self.assertEqual(res.get("status"), "failed")
+
+        template.reload()
+        self.assertEqual(template.status, "Enabled")
+
