@@ -358,11 +358,10 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             history_messages = get_history(cadence.cadence_for, cadence.recipient, since_date=three_months_ago)
             payload["input"].extend(history_messages)
 
-            # Guardrail model assignment for n8n vs DSPy/Sift
             if template_provider == "n8n":
-                payload["model"] = getattr(template, "model", None) or None
-            elif template_provider in ["DSPy", "Sift", "Frappe"]:
-                payload["model"] = getattr(template, "sift_id", None) or None
+                payload["model"] = getattr(template, "model", None)
+            elif template_provider == "DSPy":
+                payload["model"] = getattr(template, "sift_id", None)
             else:
                 payload["model"] = None
             
