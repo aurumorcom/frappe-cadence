@@ -191,8 +191,6 @@ def predict(template_doctype: str, template_name: str) -> None:
             messages = build_annotation_messages(ann)
             
             payload = {
-                "subject": tpl_subject,
-                "response": tpl_response_md,
                 "model": template.sift_id,
                 "background": True,
                 "webhook": {
