@@ -355,9 +355,6 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             tpl_response_md = markdownify(tpl_response) if tpl_response else ""
 
             payload = {
-                "metadata": {
-                    "name": comm_name
-                },
                 "response_format": {
                     "type": "json_schema",
                     "json_schema": {
@@ -420,6 +417,16 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             cache_val = frappe.cache().get_value(f"ai_req:{cadence_name}:{schedule_name}")
             
             if not cache_val:
+                webhook_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
+                payload["background"] = True
+                payload["webhook"] = {
+                    "url": webhook_url,
+                    "events": ["completed", "failed"],
+                    "metadata": {
+                        "name": comm_name
+                    }
+                }
+
                 if template_provider == "n8n":
                     from frappe_cadence.integrations.n8n import trigger_execution
                     trigger_execution(template, payload, channel, cadence_name, schedule_name)
@@ -432,14 +439,6 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                         headers = {"Content-Type": "application/json"}
                         if sift_api_key:
                             headers["Authorization"] = f"Bearer {sift_api_key}"
-                        
-                        # Add webhook info to payload so Sift knows where to callback
-                        webhook_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
-                        payload["background"] = True
-                        payload["webhook"] = {
-                            "url": webhook_url,
-                            "events": ["completed", "failed"]
-                        }
 
                         payload_json = json.dumps(payload, separators=(',', ':'))
                         
