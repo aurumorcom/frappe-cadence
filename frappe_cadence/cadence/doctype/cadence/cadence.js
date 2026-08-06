@@ -5,7 +5,9 @@ frappe.ui.form.on("Cadence", {
 	setup: function(frm) {
 		frm.set_query("reference_name", "cadence_schedules", function(doc, cdt, cdn) {
 			return {
-				filters: {}
+				filters: {
+					include_disabled: 1
+				}
 			};
 		});
 	},
