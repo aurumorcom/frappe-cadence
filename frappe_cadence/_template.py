@@ -174,6 +174,13 @@ def handle_callback() -> dict:
                 frappe.log_error("Failed to reset template status on callback success", str(ex))
         
         emit_event("callback", {"communication_id": communication_id})
+
+        if comm.reference_doctype == "Multi Channel Cadence" and comm.reference_name:
+            try:
+                from frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence import check_and_transition_mcc_draft_to_scheduled
+                check_and_transition_mcc_draft_to_scheduled(comm.reference_name)
+            except Exception as ex:
+                frappe.log_error("Failed to check MCC draft to scheduled transition on callback", str(ex))
         
         return {"status": "success"}
     except Exception as e:
