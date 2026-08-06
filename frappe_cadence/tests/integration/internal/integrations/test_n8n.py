@@ -170,7 +170,7 @@ class TestN8NIntegration(IntegrationTestCase):
             },
             "data": [{
                 "content": [{
-                    "text": '{"subject": "Generated Subject", "content": "Generated Content"}'
+                    "text": '{"subject": "Generated Subject", "salutation": "Dear **Customer**,", "body": "Generated *body* content.", "call_to_action": "Click [here](https://example.com).", "sign_off": "Best,\\n**Support**"}'
                 }]
             }]
         }
@@ -181,7 +181,9 @@ class TestN8NIntegration(IntegrationTestCase):
 
         comm.reload()
         self.assertEqual(comm.subject, "Generated Subject")
-        self.assertEqual(comm.content, "Generated Content")
+        self.assertIn("<p>Dear <strong>Customer</strong>,</p>", comm.content)
+        self.assertIn("<em>body</em>", comm.content)
+        self.assertIn('<a href="https://example.com">here</a>', comm.content)
 
         template.reload()
         self.assertEqual(template.status, "Enabled")
