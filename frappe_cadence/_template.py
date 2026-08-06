@@ -67,7 +67,7 @@ def build_annotation_messages(ann) -> list:
     sender_name = sender.get("full_name") or ""
 
     if sender_name or sender_bio:
-        messages.append({"role": "system", "content": f"Sender Name: {sender_name}\nSender Bio:\n{sender_bio}"})
+        messages.append({"role": "user", "content": f"Sender Name: {sender_name}\nSender Bio:\n{sender_bio}"})
 
     history_messages = get_history(ann.reference_doctype, ann.reference_name)
     messages.extend(history_messages)
