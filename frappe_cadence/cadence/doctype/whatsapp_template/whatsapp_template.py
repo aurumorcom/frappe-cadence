@@ -13,9 +13,12 @@ class WhatsAppTemplate(Document):
 
         annotations: DF.Table[WhatsappTemplateAnnotation]
         message: DF.TextEditor | None
+        provider: DF.Literal["Frappe", "DSPy", "n8n"]
+        request_url: DF.Data | None
         sift_id: DF.Data | None
-        status: DF.Literal["Enabled", "Prompt", "Disabled"]
+        status: DF.Literal["Enabled", "Disabled"]
         title: DF.Data
+        webhook_secret: DF.Password | None
         whatsapp_template_code: DF.Data | None
     # end: auto-generated types
 
@@ -29,6 +32,6 @@ def on_update(doc, method=None):
             argument={
                 "doctype": doc.doctype,
                 "name": doc.name,
-                "enabled": 1 if doc.status in ["Enabled", "Prompt"] else 0
+                "enabled": 1 if doc.status == "Enabled" else 0
             }
         )

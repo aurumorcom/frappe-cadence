@@ -8,6 +8,9 @@
    "title",
    "whatsapp_template_code",
    "status",
+   "provider",
+   "request_url",
+   "webhook_secret",
    "message",
    "annotations",
    "sift_id"
@@ -26,31 +29,53 @@
     "fieldtype": "Data",
     "label": "WhatsApp Template Code"
    },
-  {
-   "default": "Enabled",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Enabled\nPrompt\nDisabled"
-  },
-  {
-   "fieldname": "message",
-   "fieldtype": "Text Editor",
-   "label": "Message"
-  },
-  {
-   "fieldname": "annotations",
-   "fieldtype": "Table",
-   "label": "Annotations",
-   "options": "Whatsapp Template Annotation"
-  },
-  {
-   "fieldname": "sift_id",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Sift ID"
-  }
- ],
+   {
+    "default": "Enabled",
+    "fieldname": "status",
+    "fieldtype": "Select",
+    "label": "Status",
+    "options": "Enabled\nDisabled"
+   },
+   {
+    "default": "Frappe",
+    "fieldname": "provider",
+    "fieldtype": "Select",
+    "label": "Provider",
+    "options": "Frappe\nDSPy\nn8n"
+   },
+   {
+    "depends_on": "eval:doc.provider === 'n8n'",
+    "mandatory_depends_on": "eval:doc.provider === 'n8n'",
+    "fieldname": "request_url",
+    "fieldtype": "Data",
+    "label": "Request URL"
+   },
+   {
+    "depends_on": "eval:doc.provider === 'n8n'",
+    "fieldname": "webhook_secret",
+    "fieldtype": "Password",
+    "label": "Webhook Secret"
+   },
+   {
+    "fieldname": "message",
+    "fieldtype": "Text Editor",
+    "label": "Message"
+   },
+   {
+    "depends_on": "eval:in_list(['DSPy', 'n8n'], doc.provider)",
+    "fieldname": "annotations",
+    "fieldtype": "Table",
+    "label": "Annotations",
+    "options": "Whatsapp Template Annotation"
+   },
+   {
+    "depends_on": "eval:doc.provider === 'DSPy'",
+    "fieldname": "sift_id",
+    "fieldtype": "Data",
+    "hidden": 0,
+    "label": "Sift ID"
+   }
+  ],
  "links": [],
  "modified": "2026-07-10 02:55:03.016810",
  "modified_by": "Administrator",
