@@ -147,6 +147,7 @@ class TestMultiChannelCadenceLifecycle(UnitTestCase):
         mock_get_all.return_value = [mock_comm_info]
         
         mock_comm = MagicMock()
+        mock_comm.name = "COMM-1"
         mock_get_doc.return_value = mock_comm
         
         mcc.on_update()
