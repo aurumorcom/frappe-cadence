@@ -131,6 +131,26 @@ class TestMultiChannelCadence(IntegrationTestCase):
         mock_enqueue.assert_has_calls(calls)
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.enqueue")
+    def test_on_update_enqueues_steps_when_saving_in_draft_status(self, mock_enqueue):
+        draft_cadence = frappe.get_doc({
+            "doctype": "Multi Channel Cadence",
+            "cadence_name": self.master_cadence.name,
+            "cadence_for": "CRM Lead",
+            "recipient": self.lead_name,
+            "start_date": "2024-01-01",
+            "status": "Draft"
+        }).insert(ignore_permissions=True)
+
+        mock_enqueue.reset_mock()
+
+        # Save again while keeping status as Draft
+        draft_cadence.on_update()
+
+        # Assert enqueue was called for all steps
+        self.assertEqual(mock_enqueue.call_count, 3)
+        frappe.delete_doc("Multi Channel Cadence", draft_cadence.name, ignore_permissions=True, force=True)
+
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.enqueue")
     def test_on_update_skips_sent_communications(self, mock_enqueue):
         self.cadence.insert(ignore_permissions=True)
         mock_enqueue.reset_mock()
