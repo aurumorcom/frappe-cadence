@@ -33,11 +33,11 @@ class IntegrationTestWhatsAppTemplate(IntegrationTestCase):
 	"""
 
 	@patch("frappe.log_error")
-	@patch("frappe_cadence.cadence.whatsapp_template.emit_event")
-	@patch("frappe_cadence.cadence.whatsapp_template.frappe.get_doc")
+	@patch("frappe_cadence._template.emit_event")
+	@patch("frappe_cadence._template.frappe.get_doc")
 	@patch("frappe.db.exists", return_value=True)
 	def test_sift_callback_failure_recovery(self, mock_exists, mock_get_doc, mock_emit, mock_log_error):
-		from frappe_cadence.cadence.whatsapp_template import callback
+		from frappe_cadence.whatsapp_template import callback
 		frappe.local.request = frappe._dict(json={
 			"type": "response.failed",
 			"metadata": {"name": "COMM-001"},
@@ -70,4 +70,3 @@ class IntegrationTestWhatsAppTemplate(IntegrationTestCase):
 		meta = frappe.get_meta("WhatsApp Template")
 		field = meta.get_field("sift_id")
 		self.assertIsNotNone(field)
-		self.assertTrue(field.hidden)

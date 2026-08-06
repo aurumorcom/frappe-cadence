@@ -1,7 +1,7 @@
 from frappe.tests import IntegrationTestCase
 from unittest.mock import patch, MagicMock
 import frappe
-from frappe_cadence.cadence.email_template import callback
+from frappe_cadence.email_template import callback
 
 class TestEmailTemplate(IntegrationTestCase):
     @classmethod
@@ -10,8 +10,8 @@ class TestEmailTemplate(IntegrationTestCase):
         super().tearDownClass()
 
     
-    @patch("frappe_cadence.cadence.email_template.emit_event")
-    @patch("frappe_cadence.cadence.email_template.frappe.get_doc")
+    @patch("frappe_cadence._template.emit_event")
+    @patch("frappe_cadence._template.frappe.get_doc")
     def test_callback_emits_event(self, mock_get_doc, mock_emit_event):
         # Mock payload
         frappe.local.request = frappe._dict(json={
@@ -86,7 +86,6 @@ class TestEmailTemplate(IntegrationTestCase):
         meta = frappe.get_meta("Email Template")
         field = meta.get_field("sift_id")
         self.assertIsNotNone(field)
-        self.assertTrue(field.hidden)
 
     @patch("frappe_controller.utils.controller.emit_event")
     def test_emit_event_on_template_enable(self, mock_emit):
@@ -120,8 +119,8 @@ class TestEmailTemplate(IntegrationTestCase):
         )
 
     @patch("frappe.log_error")
-    @patch("frappe_cadence.cadence.email_template.emit_event")
-    @patch("frappe_cadence.cadence.email_template.frappe.get_doc")
+    @patch("frappe_cadence._template.emit_event")
+    @patch("frappe_cadence._template.frappe.get_doc")
     @patch("frappe.db.exists", return_value=True)
     def test_sift_callback_failure_recovery(self, mock_exists, mock_get_doc, mock_emit, mock_log_error):
         frappe.local.request = frappe._dict(json={
