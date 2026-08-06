@@ -277,24 +277,12 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                         "type": "string",
                         "description": "The subject line of the email"
                     },
-                    "salutation": {
-                        "type": "string",
-                        "description": "The salutation or greeting"
-                    },
-                    "body": {
+                    "content": {
                         "type": "string",
                         "description": "The main body content of the email"
-                    },
-                    "call_to_action": {
-                        "type": "string",
-                        "description": "The call to action"
-                    },
-                    "sign_off": {
-                        "type": "string",
-                        "description": "The sign-off or closing"
                     }
                 }
-                required_fields = ["subject", "salutation", "body", "call_to_action", "sign_off"]
+                required_fields = ["subject", "content"]
             else:
                 schema_properties = {
                     "content": {
@@ -315,8 +303,6 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             tpl_response_md = markdownify(tpl_response) if tpl_response else ""
 
             payload = {
-                "subject": tpl_subject,
-                "response": tpl_response_md,
                 "metadata": {
                     "name": comm_name
                 },
