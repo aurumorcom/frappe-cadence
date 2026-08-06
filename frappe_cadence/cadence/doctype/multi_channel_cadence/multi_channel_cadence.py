@@ -358,9 +358,13 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             history_messages = get_history(cadence.cadence_for, cadence.recipient, since_date=three_months_ago)
             payload["input"].extend(history_messages)
 
-            # Use /responses endpoint instead of /agents and map cadence model
-            sift_id_val = getattr(template, "sift_id", None)
-            payload["model"] = sift_id_val if isinstance(sift_id_val, str) and sift_id_val else "default-model"
+            # Guardrail model assignment for n8n vs DSPy/Sift
+            if template_provider == "n8n":
+                payload["model"] = getattr(template, "model", None) or None
+            elif template_provider in ["DSPy", "Sift", "Frappe"]:
+                payload["model"] = getattr(template, "sift_id", None) or None
+            else:
+                payload["model"] = None
             
             cache_val = frappe.cache().get_value(f"ai_req:{cadence_name}:{schedule_name}")
             
