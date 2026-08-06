@@ -356,9 +356,9 @@ class TestMultiChannelCadence(UnitTestCase):
                     
                     # Verify input payload structure
                     input_data = data["input"]
-                    self.assertEqual(len(input_data), 2) # System, History
+                    self.assertEqual(len(input_data), 2) # Sender Bio, History
                     
-                    self.assertEqual(input_data[0]["role"], "system")
+                    self.assertEqual(input_data[0]["role"], "user")
                     self.assertIn("Test User", input_data[0]["content"])
                     
                     self.assertEqual(input_data[1]["role"], "user")
