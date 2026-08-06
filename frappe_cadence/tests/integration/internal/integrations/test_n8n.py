@@ -6,7 +6,9 @@ from frappe_cadence._template import handle_callback
 from frappe_cadence.integrations.n8n import (
     get_test_request_url,
     optimize,
-    send_request
+    optimize_callback,
+    trigger_execution,
+    trigger_test_execution
 )
 
 class TestN8NIntegration(IntegrationTestCase):
@@ -148,8 +150,8 @@ class TestN8NIntegration(IntegrationTestCase):
 
         mock_post.assert_called_once()
         called_url = mock_post.call_args[0][0]
-        # Should call real request_url
-        self.assertEqual(called_url, "https://n8n.capybaara.com/webhook/ce63ee3b-90f5-41cb-9538-1418302eac7d")
+        # Should call test_request_url
+        self.assertEqual(called_url, "https://n8n.capybaara.com/webhook-test/ce63ee3b-90f5-41cb-9538-1418302eac7d")
 
         # Verify Communication draft was created
         schedule_name = cadence.cadence_schedules[0].name
