@@ -21,6 +21,6 @@ def on_update(doc, method=None):
             argument={
                 "doctype": doc.doctype,
                 "name": doc.name,
-                "enabled": 1 if doc.status in ["Enabled", "Prompt"] else 0
+                "enabled": 1 if doc.status == "Enabled" else 0
             }
         )
