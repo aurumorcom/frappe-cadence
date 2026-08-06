@@ -269,20 +269,40 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             cadence = frappe.get_doc("Multi Channel Cadence", cadence_name)
             lead = frappe.get_doc(cadence.cadence_for, cadence.recipient)
             
-            schema_properties = {
-                "content": {
-                    "type": "string",
-                    "description": "The main body content of the message"
-                }
-            }
-            required_fields = ["content"]
-            
+            from markdownify import markdownify
+
             if channel == "Email":
-                schema_properties["subject"] = {
-                    "type": "string",
-                    "description": "The subject of the message"
+                schema_properties = {
+                    "subject": {
+                        "type": "string",
+                        "description": "The subject line of the email"
+                    },
+                    "salutation": {
+                        "type": "string",
+                        "description": "The salutation or greeting"
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "The main body content of the email"
+                    },
+                    "call_to_action": {
+                        "type": "string",
+                        "description": "The call to action"
+                    },
+                    "sign_off": {
+                        "type": "string",
+                        "description": "The sign-off or closing"
+                    }
                 }
-                required_fields.append("subject")
+                required_fields = ["subject", "salutation", "body", "call_to_action", "sign_off"]
+            else:
+                schema_properties = {
+                    "content": {
+                        "type": "string",
+                        "description": "The main body content of the message"
+                    }
+                }
+                required_fields = ["content"]
                 
             tpl_subject = getattr(template, "subject", "") or ""
             if not isinstance(tpl_subject, str):
@@ -291,10 +311,12 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
             if not isinstance(tpl_response, str):
                 tpl_response = str(tpl_response) if tpl_response else ""
+            
+            tpl_response_md = markdownify(tpl_response) if tpl_response else ""
 
             payload = {
                 "subject": tpl_subject,
-                "response": tpl_response,
+                "response": tpl_response_md,
                 "metadata": {
                     "name": comm_name
                 },
@@ -313,7 +335,6 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                 },
             }
             
-            from markdownify import markdownify
             from frappe_cadence.cadence.doctype.history.history import get_history
             from frappe_cadence.cadence.doctype.user_bio.user_bio import get_user_bio
             
@@ -340,10 +361,10 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                     "content": f"Template Subject: {tpl_subject}"
                 })
 
-            if tpl_response:
+            if tpl_response_md:
                 payload["input"].append({
                     "role": "user",
-                    "content": f"Template Response:\n{tpl_response}"
+                    "content": f"Template Response:\n{tpl_response_md}"
                 })
             
             # Fetch and format History records
