@@ -37,7 +37,7 @@ class TestEmailTemplate(IntegrationTestCase):
     @patch("frappe_cadence._template.emit_event")
     @patch("frappe_cadence._template.frappe.get_doc")
     def test_callback_emits_event(self, mock_get_doc, mock_emit_event):
-        # Mock payload
+        # Mock payload with 5-part email schema and Markdown
         frappe.local.request = frappe._dict(json={
             "type": "response.completed",
             "metadata": {
@@ -47,7 +47,7 @@ class TestEmailTemplate(IntegrationTestCase):
                 {
                     "content": [
                         {
-                            "text": "{\"subject\": \"Hello\", \"content\": \"Hi there\"}"
+                            "text": "{\"subject\": \"Hello\", \"salutation\": \"Dear **John**,\", \"body\": \"Welcome to *our* service.\", \"call_to_action\": \"Click [here](https://example.com).\", \"sign_off\": \"Best,\\n**Team**\"}"
                         }
                     ]
                 }
@@ -62,7 +62,9 @@ class TestEmailTemplate(IntegrationTestCase):
         
         self.assertEqual(result.get("status"), "success")
         self.assertEqual(mock_comm.subject, "Hello")
-        self.assertEqual(mock_comm.content, "Hi there")
+        self.assertIn("<p>Dear <strong>John</strong>,</p>", mock_comm.content)
+        self.assertIn("<em>our</em>", mock_comm.content)
+        self.assertIn('<a href="https://example.com">here</a>', mock_comm.content)
         mock_comm.save.assert_called_once_with(ignore_permissions=True)
         
         mock_emit_event.assert_called_once_with("callback", {"communication_id": "COMM-001"})
