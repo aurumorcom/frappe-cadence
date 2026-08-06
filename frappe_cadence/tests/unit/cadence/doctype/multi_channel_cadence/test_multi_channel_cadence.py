@@ -99,6 +99,7 @@ class TestMultiChannelCadenceLifecycle(UnitTestCase):
     def test_provider_agnostic_mcc_lifecycle(self, mock_get_doc, mock_enqueue, mock_get_all):
         mock_get_all.return_value = []
         mock_cadence = MagicMock()
+        mock_cadence.name = "Cadence-1"
         mock_cadence.provider = None
         sch = MagicMock()
         sch.name = "Sch-1"
