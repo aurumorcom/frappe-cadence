@@ -75,64 +75,185 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
 
     request_url = template.get("request_url")
     if not request_url:
-        frappe.throw(f"Request URL not configured on {template_doctype} {template_name}.")
+        msg = f"Request URL not configured on {template_doctype} {template_name}."
+        frappe.msgprint(msg, alert=True, indicator="orange")
+        return {"status": "failed", "error": msg}
+
+    schedules = frappe.get_all(
+        "Cadence Multi Channel Schedule",
+        filters={
+            "reference_doctype": template_doctype,
+            "reference_name": template_name
+        },
+        fields=["name", "parent"]
+    )
+
+    if not schedules:
+        msg = f"No Cadence step found using template {template_name}."
+        frappe.msgprint(msg, alert=True, indicator="orange")
+        return {"status": "failed", "error": msg}
+
+    cadence_names = list(set([s.parent for s in schedules if s.parent]))
+
+    mcc_list = frappe.get_all(
+        "Multi Channel Cadence",
+        filters={
+            "cadence_name": ["in", cadence_names],
+            "status": ["!=", "Provisioning"]
+        },
+        fields=["name", "cadence_name", "cadence_for", "recipient", "sender", "owner", "status"],
+        order_by="modified desc",
+        limit=1
+    )
+
+    if not mcc_list:
+        msg = f"No active Multi Channel Cadence (not in Provisioning status) found using template {template_name}."
+        frappe.msgprint(msg, alert=True, indicator="orange")
+        return {"status": "failed", "error": msg}
+
+    mcc_doc = frappe.get_doc("Multi Channel Cadence", mcc_list[0].name)
+    cadence_doc = frappe.get_doc("Cadence", mcc_doc.cadence_name)
+
+    schedule_name = None
+    for sched in cadence_doc.cadence_schedules:
+        if sched.reference_doctype == template_doctype and sched.reference_name == template_name:
+            schedule_name = sched.name
+            break
+
+    if not schedule_name:
+        msg = f"Could not determine Cadence step for template {template_name}."
+        frappe.msgprint(msg, alert=True, indicator="orange")
+        return {"status": "failed", "error": msg}
+
+    channel = template_doctype.replace(" Template", "")
 
     template.status = "Optimizing"
     template.flags.ignore_links = True
     template.save(ignore_permissions=True)
 
-    test_url = get_test_request_url(request_url)
-
-    webhook_secret = _get_webhook_secret(template)
-
-    headers = {"Content-Type": "application/json"}
-    if webhook_secret:
-        headers["Authorization"] = f"Bearer {webhook_secret}"
-
-    tpl_subject = getattr(template, "subject", "") or ""
-    tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
-
-    payload = {
-        "subject": tpl_subject,
-        "response": tpl_response,
-        "metadata": {
-            "doctype": template_doctype,
-            "name": template_name,
-            "event_type": "optimize"
-        },
-        "background": True,
-        "webhook": {
-            "url": get_url("/api/method/frappe_cadence.integrations.n8n.optimize_callback"),
-            "events": ["completed", "failed"]
-        },
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": get_annotation_schema(template_doctype)
-        },
-        "input": [],
-        "model": getattr(template, "sift_id", None) or "n8n-workflow"
-    }
-
-    payload_json = json.dumps(payload, separators=(',', ':'))
-
     try:
-        response = requests.post(test_url, headers=headers, data=payload_json, timeout=10)
-        response.raise_for_status()
-        frappe.msgprint("Test event sent to n8n test workflow successfully.", alert=True, indicator="green")
-        return {"status": "success"}
+        reference_cadence_provider = None
+        for row in (mcc_doc.get("provider") or []):
+            if row.channel == channel:
+                reference_cadence_provider = row.cadence_provider
+                break
+
+        draft_comm = frappe.get_all("Communication", filters={
+            "reference_doctype": "Multi Channel Cadence",
+            "reference_name": mcc_doc.name,
+            "cadence_schedule": schedule_name,
+            "status": "Open"
+        })
+
+        if draft_comm:
+            comm_name = draft_comm[0].name
+        else:
+            comm = frappe.get_doc({
+                "doctype": "Communication",
+                "communication_medium": channel,
+                "subject": f"Draft {channel} Message",
+                "reference_doctype": "Multi Channel Cadence",
+                "reference_name": mcc_doc.name,
+                "cadence_schedule": schedule_name,
+                "status": "Open",
+                "reference_cadence_provider": reference_cadence_provider
+            })
+            comm.insert(ignore_permissions=True)
+            comm_name = comm.name
+
+        schema_properties = {
+            "content": {
+                "type": "string",
+                "description": "The main body content of the message"
+            }
+        }
+        required_fields = ["content"]
+
+        if channel == "Email":
+            schema_properties["subject"] = {
+                "type": "string",
+                "description": "The subject of the message"
+            }
+            required_fields.append("subject")
+
+        tpl_subject = getattr(template, "subject", "") or ""
+        tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
+
+        payload = {
+            "subject": tpl_subject,
+            "response": tpl_response,
+            "metadata": {
+                "name": comm_name
+            },
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "communication_generation",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": schema_properties,
+                        "required": required_fields,
+                        "additionalProperties": False
+                    }
+                }
+            }
+        }
+
+        from markdownify import markdownify
+        from frappe.utils import add_months, today
+        from frappe_cadence.cadence.doctype.history.history import get_history
+        from frappe_cadence.cadence.doctype.user_bio.user_bio import get_user_bio
+
+        sender_user = mcc_doc.sender or mcc_doc.owner
+        sender_bio_content = get_user_bio(sender_user, mcc_doc.cadence_name)
+        sender = frappe.db.get_value("User", sender_user, ["full_name"], as_dict=True) or {}
+        sender_name = sender.get("full_name") or ""
+        sender_bio = markdownify(sender_bio_content) if sender_bio_content else ""
+
+        payload["input"] = []
+        if sender_name or sender_bio:
+            payload["input"].append({
+                "role": "user",
+                "content": f"Sender Name: {sender_name}\nSender Bio:\n{sender_bio}"
+            })
+
+        if tpl_subject:
+            payload["input"].append({
+                "role": "user",
+                "content": f"Template Subject: {tpl_subject}"
+            })
+
+        if tpl_response:
+            payload["input"].append({
+                "role": "user",
+                "content": f"Template Response:\n{tpl_response}"
+            })
+
+        three_months_ago = add_months(today(), -3)
+        history_messages = get_history(mcc_doc.cadence_for, mcc_doc.recipient, since_date=three_months_ago)
+        payload["input"].extend(history_messages)
+
+        sift_id_val = getattr(template, "sift_id", None)
+        payload["model"] = sift_id_val if isinstance(sift_id_val, str) and sift_id_val else "default-model"
+
+        success = send_request(template, payload, channel, mcc_doc.name, schedule_name)
+        if success:
+            frappe.msgprint("Real inference request sent to n8n workflow successfully.", alert=True, indicator="green")
+            return {"status": "success"}
+        else:
+            template.status = "Enabled" if template.enabled else "Disabled"
+            template.flags.ignore_links = True
+            template.save(ignore_permissions=True)
+            frappe.msgprint("Failed to send real inference request to n8n workflow.", alert=True, indicator="orange")
+            return {"status": "failed", "error": "Failed to send request to n8n workflow."}
+
     except Exception as e:
-        template.status = "Enabled"
+        template.status = "Enabled" if template.enabled else "Disabled"
         template.flags.ignore_links = True
         template.save(ignore_permissions=True)
-        frappe.log_error(
-            title="n8n Optimize Warning",
-            message=f"n8n test workflow not listening at {test_url}: {str(e)}"
-        )
-        frappe.msgprint(
-            f"Failed to send test event. The n8n test workflow may not be listening: {str(e)}",
-            alert=True,
-            indicator="orange"
-        )
+        frappe.log_error(title="n8n Optimize Error", message=str(e))
+        frappe.msgprint(f"Failed to optimize template: {str(e)}", alert=True, indicator="orange")
         return {"status": "failed", "error": str(e)}
 
 @frappe.whitelist(allow_guest=True)
