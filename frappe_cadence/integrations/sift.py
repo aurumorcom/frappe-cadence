@@ -176,12 +176,17 @@ def predict(template_doctype: str, template_name: str) -> None:
     
     has_pending = False
     
+    tpl_subject = getattr(template, "subject", "") or ""
+    tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
+
     for ann in annotations:
         if is_annotation_pending(ann):
             has_pending = True
             messages = build_annotation_messages(ann)
             
             payload = {
+                "subject": tpl_subject,
+                "response": tpl_response,
                 "model": template.sift_id,
                 "background": True,
                 "webhook": {
