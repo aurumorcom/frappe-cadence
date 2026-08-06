@@ -2,6 +2,13 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Cadence", {
+	setup: function(frm) {
+		frm.set_query("reference_name", "cadence_schedules", function(doc, cdt, cdn) {
+			return {
+				filters: {}
+			};
+		});
+	},
 	refresh: function (frm) {
 		if (frm.is_new()) {
 			frm.toggle_display("cadence_code", false);
