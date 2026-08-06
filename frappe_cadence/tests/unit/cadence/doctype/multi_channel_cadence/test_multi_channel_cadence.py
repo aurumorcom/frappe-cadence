@@ -569,8 +569,9 @@ class TestMultiChannelCadence(UnitTestCase):
 
                 data = json.loads(mock_post.call_args[1]["data"])
                 self.assertTrue(data.get("background"))
+                self.assertNotIn("metadata", data)
                 self.assertIn("webhook", data)
                 self.assertEqual(data["webhook"]["url"], "http://test.com/webhook")
-                self.assertIn("subject", data)
-                self.assertIn("response", data)
+                self.assertEqual(data["webhook"]["metadata"], {"name": "COMM-N8N"})
+                self.assertIn("response_format", data)
                 self.assertTrue(all(msg.get("role") == "user" for msg in data.get("input", [])))
