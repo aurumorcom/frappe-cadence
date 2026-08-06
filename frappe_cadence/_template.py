@@ -105,20 +105,30 @@ def handle_callback() -> dict:
         if event_type and event_type.endswith(".started"):
             return {"status": "ignored"}
             
-        if event_type and event_type.endswith(".failed"):
-            error_msg = payload.get("error") or "Unknown error"
-            frappe.log_error(title="Sift Callback Failed", message=error_msg)
-            communication_id = payload.get("metadata", {}).get("name")
-            if communication_id:
-                if frappe.db.exists("Communication", communication_id):
-                    comm = frappe.get_doc("Communication", communication_id)
-                    comm.delivery_status = "Failed"
-                    comm.content = f"AI Generation Failed: {error_msg}"
-                    comm.save(ignore_permissions=True)
-                emit_event("callback", {"communication_id": communication_id, "error": error_msg})
-            return {"status": "failed"}
-            
         communication_id = payload.get("metadata", {}).get("name")
+        if communication_id and frappe.db.exists("Communication", communication_id):
+            comm = frappe.get_doc("Communication", communication_id)
+            if comm.cadence_schedule:
+                try:
+                    schedule = frappe.get_doc("Cadence Multi Channel Schedule", comm.cadence_schedule)
+                    if schedule.reference_doctype and schedule.reference_name:
+                        template = frappe.get_doc(schedule.reference_doctype, schedule.reference_name)
+                        if template.status == "Optimizing":
+                            template.status = "Enabled" if template.enabled else "Disabled"
+                            template.flags.ignore_links = True
+                            template.save(ignore_permissions=True)
+                except Exception as ex:
+                    frappe.log_error("Failed to reset template status on callback failure", str(ex))
+
+            if event_type and event_type.endswith(".failed"):
+                error_msg = payload.get("error") or "Unknown error"
+                frappe.log_error(title="Sift Callback Failed", message=error_msg)
+                comm.delivery_status = "Failed"
+                comm.content = f"AI Generation Failed: {error_msg}"
+                comm.save(ignore_permissions=True)
+                emit_event("callback", {"communication_id": communication_id, "error": error_msg})
+                return {"status": "failed"}
+
         if not communication_id:
             return {"status": "error", "message": "Missing communication_id in metadata"}
             
@@ -142,6 +152,18 @@ def handle_callback() -> dict:
         comm.content = parsed_json.get("content")
         comm.delivery_status = "Scheduled"
         comm.save(ignore_permissions=True)
+
+        if comm.cadence_schedule:
+            try:
+                schedule = frappe.get_doc("Cadence Multi Channel Schedule", comm.cadence_schedule)
+                if schedule.reference_doctype and schedule.reference_name:
+                    template = frappe.get_doc(schedule.reference_doctype, schedule.reference_name)
+                    if template.status == "Optimizing":
+                        template.status = "Enabled" if template.enabled else "Disabled"
+                        template.flags.ignore_links = True
+                        template.save(ignore_permissions=True)
+            except Exception as ex:
+                frappe.log_error("Failed to reset template status on callback success", str(ex))
         
         emit_event("callback", {"communication_id": communication_id})
         
