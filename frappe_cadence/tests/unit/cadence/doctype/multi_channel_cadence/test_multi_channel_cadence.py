@@ -563,3 +563,6 @@ class TestMultiChannelCadence(UnitTestCase):
                 self.assertTrue(data.get("background"))
                 self.assertIn("webhook", data)
                 self.assertEqual(data["webhook"]["url"], "http://test.com/webhook")
+                self.assertIn("subject", data)
+                self.assertIn("response", data)
+                self.assertTrue(all(msg.get("role") == "user" for msg in data.get("input", [])))
