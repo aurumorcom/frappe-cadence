@@ -408,9 +408,16 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             payload["input"].extend(history_messages)
 
             if template_provider == "n8n":
-                payload["model"] = getattr(template, "model", None)
+                raw_model = getattr(template, "model", None)
             elif template_provider == "DSPy":
-                payload["model"] = getattr(template, "sift_id", None)
+                raw_model = getattr(template, "sift_id", None)
+            else:
+                raw_model = None
+
+            if isinstance(raw_model, str):
+                payload["model"] = raw_model
+            elif raw_model and isinstance(raw_model, (int, float)):
+                payload["model"] = str(raw_model)
             else:
                 payload["model"] = None
             
