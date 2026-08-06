@@ -89,7 +89,12 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
     if webhook_secret:
         headers["Authorization"] = f"Bearer {webhook_secret}"
 
+    tpl_subject = getattr(template, "subject", "") or ""
+    tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
+
     payload = {
+        "subject": tpl_subject,
+        "response": tpl_response,
         "metadata": {
             "doctype": template_doctype,
             "name": template_name,
@@ -189,12 +194,17 @@ def predict(template_doctype: str, template_name: str) -> Dict[str, Any]:
 
     has_pending = False
 
+    tpl_subject = getattr(template, "subject", "") or ""
+    tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
+
     for ann in annotations:
         if is_annotation_pending(ann):
             has_pending = True
             messages = build_annotation_messages(ann)
 
             payload = {
+                "subject": tpl_subject,
+                "response": tpl_response,
                 "model": getattr(template, "sift_id", None) or "n8n-workflow",
                 "background": True,
                 "webhook": {
