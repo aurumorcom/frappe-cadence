@@ -54,11 +54,16 @@ frappe.ui.form.on("WhatsApp Template", {
 	},
 	provider: function(frm) {
 		toggle_fields(frm);
+		frm.refresh_fields();
 	}
 });
 
 function toggle_fields(frm) {
 	frm.set_df_property("message", "read_only", 0);
+	frm.set_df_property("enabled", "read_only", 0);
+	frm.set_df_property("provider", "read_only", 0);
+	frm.set_df_property("request_url", "read_only", 0);
+	frm.set_df_property("webhook_secret", "read_only", 0);
 	frm.set_df_property("status", "read_only", 1);
 	frm.set_df_property("status", "hidden", 1);
 

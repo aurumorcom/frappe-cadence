@@ -282,6 +282,8 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_template.status = "Enabled"
         mock_template.provider = "DSPy"
         mock_template.sift_id = "agent-mcc"
+        mock_template.subject = ""
+        mock_template.get.side_effect = lambda k, default=None: "" if k in ["response", "response_html", "use_html", "message"] else None
         
         mock_lead = MagicMock()
         mock_lead.name = "LEAD-001"
@@ -354,9 +356,9 @@ class TestMultiChannelCadence(UnitTestCase):
                     
                     # Verify input payload structure
                     input_data = data["input"]
-                    self.assertEqual(len(input_data), 2) # System, History
+                    self.assertEqual(len(input_data), 2) # Sender Bio, History
                     
-                    self.assertEqual(input_data[0]["role"], "system")
+                    self.assertEqual(input_data[0]["role"], "user")
                     self.assertIn("Test User", input_data[0]["content"])
                     
                     self.assertEqual(input_data[1]["role"], "user")

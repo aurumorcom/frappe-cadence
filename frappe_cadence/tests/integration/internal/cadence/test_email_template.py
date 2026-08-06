@@ -173,3 +173,76 @@ class TestEmailTemplate(IntegrationTestCase):
         }).insert(ignore_permissions=True)
         self.assertTrue(doc.name)
         self.assertEqual(doc.provider, "n8n")
+
+    def test_all_templates_enabled_field_exists(self):
+        for doctype in ["Email Template", "SMS Template", "WhatsApp Template", "LinkedIn Template"]:
+            meta = frappe.get_meta(doctype)
+            self.assertIsNotNone(meta.get_field("enabled"), f"enabled field missing on {doctype}")
+
+    def test_email_template_enabled_status_sync(self):
+        doc = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "Test Enabled Sync Template",
+            "subject": "Test Sync",
+            "response": "Content Sync",
+            "enabled": 1
+        }).insert(ignore_permissions=True)
+        self.assertEqual(doc.status, "Enabled")
+
+        doc.enabled = 0
+        doc.save(ignore_permissions=True)
+        self.assertEqual(doc.status, "Disabled")
+
+        doc.enabled = 1
+        doc.save(ignore_permissions=True)
+        self.assertEqual(doc.status, "Enabled")
+
+    def test_link_search_includes_enabled_template(self):
+        doc = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "Test Search Link Enabled Template",
+            "subject": "Test Search",
+            "response": "Content Search",
+            "enabled": 1
+        }).insert(ignore_permissions=True)
+
+        from frappe.desk.search import search_link
+        results = search_link(
+            doctype="Email Template",
+            txt="Test Search Link Enabled Template",
+            query=None,
+            filters=None
+        )
+        result_names = [r[0] if isinstance(r, (list, tuple)) else r.get("value") for r in results]
+        self.assertIn(doc.name, result_names)
+
+    def test_link_search_includes_disabled_template_when_flag_set(self):
+        doc = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "Test Search Link Disabled Template",
+            "subject": "Test Search Disabled",
+            "response": "Content Search Disabled",
+            "enabled": 0
+        }).insert(ignore_permissions=True)
+
+        from frappe.desk.search import search_link
+        # Standard search without include_disabled=1 should NOT return disabled template
+        std_results = search_link(
+            doctype="Email Template",
+            txt="Test Search Link Disabled Template",
+            query=None,
+            filters=None
+        )
+        std_result_names = [r[0] if isinstance(r, (list, tuple)) else r.get("value") for r in std_results]
+        self.assertNotIn(doc.name, std_result_names)
+
+        # Search with include_disabled=1 MUST return disabled template
+        disabled_results = search_link(
+            doctype="Email Template",
+            txt="Test Search Link Disabled Template",
+            query=None,
+            filters={"include_disabled": 1}
+        )
+        disabled_result_names = [r[0] if isinstance(r, (list, tuple)) else r.get("value") for r in disabled_results]
+        self.assertIn(doc.name, disabled_result_names)
+
