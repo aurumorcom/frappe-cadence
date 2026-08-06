@@ -9,7 +9,7 @@
   "subject",
   "salutation",
   "body",
-  "cta",
+  "call_to_action",
   "sign_off",
   "reference_doctype",
   "reference_name",
@@ -34,9 +34,9 @@
    "label": "Body"
   },
   {
-   "fieldname": "cta",
+   "fieldname": "call_to_action",
    "fieldtype": "Data",
-   "label": "CTA"
+   "label": "Call to Action"
   },
   {
    "fieldname": "sign_off",
