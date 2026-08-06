@@ -457,7 +457,7 @@ class TestSiftUtils(IntegrationTestCase):
         
         messages = training_example.get("messages")
         self.assertEqual(len(messages), 2)
-        self.assertEqual(messages[0].get("role"), "system")
+        self.assertEqual(messages[0].get("role"), "user")
         self.assertIn("Test Sender", messages[0].get("content"))
         self.assertIn("**Bold Bio**", messages[0].get("content"))
         
@@ -545,7 +545,7 @@ class TestSiftUtils(IntegrationTestCase):
         
         messages = payload.get("input")
         self.assertEqual(len(messages), 2)
-        self.assertEqual(messages[0].get("role"), "system")
+        self.assertEqual(messages[0].get("role"), "user")
         self.assertIn("Test Sender", messages[0].get("content"))
         self.assertIn("**Bold Bio**", messages[0].get("content"))
 

@@ -206,7 +206,7 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
     template_name = schedule.reference_name
     template = frappe.get_doc(template_doctype, template_name)
     
-    if template.status == "Disabled":
+    if template.status != "Enabled":
         event_key = f"{template_doctype.lower().replace(' ', '_')}_enabled"
         wait_for_event(
             event_key=event_key,
@@ -284,7 +284,12 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                 }
                 required_fields.append("subject")
                 
+            tpl_subject = getattr(template, "subject", "") or ""
+            tpl_response = template.get("response_html") if template.get("use_html") else (template.get("response") or template.get("message") or "")
+
             payload = {
+                "subject": tpl_subject,
+                "response": tpl_response,
                 "metadata": {
                     "name": comm_name
                 },
@@ -320,8 +325,20 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             payload["input"] = []
             if sender_name or sender_bio:
                 payload["input"].append({
-                    "role": "system",
+                    "role": "user",
                     "content": f"Sender Name: {sender_name}\nSender Bio:\n{sender_bio}"
+                })
+
+            if tpl_subject:
+                payload["input"].append({
+                    "role": "user",
+                    "content": f"Template Subject: {tpl_subject}"
+                })
+
+            if tpl_response:
+                payload["input"].append({
+                    "role": "user",
+                    "content": f"Template Response:\n{tpl_response}"
                 })
             
             # Fetch and format History records
@@ -350,7 +367,7 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                             headers["Authorization"] = f"Bearer {sift_api_key}"
                         
                         # Add webhook info to payload so Sift knows where to callback
-                        webhook_url = get_url(f"/api/method/frappe_cadence.cadence.{channel.lower()}_template.callback")
+                        webhook_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
                         payload["background"] = True
                         payload["webhook"] = {
                             "url": webhook_url,

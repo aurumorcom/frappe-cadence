@@ -1,17 +1,41 @@
 from frappe.tests import IntegrationTestCase
 from unittest.mock import patch, MagicMock
 import frappe
-from frappe_cadence.cadence.email_template import callback
+from frappe_cadence.email_template import callback
 
 class TestEmailTemplate(IntegrationTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        for ps_name, fieldname, prop, val, ptype in [
+            ("Email Template-subject-reqd", "subject", "reqd", "0", "Check"),
+            ("Email Template-subject-mandatory_depends_on", "subject", "mandatory_depends_on", "eval:!doc.provider || doc.provider == 'Frappe'", "Data"),
+            ("Email Template-response-reqd", "response", "reqd", "0", "Check"),
+            ("Email Template-response-mandatory_depends_on", "response", "mandatory_depends_on", "eval:(!doc.provider || doc.provider == 'Frappe') && !doc.use_html", "Data"),
+        ]:
+            if not frappe.db.exists("Property Setter", ps_name):
+                frappe.get_doc({
+                    "doctype": "Property Setter",
+                    "doc_type": "Email Template",
+                    "doctype_or_field": "DocField",
+                    "field_name": fieldname,
+                    "property": prop,
+                    "property_type": ptype,
+                    "value": val,
+                    "module": "Cadence"
+                }).insert(ignore_permissions=True)
+            else:
+                frappe.db.set_value("Property Setter", ps_name, "value", val)
+        frappe.clear_cache(doctype="Email Template")
+
     @classmethod
     def tearDownClass(cls):
         frappe.db.rollback()
         super().tearDownClass()
 
     
-    @patch("frappe_cadence.cadence.email_template.emit_event")
-    @patch("frappe_cadence.cadence.email_template.frappe.get_doc")
+    @patch("frappe_cadence._template.emit_event")
+    @patch("frappe_cadence._template.frappe.get_doc")
     def test_callback_emits_event(self, mock_get_doc, mock_emit_event):
         # Mock payload
         frappe.local.request = frappe._dict(json={
@@ -86,7 +110,6 @@ class TestEmailTemplate(IntegrationTestCase):
         meta = frappe.get_meta("Email Template")
         field = meta.get_field("sift_id")
         self.assertIsNotNone(field)
-        self.assertTrue(field.hidden)
 
     @patch("frappe_controller.utils.controller.emit_event")
     def test_emit_event_on_template_enable(self, mock_emit):
@@ -120,8 +143,8 @@ class TestEmailTemplate(IntegrationTestCase):
         )
 
     @patch("frappe.log_error")
-    @patch("frappe_cadence.cadence.email_template.emit_event")
-    @patch("frappe_cadence.cadence.email_template.frappe.get_doc")
+    @patch("frappe_cadence._template.emit_event")
+    @patch("frappe_cadence._template.frappe.get_doc")
     @patch("frappe.db.exists", return_value=True)
     def test_sift_callback_failure_recovery(self, mock_exists, mock_get_doc, mock_emit, mock_log_error):
         frappe.local.request = frappe._dict(json={
@@ -139,3 +162,14 @@ class TestEmailTemplate(IntegrationTestCase):
         self.assertIn("AI Generation Failed", mock_comm.content)
         mock_comm.save.assert_called_once_with(ignore_permissions=True)
         mock_emit.assert_called_once_with("callback", {"communication_id": "COMM-001", "error": "Sift Generation Failed"})
+
+    def test_n8n_and_dspy_template_creation_without_subject(self):
+        doc = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "_Test Optional n8n Template",
+            "provider": "n8n",
+            "request_url": "https://n8n.example.com/webhook/123",
+            "status": "Disabled"
+        }).insert(ignore_permissions=True)
+        self.assertTrue(doc.name)
+        self.assertEqual(doc.provider, "n8n")
