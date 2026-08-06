@@ -413,6 +413,7 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_template = MagicMock()
         mock_template.status = "Enabled"
         mock_template.provider = "DSPy"
+        mock_template.sift_id = "agent-mcc-2"
         
         mock_lead = MagicMock()
         mock_lead.name = "LEAD-002"
