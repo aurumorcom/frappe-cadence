@@ -204,20 +204,40 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
             comm.insert(ignore_permissions=True)
             comm_name = comm.name
 
-        schema_properties = {
-            "content": {
-                "type": "string",
-                "description": "The main body content of the message"
-            }
-        }
-        required_fields = ["content"]
+        from markdownify import markdownify
 
         if channel == "Email":
-            schema_properties["subject"] = {
-                "type": "string",
-                "description": "The subject of the message"
+            schema_properties = {
+                "subject": {
+                    "type": "string",
+                    "description": "The subject line of the email"
+                },
+                "salutation": {
+                    "type": "string",
+                    "description": "The salutation or greeting"
+                },
+                "body": {
+                    "type": "string",
+                    "description": "The main body content of the email"
+                },
+                "call_to_action": {
+                    "type": "string",
+                    "description": "The call to action"
+                },
+                "sign_off": {
+                    "type": "string",
+                    "description": "The sign-off or closing"
+                }
             }
-            required_fields.append("subject")
+            required_fields = ["subject", "salutation", "body", "call_to_action", "sign_off"]
+        else:
+            schema_properties = {
+                "content": {
+                    "type": "string",
+                    "description": "The main body content of the message"
+                }
+            }
+            required_fields = ["content"]
 
         tpl_subject = getattr(template, "subject", "") or ""
         if not isinstance(tpl_subject, str):
@@ -227,9 +247,11 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
         if not isinstance(tpl_response, str):
             tpl_response = str(tpl_response) if tpl_response else ""
 
+        tpl_response_md = markdownify(tpl_response) if tpl_response else ""
+
         payload = {
             "subject": tpl_subject,
-            "response": tpl_response,
+            "response": tpl_response_md,
             "metadata": {
                 "name": comm_name
             },
@@ -248,7 +270,6 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
             }
         }
 
-        from markdownify import markdownify
         from frappe.utils import add_months, today
         from frappe_cadence.cadence.doctype.history.history import get_history
         from frappe_cadence.cadence.doctype.user_bio.user_bio import get_user_bio
@@ -272,10 +293,10 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
                 "content": f"Template Subject: {tpl_subject}"
             })
 
-        if tpl_response:
+        if tpl_response_md:
             payload["input"].append({
                 "role": "user",
-                "content": f"Template Response:\n{tpl_response}"
+                "content": f"Template Response:\n{tpl_response_md}"
             })
 
         three_months_ago = add_months(today(), -3)
