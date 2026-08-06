@@ -1,6 +1,6 @@
 interactions:
 - request:
-    body: '{"agent_name": "agent-External Test Template", "webhook": {"url": "http://crm-dev.aurumor.com:8000/api/method/frappe_cadence.utils.sift.optimize_callback",
+    body: '{"agent_name": "agent-External Test Template", "webhook": {"url": "http://crm-dev.aurumor.com:8000/api/method/frappe_cadence.integrations.sift.optimize_callback",
       "events": ["completed", "failed"], "metadata": {"template_doctype": "Email Template",
       "template_name": "External Test Template"}}, "litellm_params": {"model": "testprovider/test-model"},
       "dspy_params": {"state": {"predict": {"train": [{"trace_id": "5uce4sf7fa", "score":
