@@ -6,6 +6,7 @@
  "engine": "InnoDB",
   "field_order": [
    "title",
+   "enabled",
    "sms_template_code",
    "status",
    "provider",
@@ -25,12 +26,19 @@
     "unique": 1
    },
    {
+    "default": "0",
+    "fieldname": "enabled",
+    "fieldtype": "Check",
+    "in_list_view": 1,
+    "label": "Enabled"
+   },
+   {
     "fieldname": "sms_template_code",
     "fieldtype": "Data",
     "label": "SMS Template Code"
    },
    {
-    "default": "Enabled",
+    "default": "Disabled",
     "fieldname": "status",
     "fieldtype": "Select",
     "hidden": 1,
