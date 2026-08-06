@@ -861,7 +861,7 @@ class TestAgentUtils(IntegrationTestCase):
         
         # Assertions for payload format
         self.assertEqual(payload["model"], "test_model_123")
-        self.assertEqual(payload["input"][0]["role"], "system")
+        self.assertEqual(payload["input"][0]["role"], "user")
         self.assertIn("I am a **bold** user.", payload["input"][0]["content"])
         
         history_msg = payload["input"][1]
