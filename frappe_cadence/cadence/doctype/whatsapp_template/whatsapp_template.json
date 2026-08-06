@@ -72,7 +72,7 @@
     "label": "Message"
    },
    {
-    "depends_on": "eval:in_list(['DSPy', 'n8n'], doc.provider)",
+    "depends_on": "eval:doc.provider === 'DSPy'",
     "fieldname": "annotations",
     "fieldtype": "Table",
     "label": "Annotations",
