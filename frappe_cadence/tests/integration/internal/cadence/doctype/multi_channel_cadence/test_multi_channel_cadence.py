@@ -704,16 +704,12 @@ class TestAgentUtils(IntegrationTestCase):
             
         payload = json.loads(mock_post.call_args[1]["data"])
         schema = payload["response_format"]["json_schema"]["schema"]
+        self.assertNotIn("subject", payload)
+        self.assertNotIn("response", payload)
         self.assertIn("subject", schema["properties"])
-        self.assertIn("salutation", schema["properties"])
-        self.assertIn("body", schema["properties"])
-        self.assertIn("call_to_action", schema["properties"])
-        self.assertIn("sign_off", schema["properties"])
+        self.assertIn("content", schema["properties"])
         self.assertIn("subject", schema["required"])
-        self.assertIn("salutation", schema["required"])
-        self.assertIn("body", schema["required"])
-        self.assertIn("call_to_action", schema["required"])
-        self.assertIn("sign_off", schema["required"])
+        self.assertIn("content", schema["required"])
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
