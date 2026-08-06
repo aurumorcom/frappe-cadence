@@ -270,6 +270,7 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_mcc.status = "Scheduled"
         mock_mcc.cadence_for = "CRM Lead"
         mock_mcc.recipient = "LEAD-001"
+        mock_mcc.sender = None
         mock_mcc.owner = "user@test.com"
         mock_mcc.sift_id = "agent-mcc"
         row = MagicMock()
@@ -278,7 +279,9 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_mcc.get.return_value = [row]
         
         mock_template = MagicMock()
-        mock_template.status = "Prompt"
+        mock_template.status = "Enabled"
+        mock_template.provider = "DSPy"
+        mock_template.sift_id = "agent-mcc"
         
         mock_lead = MagicMock()
         mock_lead.name = "LEAD-001"
@@ -393,6 +396,7 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_mcc.status = "Scheduled"
         mock_mcc.cadence_for = "CRM Lead"
         mock_mcc.recipient = "LEAD-002"
+        mock_mcc.sender = None
         mock_mcc.owner = "user@test.com"
         mock_mcc.sift_id = "agent-mcc-2"
         row = MagicMock()
@@ -401,7 +405,8 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_mcc.get.return_value = [row]
         
         mock_template = MagicMock()
-        mock_template.status = "Prompt"
+        mock_template.status = "Enabled"
+        mock_template.provider = "DSPy"
         
         mock_lead = MagicMock()
         mock_lead.name = "LEAD-002"
@@ -465,3 +470,96 @@ class TestMultiChannelCadence(UnitTestCase):
                         
                         self.assertIn("Sender Name: Test User", system_content)
                         self.assertIn("I am a **bold** user.", system_content)
+
+    @patch("frappe_cadence.cadence.doctype.history.history.get_history")
+    @patch("frappe_cadence.integrations.n8n.requests.post")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
+    @patch("frappe_cadence.integrations.n8n.get_url")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_months")
+    @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio")
+    def test_process_cadence_step_n8n_integration(self, mock_get_user_bio, mock_add_months, mock_n8n_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history):
+        mock_get_user_bio.return_value = "<p>User Bio</p>"
+        mock_n8n_get_url.return_value = "http://test.com/webhook"
+        mock_add_months.return_value = "2024-01-01"
+        mock_get_history.return_value = []
+        from frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence import process_schedule
+        import json
+
+        mock_schedule = MagicMock()
+        mock_schedule.reference_doctype = "Email Template"
+        mock_schedule.reference_name = "Template-N8N"
+
+        mock_mcc = MagicMock()
+        mock_mcc.status = "Scheduled"
+        mock_mcc.cadence_for = "CRM Lead"
+        mock_mcc.recipient = "LEAD-N8N"
+        mock_mcc.sender = None
+        mock_mcc.owner = "user@test.com"
+        row = MagicMock()
+        row.channel = "Email"
+        row.cadence_provider = "Apollo"
+        mock_mcc.get.return_value = [row]
+
+        mock_template = MagicMock()
+        mock_template.status = "Enabled"
+        mock_template.provider = "n8n"
+        mock_template.request_url = "https://n8n.example.com/webhook"
+        mock_template.get.side_effect = lambda k, default=None: getattr(mock_template, k, default)
+        mock_template.get_password.return_value = "n8n_secret_123"
+
+        mock_lead = MagicMock()
+        mock_lead.name = "LEAD-N8N"
+        mock_lead.organization = None
+
+        mock_comm = MagicMock()
+        mock_comm.name = "COMM-N8N"
+
+        mock_get_all.return_value = []
+
+        original_get_doc = frappe.get_doc
+        def get_doc_side_effect(*args, **kwargs):
+            if len(args) == 2 and args[0] == "Cadence Multi Channel Schedule":
+                return mock_schedule
+            elif len(args) == 2 and args[0] == "Multi Channel Cadence":
+                return mock_mcc
+            elif len(args) == 2 and args[0] == "Email Template":
+                return mock_template
+            elif len(args) == 2 and args[0] == "CRM Lead":
+                return mock_lead
+            elif len(args) == 1 and isinstance(args[0], dict) and args[0].get("doctype") == "Communication":
+                return mock_comm
+            return original_get_doc(*args, **kwargs)
+
+        original_get_single = frappe.get_single
+        def get_single_side_effect(*args, **kwargs):
+            if args[0] == "Sift Settings":
+                return MagicMock()
+            return original_get_single(*args, **kwargs)
+
+        original_get_value = frappe.db.get_value
+        def get_value_side_effect(*args, **kwargs):
+            doctype = kwargs.get("doctype") or (args[0] if len(args) > 0 else None)
+            filters = kwargs.get("filters") or (args[1] if len(args) > 1 else None)
+            if doctype == "User" and filters == "user@test.com":
+                return {"full_name": "Test User"}
+            return original_get_value(*args, **kwargs)
+
+        with patch.object(frappe, "get_doc", side_effect=get_doc_side_effect):
+            with patch.object(frappe, "get_single", side_effect=get_single_side_effect):
+                with patch.object(frappe.db, "get_value", side_effect=get_value_side_effect):
+                    with patch("frappe_cadence.integrations.n8n.frappe.cache") as mock_cache:
+                        mock_cache.return_value.get_value.return_value = None
+                        process_schedule("MCC-N8N", "SCHED-N8N")
+
+                        mock_post.assert_called_once()
+                        called_url = mock_post.call_args[0][0]
+                        self.assertEqual(called_url, "https://n8n.example.com/webhook")
+
+                        headers = mock_post.call_args[1]["headers"]
+                        self.assertEqual(headers["Authorization"], "Bearer n8n_secret_123")
+
+                data = json.loads(mock_post.call_args[1]["data"])
+                self.assertTrue(data.get("background"))
+                self.assertIn("webhook", data)
+                self.assertEqual(data["webhook"]["url"], "http://test.com/webhook")
