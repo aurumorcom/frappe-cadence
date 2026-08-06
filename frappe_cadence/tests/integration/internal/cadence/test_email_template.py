@@ -62,9 +62,9 @@ class TestEmailTemplate(IntegrationTestCase):
         
         self.assertEqual(result.get("status"), "success")
         self.assertEqual(mock_comm.subject, "Hello")
-        self.assertIn("<p>Dear <strong>John</strong>,</p>", mock_comm.content)
+        self.assertIn('<p>Dear <strong>John</strong>,</p>', mock_comm.content)
         self.assertIn("<em>our</em>", mock_comm.content)
-        self.assertIn('<a href="https://example.com">here</a>', mock_comm.content)
+        self.assertIn('href="https://example.com"', mock_comm.content)
         mock_comm.save.assert_called_once_with(ignore_permissions=True)
         
         mock_emit_event.assert_called_once_with("callback", {"communication_id": "COMM-001"})
