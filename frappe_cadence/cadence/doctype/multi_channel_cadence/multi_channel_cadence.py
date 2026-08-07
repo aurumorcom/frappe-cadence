@@ -79,51 +79,6 @@ class MultiChannelCadence(Document):
                 emit_event("mcc_in_progress", {"doctype": self.doctype, "name": self.name})
 
 
-def _is_mcc_ready_for_scheduling(cadence_name: str) -> bool:
-    """
-    Checks if all cadence schedules for a given MCC in Draft status have a completed
-    Communication (delivery_status in ['Scheduled', 'Sent']).
-    """
-    mcc = frappe.get_doc("Multi Channel Cadence", cadence_name)
-    if mcc.status != "Draft":
-        return False
-
-    cadence = frappe.get_doc("Cadence", mcc.cadence_name)
-    if not cadence.cadence_schedules:
-        return False
-
-    schedule_names = [s.name for s in cadence.cadence_schedules]
-
-    comms = frappe.get_all(
-        "Communication",
-        filters={
-            "reference_doctype": "Multi Channel Cadence",
-            "reference_name": cadence_name,
-            "cadence_schedule": ["in", schedule_names],
-            "delivery_status": ["in", ["Scheduled", "Sent"]]
-        },
-        fields=["cadence_schedule"]
-    )
-
-    completed_schedules = {c.cadence_schedule for c in comms}
-    return len(completed_schedules) == len(schedule_names)
-
-
-def check_and_transition_mcc_draft_to_scheduled(cadence_name: str) -> bool:
-    """
-    If all communications for an MCC in 'Draft' status are generated and ready,
-    automatically transitions MCC status to 'Scheduled' and emits event.
-    """
-    if not _is_mcc_ready_for_scheduling(cadence_name):
-        return False
-
-    mcc = frappe.get_doc("Multi Channel Cadence", cadence_name)
-    mcc.status = "Scheduled"
-    mcc.flags.ignore_permissions = True
-    mcc.save()
-
-    emit_event("mcc_scheduled", {"doctype": "Multi Channel Cadence", "name": cadence_name})
-    return True
 
 
 def _enqueue_schedule_jobs(mcc_doc, cadence_doc):
@@ -292,7 +247,6 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
         })
         comm.insert(ignore_permissions=True)
         emit_event("cadence_step_completed", {"cadence_name": cadence_name, "schedule_name": schedule_name})
-        check_and_transition_mcc_draft_to_scheduled(cadence_name)
         return
 
     if template_provider in ["DSPy", "n8n"] and template.status == "Enabled":
