@@ -134,15 +134,10 @@ class TestEmailTemplate(IntegrationTestCase):
         doc.status = "Enabled"
         doc.save(ignore_permissions=True)
         
-        # Should emit event with structured payload
-        mock_emit.assert_any_call(
-            key="email_template_enabled",
-            argument={
-                "doctype": "Email Template",
-                "name": "Test Event Emit Template",
-                "enabled": 1
-            }
-        )
+        # Standard frappe_controller doc event should be emitted; dirty custom event should NOT be emitted
+        emitted_keys = [call[1].get("key") if "key" in call[1] else call[0][0] for call in mock_emit.call_args_list if call[0] or call[1]]
+        self.assertIn("doc:Email Template:on_update", emitted_keys)
+        self.assertNotIn("email_template_enabled", emitted_keys)
 
     @patch("frappe.log_error")
     @patch("frappe_cadence._template.emit_event")
