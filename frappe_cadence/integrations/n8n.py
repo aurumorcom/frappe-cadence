@@ -4,6 +4,8 @@ import frappe
 from typing import Dict, Any, Optional
 from frappe.utils import get_url
 from frappe_cadence._template import (
+    WebhookResponse,
+    extract_output_text,
     get_annotation_schema,
     get_annotation_response,
     is_annotation_pending,
@@ -281,46 +283,31 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
         return {"status": "failed", "error": str(e)}
 
 @frappe.whitelist(allow_guest=True)
-def optimize_callback(**kwargs) -> Dict[str, str]:
-    event_type = kwargs.get("type")
-    if event_type and event_type.endswith(".started"):
+def optimize_callback(**kwargs) -> Dict[str, Any]:
+    raw_payload = kwargs or (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
+    payload = WebhookResponse(raw_payload)
+
+    if payload.is_started:
         return {"status": "ignored"}
 
-    metadata = kwargs.get("metadata", {})
-    if isinstance(metadata, str):
-        try:
-            metadata = json.loads(metadata)
-        except Exception:
-            metadata = {}
+    template_doctype = payload.metadata.get("doctype")
+    template_name = payload.metadata.get("name")
+    template = frappe.get_doc(template_doctype, template_name) if template_doctype and template_name and frappe.db.exists(template_doctype, template_name) else None
 
-    template_doctype = metadata.get("doctype")
-    template_name = metadata.get("name")
-
-    if event_type in ("failed", "agent.failed", "response.failed"):
-        error = kwargs.get("error") or "Unknown error"
+    if payload.is_failed:
+        error = payload.error or "Unknown error"
         frappe.log_error("n8n Optimize Callback Failed", error)
-        if template_doctype and template_name:
-            template = frappe.get_doc(template_doctype, template_name)
+        if template:
             template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
             template.save(ignore_permissions=True)
-        return {"status": "failed"}
+            return {"status": "failed", "error": error, "template": template.as_dict()}
+        return {"status": "failed", "error": error}
 
-    if event_type in ("completed", "agent.completed", "response.completed"):
-        if template_doctype and template_name:
-            template = frappe.get_doc(template_doctype, template_name)
+    if payload.is_completed:
+        if template:
             channel = template_doctype.replace(" Template", "") if template_doctype else "Email"
-
-            data = kwargs.get("data", [])
-            output_text = ""
-            if isinstance(data, list) and len(data) > 0:
-                content_list = data[0].get("content", [])
-                if content_list and isinstance(content_list, list) and len(content_list) > 0:
-                    output_text = content_list[0].get("text", "")
-            elif isinstance(data, dict):
-                content_list = data.get("content", [])
-                if content_list and isinstance(content_list, list) and len(content_list) > 0:
-                    output_text = content_list[0].get("text", "")
+            output_text = extract_output_text(payload.data)
 
             if output_text:
                 try:
@@ -343,7 +330,7 @@ def optimize_callback(**kwargs) -> Dict[str, str]:
             template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
             template.save(ignore_permissions=True)
-            return {"status": "success"}
+            return template.as_dict()
 
     return {"status": "ignored"}
 
@@ -414,48 +401,28 @@ def predict(template_doctype: str, template_name: str) -> Dict[str, Any]:
     return {"status": "success"}
 
 @frappe.whitelist(allow_guest=True)
-def predict_callback(**kwargs) -> Dict[str, str]:
-    event_type = kwargs.get("type")
-    if event_type and event_type.endswith(".started"):
+def predict_callback(**kwargs) -> Dict[str, Any]:
+    raw_payload = kwargs or (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
+    payload = WebhookResponse(raw_payload)
+
+    if payload.is_started:
         return {"status": "ignored"}
 
-    metadata = kwargs.get("metadata", {})
-    if isinstance(metadata, str):
-        try:
-            metadata = json.loads(metadata)
-        except Exception:
-            metadata = {}
+    annotation_id = payload.metadata.get("name")
+    annotation_doctype = payload.metadata.get("doctype")
 
-    annotation_id = metadata.get("name")
-    annotation_doctype = metadata.get("doctype")
-
-    data = kwargs.get("data", [])
-    if isinstance(data, str):
-        try:
-            data = json.loads(data)
-        except Exception:
-            data = []
-
-    if event_type in ("failed", "response.failed"):
-        error = kwargs.get("error") or "Unknown error"
+    if payload.is_failed:
+        error = payload.error or "Unknown error"
         frappe.log_error("n8n Predict Failed", error)
-        return {"status": "failed"}
+        return {"status": "failed", "error": error}
 
-    if event_type in ("completed", "response.completed"):
-        output_text = ""
-        if isinstance(data, list) and len(data) > 0:
-            content_list = data[0].get("content", [])
-            if content_list and isinstance(content_list, list) and len(content_list) > 0:
-                output_text = content_list[0].get("text", "")
-        elif isinstance(data, dict):
-            content_list = data.get("content", [])
-            if content_list and isinstance(content_list, list) and len(content_list) > 0:
-                output_text = content_list[0].get("text", "")
-
+    if payload.is_completed:
+        output_text = extract_output_text(payload.data)
         if not annotation_id or not output_text or not annotation_doctype:
             frappe.throw("Invalid webhook payload")
 
         update_annotation_output(annotation_doctype, annotation_id, output_text)
-        return {"status": "success"}
+        ann = frappe.get_doc(annotation_doctype, annotation_id)
+        return ann.as_dict()
 
     return {"status": "ignored"}

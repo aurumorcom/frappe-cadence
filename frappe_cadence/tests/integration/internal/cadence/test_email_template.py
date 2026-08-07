@@ -37,9 +37,12 @@ class TestEmailTemplate(IntegrationTestCase):
     @patch("frappe_cadence._template.emit_event")
     @patch("frappe_cadence._template.frappe.get_doc")
     def test_callback_emits_event(self, mock_get_doc, mock_emit_event):
-        # Mock payload with 5-part email schema and Markdown
+        # Mock payload with WebhookResponse schema, 5-part email schema, and Markdown
         frappe.local.request = frappe._dict(json={
+            "success": True,
             "type": "response.completed",
+            "id": "wm-job-001",
+            "webhookId": "wh-001",
             "metadata": {
                 "name": "COMM-001"
             },
@@ -56,11 +59,21 @@ class TestEmailTemplate(IntegrationTestCase):
         
         mock_comm = MagicMock()
         mock_comm.communication_medium = "Email"
+        mock_comm.name = "COMM-001"
+        mock_comm.doctype = "Communication"
+        mock_comm.cadence_schedule = None
+        mock_comm.as_dict.return_value = {
+            "name": "COMM-001",
+            "doctype": "Communication",
+            "subject": "Hello",
+            "delivery_status": "Scheduled"
+        }
         mock_get_doc.return_value = mock_comm
         
         result = callback()
         
-        self.assertEqual(result.get("status"), "success")
+        self.assertEqual(result.get("name"), "COMM-001")
+        self.assertEqual(result.get("doctype"), "Communication")
         self.assertEqual(mock_comm.subject, "Hello")
         self.assertIn('<p>Dear <strong>John</strong>,</p>', mock_comm.content)
         self.assertIn("<em>our</em>", mock_comm.content)
@@ -71,8 +84,9 @@ class TestEmailTemplate(IntegrationTestCase):
 
     def test_callback_missing_communication_id(self):
         frappe.local.request = frappe._dict(json={
+            "success": True,
             "metadata": {},
-            "output": [{"content": [{"text": "{}"}]}]
+            "data": [{"content": [{"text": "{}"}]}]
         })
         result = callback()
         self.assertEqual(result.get("status"), "error")
@@ -80,8 +94,9 @@ class TestEmailTemplate(IntegrationTestCase):
 
     def test_callback_missing_output_text(self):
         frappe.local.request = frappe._dict(json={
+            "success": True,
             "metadata": {"name": "COMM-001"},
-            "output": [{"content": [{}]}]
+            "data": [{"content": [{}]}]
         })
         result = callback()
         self.assertEqual(result.get("status"), "error")
@@ -89,6 +104,7 @@ class TestEmailTemplate(IntegrationTestCase):
 
     def test_callback_invalid_json(self):
         frappe.local.request = frappe._dict(json={
+            "success": True,
             "type": "response.completed",
             "metadata": {"name": "COMM-001"},
             "data": [{"content": [{"text": "invalid json"}]}]
@@ -134,15 +150,10 @@ class TestEmailTemplate(IntegrationTestCase):
         doc.status = "Enabled"
         doc.save(ignore_permissions=True)
         
-        # Should emit event with structured payload
-        mock_emit.assert_any_call(
-            key="email_template_enabled",
-            argument={
-                "doctype": "Email Template",
-                "name": "Test Event Emit Template",
-                "enabled": 1
-            }
-        )
+        # Standard frappe_controller doc event should be emitted; dirty custom event should NOT be emitted
+        emitted_keys = [call[1].get("key") if "key" in call[1] else call[0][0] for call in mock_emit.call_args_list if call[0] or call[1]]
+        self.assertIn("doc:Email Template:on_update", emitted_keys)
+        self.assertNotIn("email_template_enabled", emitted_keys)
 
     @patch("frappe.log_error")
     @patch("frappe_cadence._template.emit_event")
@@ -150,11 +161,18 @@ class TestEmailTemplate(IntegrationTestCase):
     @patch("frappe.db.exists", return_value=True)
     def test_sift_callback_failure_recovery(self, mock_exists, mock_get_doc, mock_emit, mock_log_error):
         frappe.local.request = frappe._dict(json={
+            "success": False,
             "type": "response.failed",
             "metadata": {"name": "COMM-001"},
             "error": "Sift Generation Failed"
         })
         mock_comm = MagicMock()
+        mock_comm.cadence_schedule = None
+        mock_comm.as_dict.return_value = {
+            "name": "COMM-001",
+            "doctype": "Communication",
+            "delivery_status": "Failed"
+        }
         mock_get_doc.return_value = mock_comm
 
         result = callback()
@@ -247,4 +265,3 @@ class TestEmailTemplate(IntegrationTestCase):
         )
         disabled_result_names = [r[0] if isinstance(r, (list, tuple)) else r.get("value") for r in disabled_results]
         self.assertIn(doc.name, disabled_result_names)
-

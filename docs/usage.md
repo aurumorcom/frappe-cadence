@@ -96,6 +96,28 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
 }
 ```
 
+#### Inbound Callback cURL Example
+```bash
+curl -X POST "https://<your-site>/api/method/frappe_cadence.email_template.callback" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "response.completed",
+    "metadata": {
+      "name": "COMM-00001"
+    },
+    "data": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"subject\": \"Quick question regarding your growth strategy\", \"content\": \"Hi John,\\n\\nI noticed...\"}"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
 ---
 
 ### 2. SMS Template Callback Data Model
@@ -162,6 +184,28 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
 }
 ```
 
+#### Inbound Callback cURL Example
+```bash
+curl -X POST "https://<your-site>/api/method/frappe_cadence.sms_template.callback" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "response.completed",
+    "metadata": {
+      "name": "COMM-00002"
+    },
+    "data": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"content\": \"Hi John, following up on our email yesterday. Are you available for a brief call?\"}"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
 ---
 
 ### 3. WhatsApp Template Callback Data Model
@@ -206,6 +250,48 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
   },
   "input": [...]
 }
+```
+
+#### Inbound Callback Response
+```json
+{
+  "type": "response.completed",
+  "metadata": {
+    "name": "COMM-00003"
+  },
+  "data": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"content\": \"Hi John, reaching out on WhatsApp regarding our recent conversation.\"}"
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Inbound Callback cURL Example
+```bash
+curl -X POST "https://<your-site>/api/method/frappe_cadence.whatsapp_template.callback" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "response.completed",
+    "metadata": {
+      "name": "COMM-00003"
+    },
+    "data": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"content\": \"Hi John, reaching out on WhatsApp regarding our recent conversation.\"}"
+          }
+        ]
+      }
+    ]
+  }'
 ```
 
 ---
@@ -254,6 +340,48 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
 }
 ```
 
+#### Inbound Callback Response
+```json
+{
+  "type": "response.completed",
+  "metadata": {
+    "name": "COMM-00004"
+  },
+  "data": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"content\": \"Hi John, enjoyed reading your post on AI workflows. Would love to connect!\"}"
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### Inbound Callback cURL Example
+```bash
+curl -X POST "https://<your-site>/api/method/frappe_cadence.linkedin_template.callback" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "response.completed",
+    "metadata": {
+      "name": "COMM-00004"
+    },
+    "data": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"content\": \"Hi John, enjoyed reading your post on AI workflows. Would love to connect!\"}"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
 ---
 
 ## Optimization and Prediction Callbacks
@@ -271,6 +399,24 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
   }
   ```
 
+#### Inbound Optimization Callback cURL Example
+```bash
+curl -X POST "https://<your-site>/api/method/frappe_cadence.integrations.sift.optimize_callback" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "completed",
+    "metadata": {
+      "doctype": "Email Template",
+      "name": "ET-00001"
+    },
+    "data": [
+      {
+        "agent_name": "Sift AI Optimization Agent"
+      }
+    ]
+  }'
+```
+
 ### Annotation Prediction Callback (`predict_callback`)
 
 - **Endpoints**:
@@ -283,3 +429,26 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
     "name": "ETA-00001"
   }
   ```
+
+#### Inbound Prediction Callback cURL Example
+```bash
+curl -X POST "https://<your-site>/api/method/frappe_cadence.integrations.sift.predict_callback" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "response.completed",
+    "metadata": {
+      "doctype": "Email Template Annotation",
+      "name": "ETA-00001"
+    },
+    "data": [
+      {
+        "content": [
+          {
+            "type": "text",
+            "text": "Predicted annotation output body text."
+          }
+        ]
+      }
+    ]
+  }'
+```
