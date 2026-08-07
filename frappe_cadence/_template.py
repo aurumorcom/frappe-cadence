@@ -3,7 +3,7 @@ import frappe
 from typing import Dict, Any, Union, Optional
 from frappe_controller.utils.controller import emit_event
 
-class ParsedWebhookPayload:
+class WebhookResponse:
     """
     Standardized parser for WebhookResponse schema:
     - success: bool -> Primary decision flag for completed (True) vs failed (False)
@@ -201,7 +201,7 @@ def handle_callback() -> dict:
     """
     try:
         raw_payload = (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
-        payload = ParsedWebhookPayload(raw_payload)
+        payload = WebhookResponse(raw_payload)
         
         if payload.is_started:
             return {"status": "ignored"}

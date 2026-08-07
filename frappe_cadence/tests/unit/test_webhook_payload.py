@@ -1,6 +1,6 @@
 import json
 import unittest
-from frappe_cadence._template import ParsedWebhookPayload, extract_output_text, extract_agent_name
+from frappe_cadence._template import WebhookResponse, extract_output_text, extract_agent_name
 
 class TestWebhookPayload(unittest.TestCase):
     def test_payload_started_event(self):
@@ -11,7 +11,7 @@ class TestWebhookPayload(unittest.TestCase):
             "webhookId": "wh-001",
             "data": []
         }
-        payload = ParsedWebhookPayload(raw)
+        payload = WebhookResponse(raw)
         self.assertTrue(payload.is_started)
         self.assertFalse(payload.is_completed)
         self.assertFalse(payload.is_failed)
@@ -26,7 +26,7 @@ class TestWebhookPayload(unittest.TestCase):
             "webhookId": "wh-002",
             "data": [{"content": [{"text": "Hello world"}]}]
         }
-        payload = ParsedWebhookPayload(raw)
+        payload = WebhookResponse(raw)
         self.assertFalse(payload.is_started)
         self.assertTrue(payload.is_completed)
         self.assertFalse(payload.is_failed)
@@ -37,7 +37,7 @@ class TestWebhookPayload(unittest.TestCase):
             "type": "completed",
             "data": [{"text": "Sample"}]
         }
-        payload = ParsedWebhookPayload(raw)
+        payload = WebhookResponse(raw)
         self.assertFalse(payload.is_started)
         self.assertTrue(payload.is_completed)
         self.assertFalse(payload.is_failed)
@@ -49,7 +49,7 @@ class TestWebhookPayload(unittest.TestCase):
             "error": "Execution Timeout",
             "data": []
         }
-        payload = ParsedWebhookPayload(raw)
+        payload = WebhookResponse(raw)
         self.assertFalse(payload.is_started)
         self.assertFalse(payload.is_completed)
         self.assertTrue(payload.is_failed)
@@ -60,7 +60,7 @@ class TestWebhookPayload(unittest.TestCase):
             "success": False,
             "error": "Generic error"
         }
-        payload = ParsedWebhookPayload(raw)
+        payload = WebhookResponse(raw)
         self.assertFalse(payload.is_started)
         self.assertFalse(payload.is_completed)
         self.assertTrue(payload.is_failed)
@@ -72,7 +72,7 @@ class TestWebhookPayload(unittest.TestCase):
             "metadata": json.dumps({"name": "COMM-001", "doctype": "Communication"}),
             "data": json.dumps([{"content": [{"text": "Parsed Output"}]}])
         }
-        payload = ParsedWebhookPayload(raw)
+        payload = WebhookResponse(raw)
         self.assertEqual(payload.metadata.get("name"), "COMM-001")
         self.assertEqual(payload.metadata.get("doctype"), "Communication")
         self.assertIsInstance(payload.data, list)

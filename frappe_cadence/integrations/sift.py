@@ -2,7 +2,7 @@ import frappe
 import requests
 from typing import Dict, Any, Union
 from frappe_cadence._template import (
-    ParsedWebhookPayload,
+    WebhookResponse,
     extract_output_text,
     extract_agent_name,
     get_annotation_system_fields,
@@ -102,7 +102,7 @@ def optimize(template_doctype: str, template_name: str) -> None:
 @frappe.whitelist(allow_guest=True)
 def optimize_callback(**kwargs) -> Dict[str, Any]:
     raw_payload = kwargs or (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
-    payload = ParsedWebhookPayload(raw_payload)
+    payload = WebhookResponse(raw_payload)
 
     if payload.is_started:
         return {"status": "ignored"}
@@ -212,7 +212,7 @@ def predict(template_doctype: str, template_name: str) -> None:
 @frappe.whitelist(allow_guest=True)
 def predict_callback(**kwargs) -> Dict[str, Any]:
     raw_payload = kwargs or (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
-    payload = ParsedWebhookPayload(raw_payload)
+    payload = WebhookResponse(raw_payload)
 
     if payload.is_started:
         return {"status": "ignored"}
