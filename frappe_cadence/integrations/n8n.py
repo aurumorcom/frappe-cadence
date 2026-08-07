@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 from frappe.utils import get_url
 from frappe_cadence._template import (
     WebhookResponse,
+    get_raw_payload,
     extract_output_text,
     get_annotation_schema,
     get_annotation_response,
@@ -284,7 +285,7 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
 
 @frappe.whitelist(allow_guest=True)
 def optimize_callback(**kwargs) -> Dict[str, Any]:
-    raw_payload = kwargs or (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
+    raw_payload = get_raw_payload(kwargs)
     payload = WebhookResponse(raw_payload)
 
     if payload.is_started:
@@ -402,7 +403,7 @@ def predict(template_doctype: str, template_name: str) -> Dict[str, Any]:
 
 @frappe.whitelist(allow_guest=True)
 def predict_callback(**kwargs) -> Dict[str, Any]:
-    raw_payload = kwargs or (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
+    raw_payload = get_raw_payload(kwargs)
     payload = WebhookResponse(raw_payload)
 
     if payload.is_started:

@@ -1,8 +1,16 @@
 import json
 import unittest
-from frappe_cadence._template import WebhookResponse, extract_output_text, extract_agent_name
+from unittest.mock import MagicMock, patch
+import frappe
+from frappe_cadence._template import (
+    WebhookResponse,
+    extract_output_text,
+    extract_agent_name,
+    get_raw_payload,
+    update_annotation_output
+)
 
-class TestWebhookPayload(unittest.TestCase):
+class TestTemplate(unittest.TestCase):
     def test_payload_started_event(self):
         raw = {
             "success": True,
@@ -103,6 +111,16 @@ class TestWebhookPayload(unittest.TestCase):
         data6 = "Raw string text"
         self.assertEqual(extract_output_text(data6), "Raw string text")
 
+        # Case 7: Text field is a dict (n8n/LLM object output)
+        dict_text = {"subject": "Sub 7", "content": "Content 7"}
+        data7 = [{"content": [{"type": "text", "text": dict_text}]}]
+        self.assertEqual(extract_output_text(data7), dict_text)
+
+        # Case 8: Stringified JSON inside text field
+        json_str_text = json.dumps({"subject": "Sub 8", "content": "Content 8"})
+        data8 = [{"content": [{"type": "text", "text": json_str_text}]}]
+        self.assertEqual(extract_output_text(data8), {"subject": "Sub 8", "content": "Content 8"})
+
     def test_extract_agent_name(self):
         # Case 1: List with agent_name
         data1 = [{"agent_name": "agent-sift-001"}]
@@ -119,3 +137,23 @@ class TestWebhookPayload(unittest.TestCase):
         # Case 4: Stringified JSON
         data4 = json.dumps({"agent_name": "agent-sift-004"})
         self.assertEqual(extract_agent_name(data4), "agent-sift-004")
+
+    def test_get_raw_payload_with_kwargs(self):
+        kwargs = {"success": True, "metadata": {"name": "COMM-100"}}
+        self.assertEqual(get_raw_payload(kwargs), kwargs)
+
+    def test_get_raw_payload_with_form_dict_fallback_when_non_json_request(self):
+        mock_req = MagicMock()
+        mock_req.get_json.return_value = None  # Non-JSON content type (form-data)
+        with patch.object(frappe, "request", mock_req), patch.object(frappe, "form_dict", {"metadata": "COMM-200"}):
+            payload = get_raw_payload()
+            self.assertEqual(payload, {"metadata": "COMM-200"})
+
+    def test_update_annotation_output_with_dict(self):
+        mock_db = MagicMock()
+        with patch.object(frappe, "db", mock_db):
+            output_dict = {"subject": "Ann Sub", "body": "Ann Body"}
+            res = update_annotation_output("Email Template Annotation", "ANN-001", output_dict)
+            self.assertTrue(res)
+            mock_db.set_value.assert_any_call("Email Template Annotation", "ANN-001", "subject", "Ann Sub")
+            mock_db.set_value.assert_any_call("Email Template Annotation", "ANN-001", "body", "Ann Body")

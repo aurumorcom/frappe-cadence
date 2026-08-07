@@ -4,9 +4,61 @@ This document defines the data models and payload contracts for outbound webhook
 
 ---
 
-## Standard Webhook Envelope Rule
+## WebhookResponse Schema
 
-All outbound task dispatches to external AI services (Sift / n8n) follow the unified webhook envelope specification:
+All inbound callbacks delivered to `frappe_cadence` follow the unified `WebhookResponse` model parsed by [`_template.WebhookResponse`](apps/frappe_cadence/frappe_cadence/_template.py:6):
+
+```json
+{
+  "success": true,
+  "type": "email_template.complete",
+  "id": "wm-job-12345",
+  "webhookId": "wh-delivery-67890",
+  "data": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"subject\": \"Quick question\", \"content\": \"Hi John...\"}"
+        }
+      ]
+    }
+  ],
+  "error": null,
+  "metadata": {
+    "name": "COMM-00001",
+    "doctype": "Communication"
+  }
+}
+```
+
+### Schema Attributes
+
+| Field | Type | Description |
+|---|---|---|
+| **`success`** | `boolean` | **Primary Decision Flag.** `true` for successful completion, `false` for execution failure. |
+| **`type`** | `string` | Event type identifier (e.g. `email_template.complete`, `completed`, `response.completed`, `agent.started`). Used to filter out in-between status events such as `started`. |
+| **`id`** | `string` | Execution or Job ID (e.g., Windmill Job ID `WM_JOB_ID` or UUID). |
+| **`webhookId`** | `string` | Unique UUID for the delivery attempt. |
+| **`data`** | `Any` | Output payload. Contains empty array `[]` for `started` events, or raw output array/object for completed tasks. |
+| **`error`** | `string \| null` | Optional error message string when `success` is `false`. |
+| **`metadata`** | `object \| string` | Contextual dictionary passed in the outbound dispatch and echoed back in callback. Can be a dictionary or a stringified JSON object. |
+
+---
+
+## Callback Endpoint Return Values
+
+To ensure transparency, all whitelisted callback endpoints return the **actual updated domain document** as a dictionary rather than generic `{"status": "success"}` payloads:
+
+1. **Generation Callbacks** ([`_template.handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:198)): Returns the updated `Communication` document (`comm.as_dict()`).
+2. **Template Optimization Callbacks** ([`sift.optimize_callback`](apps/frappe_cadence/frappe_cadence/integrations/sift.py:102), [`n8n.optimize_callback`](apps/frappe_cadence/frappe_cadence/integrations/n8n.py:284)): Returns the updated Template document (`template.as_dict()`).
+3. **Annotation Prediction Callbacks** ([`sift.predict_callback`](apps/frappe_cadence/frappe_cadence/integrations/sift.py:228), [`n8n.predict_callback`](apps/frappe_cadence/frappe_cadence/integrations/n8n.py:417)): Returns the updated `Annotation` child document (`ann.as_dict()`).
+
+---
+
+## Standard Webhook Envelope Rule (Outbound)
+
+All outbound dispatches to external AI services (Sift / n8n) follow the unified webhook envelope specification:
 - **`background`**: Boolean (`true`) indicating asynchronous execution.
 - **`webhook`**: Object containing callback instructions:
   - **`url`**: The callback endpoint URL hosted on Frappe.
@@ -25,7 +77,7 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
 ### 1. Email Template Callback Data Model
 
 - **Channel Endpoint**: `/api/method/frappe_cadence.email_template.callback`
-- **Handler Method**: [`handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:97)
+- **Handler Method**: [`handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:198)
 
 #### Outbound Dispatch Payload (`POST` to n8n / Sift)
 ```json
@@ -76,10 +128,13 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
 }
 ```
 
-#### Inbound Callback Response (`POST` from n8n / Sift)
+#### Inbound Callback Request (`POST` from n8n / Sift)
 ```json
 {
-  "type": "response.completed",
+  "success": true,
+  "type": "email_template.complete",
+  "id": "wm-job-00001",
+  "webhookId": "wh-delivery-00001",
   "metadata": {
     "name": "COMM-00001"
   },
@@ -96,12 +151,26 @@ All outbound task dispatches to external AI services (Sift / n8n) follow the uni
 }
 ```
 
+#### Inbound Callback Endpoint Return Value
+```json
+{
+  "name": "COMM-00001",
+  "doctype": "Communication",
+  "subject": "Quick question regarding your growth strategy",
+  "content": "<p>Hi John,<br><br>I noticed...</p>",
+  "delivery_status": "Scheduled"
+}
+```
+
 #### Inbound Callback cURL Example
 ```bash
 curl -X POST "https://<your-site>/api/method/frappe_cadence.email_template.callback" \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "response.completed",
+    "success": true,
+    "type": "email_template.complete",
+    "id": "wm-job-00001",
+    "webhookId": "wh-delivery-00001",
     "metadata": {
       "name": "COMM-00001"
     },
@@ -123,7 +192,7 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.email_template.callb
 ### 2. SMS Template Callback Data Model
 
 - **Channel Endpoint**: `/api/method/frappe_cadence.sms_template.callback`
-- **Handler Method**: [`handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:97)
+- **Handler Method**: [`handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:198)
 
 #### Outbound Dispatch Payload
 ```json
@@ -164,10 +233,13 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.email_template.callb
 }
 ```
 
-#### Inbound Callback Response
+#### Inbound Callback Request
 ```json
 {
-  "type": "response.completed",
+  "success": true,
+  "type": "sms_template.complete",
+  "id": "wm-job-00002",
+  "webhookId": "wh-delivery-00002",
   "metadata": {
     "name": "COMM-00002"
   },
@@ -184,26 +256,15 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.email_template.callb
 }
 ```
 
-#### Inbound Callback cURL Example
-```bash
-curl -X POST "https://<your-site>/api/method/frappe_cadence.sms_template.callback" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "response.completed",
-    "metadata": {
-      "name": "COMM-00002"
-    },
-    "data": [
-      {
-        "content": [
-          {
-            "type": "text",
-            "text": "{\"content\": \"Hi John, following up on our email yesterday. Are you available for a brief call?\"}"
-          }
-        ]
-      }
-    ]
-  }'
+#### Inbound Callback Endpoint Return Value
+```json
+{
+  "name": "COMM-00002",
+  "doctype": "Communication",
+  "subject": "SMS Message",
+  "content": "<p>Hi John, following up on our email yesterday. Are you available for a brief call?</p>",
+  "delivery_status": "Scheduled"
+}
 ```
 
 ---
@@ -211,7 +272,7 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.sms_template.callbac
 ### 3. WhatsApp Template Callback Data Model
 
 - **Channel Endpoint**: `/api/method/frappe_cadence.whatsapp_template.callback`
-- **Handler Method**: [`handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:97)
+- **Handler Method**: [`handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:198)
 
 #### Outbound Dispatch Payload
 ```json
@@ -252,10 +313,13 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.sms_template.callbac
 }
 ```
 
-#### Inbound Callback Response
+#### Inbound Callback Request
 ```json
 {
-  "type": "response.completed",
+  "success": true,
+  "type": "whatsapp_template.complete",
+  "id": "wm-job-00003",
+  "webhookId": "wh-delivery-00003",
   "metadata": {
     "name": "COMM-00003"
   },
@@ -272,26 +336,15 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.sms_template.callbac
 }
 ```
 
-#### Inbound Callback cURL Example
-```bash
-curl -X POST "https://<your-site>/api/method/frappe_cadence.whatsapp_template.callback" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "response.completed",
-    "metadata": {
-      "name": "COMM-00003"
-    },
-    "data": [
-      {
-        "content": [
-          {
-            "type": "text",
-            "text": "{\"content\": \"Hi John, reaching out on WhatsApp regarding our recent conversation.\"}"
-          }
-        ]
-      }
-    ]
-  }'
+#### Inbound Callback Endpoint Return Value
+```json
+{
+  "name": "COMM-00003",
+  "doctype": "Communication",
+  "subject": "WhatsApp Message",
+  "content": "<p>Hi John, reaching out on WhatsApp regarding our recent conversation.</p>",
+  "delivery_status": "Scheduled"
+}
 ```
 
 ---
@@ -299,7 +352,7 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.whatsapp_template.ca
 ### 4. LinkedIn Template Callback Data Model
 
 - **Channel Endpoint**: `/api/method/frappe_cadence.linkedin_template.callback`
-- **Handler Method**: [`handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:97)
+- **Handler Method**: [`handle_callback`](apps/frappe_cadence/frappe_cadence/_template.py:198)
 
 #### Outbound Dispatch Payload
 ```json
@@ -340,10 +393,13 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.whatsapp_template.ca
 }
 ```
 
-#### Inbound Callback Response
+#### Inbound Callback Request
 ```json
 {
-  "type": "response.completed",
+  "success": true,
+  "type": "linkedin_template.complete",
+  "id": "wm-job-00004",
+  "webhookId": "wh-delivery-00004",
   "metadata": {
     "name": "COMM-00004"
   },
@@ -360,26 +416,15 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.whatsapp_template.ca
 }
 ```
 
-#### Inbound Callback cURL Example
-```bash
-curl -X POST "https://<your-site>/api/method/frappe_cadence.linkedin_template.callback" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "response.completed",
-    "metadata": {
-      "name": "COMM-00004"
-    },
-    "data": [
-      {
-        "content": [
-          {
-            "type": "text",
-            "text": "{\"content\": \"Hi John, enjoyed reading your post on AI workflows. Would love to connect!\"}"
-          }
-        ]
-      }
-    ]
-  }'
+#### Inbound Callback Endpoint Return Value
+```json
+{
+  "name": "COMM-00004",
+  "doctype": "Communication",
+  "subject": "LinkedIn Message",
+  "content": "<p>Hi John, enjoyed reading your post on AI workflows. Would love to connect!</p>",
+  "delivery_status": "Scheduled"
+}
 ```
 
 ---
@@ -389,66 +434,78 @@ curl -X POST "https://<your-site>/api/method/frappe_cadence.linkedin_template.ca
 ### Template Optimization Callback (`optimize_callback`)
 
 - **Endpoints**:
-  - n8n: `/api/method/frappe_cadence.integrations.n8n.optimize_callback`
-  - Sift: `/api/method/frappe_cadence.integrations.sift.optimize_callback`
-- **Webhook Metadata Model**:
-  ```json
+  - n8n: `/api/method/frappe_cadence.integrations.n8n.optimize_callback` (Handler: [`n8n.optimize_callback`](apps/frappe_cadence/frappe_cadence/integrations/n8n.py:284))
+  - Sift: `/api/method/frappe_cadence.integrations.sift.optimize_callback` (Handler: [`sift.optimize_callback`](apps/frappe_cadence/frappe_cadence/integrations/sift.py:102))
+
+#### Inbound Optimization Callback Request
+```json
+{
+  "success": true,
+  "type": "completed",
+  "id": "wm-job-00005",
+  "webhookId": "wh-delivery-00005",
   "metadata": {
     "doctype": "Email Template",
     "name": "ET-00001"
-  }
-  ```
-
-#### Inbound Optimization Callback cURL Example
-```bash
-curl -X POST "https://<your-site>/api/method/frappe_cadence.integrations.sift.optimize_callback" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "completed",
-    "metadata": {
-      "doctype": "Email Template",
-      "name": "ET-00001"
-    },
-    "data": [
-      {
-        "agent_name": "Sift AI Optimization Agent"
-      }
-    ]
-  }'
+  },
+  "data": [
+    {
+      "agent_name": "Sift AI Optimization Agent"
+    }
+  ]
+}
 ```
+
+#### Inbound Optimization Endpoint Return Value
+```json
+{
+  "name": "ET-00001",
+  "doctype": "Email Template",
+  "sift_id": "Sift AI Optimization Agent",
+  "status": "Disabled",
+  "enabled": 0
+}
+```
+
+---
 
 ### Annotation Prediction Callback (`predict_callback`)
 
 - **Endpoints**:
-  - n8n: `/api/method/frappe_cadence.integrations.n8n.predict_callback`
-  - Sift: `/api/method/frappe_cadence.integrations.sift.predict_callback`
-- **Webhook Metadata Model**:
-  ```json
+  - n8n: `/api/method/frappe_cadence.integrations.n8n.predict_callback` (Handler: [`n8n.predict_callback`](apps/frappe_cadence/frappe_cadence/integrations/n8n.py:417))
+  - Sift: `/api/method/frappe_cadence.integrations.sift.predict_callback` (Handler: [`sift.predict_callback`](apps/frappe_cadence/frappe_cadence/integrations/sift.py:228))
+
+#### Inbound Prediction Callback Request
+```json
+{
+  "success": true,
+  "type": "response.completed",
+  "id": "wm-job-00006",
+  "webhookId": "wh-delivery-00006",
   "metadata": {
     "doctype": "Email Template Annotation",
     "name": "ETA-00001"
-  }
-  ```
+  },
+  "data": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"subject\": \"Predicted Subject\", \"body\": \"Predicted Body\"}"
+        }
+      ]
+    }
+  ]
+}
+```
 
-#### Inbound Prediction Callback cURL Example
-```bash
-curl -X POST "https://<your-site>/api/method/frappe_cadence.integrations.sift.predict_callback" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "response.completed",
-    "metadata": {
-      "doctype": "Email Template Annotation",
-      "name": "ETA-00001"
-    },
-    "data": [
-      {
-        "content": [
-          {
-            "type": "text",
-            "text": "Predicted annotation output body text."
-          }
-        ]
-      }
-    ]
-  }'
+#### Inbound Prediction Endpoint Return Value
+```json
+{
+  "name": "ETA-00001",
+  "doctype": "Email Template Annotation",
+  "parent": "ET-00001",
+  "subject": "Predicted Subject",
+  "body": "Predicted Body"
+}
 ```
