@@ -50,7 +50,9 @@ def trigger_execution(template, payload: dict, channel: str, cadence_name: str, 
 
     callback_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
     payload["background"] = True
+    existing_webhook = payload.get("webhook") if isinstance(payload.get("webhook"), dict) else {}
     payload["webhook"] = {
+        **existing_webhook,
         "url": callback_url,
         "events": ["completed", "failed"]
     }

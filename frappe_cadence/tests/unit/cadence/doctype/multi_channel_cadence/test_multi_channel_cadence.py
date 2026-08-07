@@ -99,6 +99,7 @@ class TestMultiChannelCadenceLifecycle(UnitTestCase):
     def test_provider_agnostic_mcc_lifecycle(self, mock_get_doc, mock_enqueue, mock_get_all):
         mock_get_all.return_value = []
         mock_cadence = MagicMock()
+        mock_cadence.name = "Cadence-1"
         mock_cadence.provider = None
         sch = MagicMock()
         sch.name = "Sch-1"
@@ -146,6 +147,7 @@ class TestMultiChannelCadenceLifecycle(UnitTestCase):
         mock_get_all.return_value = [mock_comm_info]
         
         mock_comm = MagicMock()
+        mock_comm.name = "COMM-1"
         mock_get_doc.return_value = mock_comm
         
         mcc.on_update()
@@ -349,9 +351,11 @@ class TestMultiChannelCadence(UnitTestCase):
                     
                     data = json.loads(mock_post.call_args[1]["data"])
                     self.assertTrue(data.get("background"))
+                    self.assertNotIn("metadata", data)
                     self.assertIn("webhook", data)
                     self.assertEqual(data["webhook"]["url"], "http://test.com/webhook")
                     self.assertEqual(data["webhook"]["events"], ["completed", "failed"])
+                    self.assertEqual(data["webhook"]["metadata"], {"name": "COMM-001"})
                     self.assertEqual(data["model"], "agent-mcc")
                     
                     # Verify input payload structure
@@ -373,13 +377,17 @@ class TestMultiChannelCadence(UnitTestCase):
                         condition="argument.get('communication_id') == 'COMM-001'"
                     )
 
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.today")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_months")
     @patch("frappe_cadence.cadence.doctype.history.history.get_history")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.get_url")
     @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio")
-    def test_process_cadence_step_sift_payload_markdown(self, mock_get_user_bio, mock_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history):
+    def test_process_cadence_step_sift_payload_markdown(self, mock_get_user_bio, mock_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history, mock_add_months, mock_today):
+        mock_today.return_value = "2024-01-01"
+        mock_add_months.return_value = "2023-10-01"
         mock_get_url.return_value = "http://test.com/webhook"
         from frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence import process_schedule
         import json
@@ -409,6 +417,7 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_template = MagicMock()
         mock_template.status = "Enabled"
         mock_template.provider = "DSPy"
+        mock_template.sift_id = "agent-mcc-2"
         
         mock_lead = MagicMock()
         mock_lead.name = "LEAD-002"
@@ -437,6 +446,8 @@ class TestMultiChannelCadence(UnitTestCase):
                 return mock_lead
             elif len(args) == 1 and isinstance(args[0], dict) and args[0].get("doctype") == "Communication":
                 return mock_comm
+            elif args and args[0] == "System Settings":
+                return mock_sys_settings
             return original_get_doc(*args, **kwargs)
             
         original_get_single = frappe.get_single
@@ -473,6 +484,7 @@ class TestMultiChannelCadence(UnitTestCase):
                         self.assertIn("Sender Name: Test User", system_content)
                         self.assertIn("I am a **bold** user.", system_content)
 
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.today")
     @patch("frappe_cadence.cadence.doctype.history.history.get_history")
     @patch("frappe_cadence.integrations.n8n.requests.post")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
@@ -480,7 +492,8 @@ class TestMultiChannelCadence(UnitTestCase):
     @patch("frappe_cadence.integrations.n8n.get_url")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_months")
     @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio")
-    def test_process_cadence_step_n8n_integration(self, mock_get_user_bio, mock_add_months, mock_n8n_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history):
+    def test_process_cadence_step_n8n_integration(self, mock_get_user_bio, mock_add_months, mock_n8n_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history, mock_today):
+        mock_today.return_value = "2024-01-01"
         mock_get_user_bio.return_value = "<p>User Bio</p>"
         mock_n8n_get_url.return_value = "http://test.com/webhook"
         mock_add_months.return_value = "2024-01-01"
@@ -506,6 +519,7 @@ class TestMultiChannelCadence(UnitTestCase):
         mock_template = MagicMock()
         mock_template.status = "Enabled"
         mock_template.provider = "n8n"
+        mock_template.model = "agent-n8n-model"
         mock_template.subject = "Test N8N Subject"
         mock_template.response = "Test N8N Response"
         mock_template.response_html = None
@@ -523,6 +537,9 @@ class TestMultiChannelCadence(UnitTestCase):
 
         mock_get_all.return_value = []
 
+        mock_sys_settings = MagicMock()
+        mock_sys_settings.time_zone = "Asia/Kolkata"
+
         original_get_doc = frappe.get_doc
         def get_doc_side_effect(*args, **kwargs):
             if len(args) == 2 and args[0] == "Cadence Multi Channel Schedule":
@@ -535,12 +552,16 @@ class TestMultiChannelCadence(UnitTestCase):
                 return mock_lead
             elif len(args) == 1 and isinstance(args[0], dict) and args[0].get("doctype") == "Communication":
                 return mock_comm
+            elif args and args[0] == "System Settings":
+                return mock_sys_settings
             return original_get_doc(*args, **kwargs)
 
         original_get_single = frappe.get_single
         def get_single_side_effect(*args, **kwargs):
             if args[0] == "Sift Settings":
                 return MagicMock()
+            elif args[0] == "System Settings":
+                return mock_sys_settings
             return original_get_single(*args, **kwargs)
 
         original_get_value = frappe.db.get_value
@@ -567,8 +588,9 @@ class TestMultiChannelCadence(UnitTestCase):
 
                 data = json.loads(mock_post.call_args[1]["data"])
                 self.assertTrue(data.get("background"))
+                self.assertNotIn("metadata", data)
                 self.assertIn("webhook", data)
                 self.assertEqual(data["webhook"]["url"], "http://test.com/webhook")
-                self.assertIn("subject", data)
-                self.assertIn("response", data)
+                self.assertEqual(data["webhook"]["metadata"], {"name": "COMM-N8N"})
+                self.assertIn("response_format", data)
                 self.assertTrue(all(msg.get("role") == "user" for msg in data.get("input", [])))

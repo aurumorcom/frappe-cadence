@@ -70,49 +70,100 @@ class MultiChannelCadence(Document):
                         comm.reference_cadence_provider = provider
                         comm.save(ignore_permissions=True)
         
-        if self.has_value_changed("status"):
-            if self.status in ["Scheduled", "In Progress"]:
-                existing_jobs = False
-                jobs = frappe.get_all("FS Job", filters={"status": ["in", ["queued", "started", "deferred"]]}, fields=["name", "arguments"])
-                for job in jobs:
-                    import json
-                    try:
-                        kwargs = json.loads(job.arguments)
-                        if kwargs.get("cadence_name") == self.name:
-                            existing_jobs = True
-                            break
-                    except Exception:
-                        pass
+        if self.has_value_changed("status") or self.status == "Draft":
+            if self.status in ["Draft", "Scheduled", "In Progress"]:
+                _enqueue_schedule_jobs(self, cadence)
                 
-                if not existing_jobs:
-                    # Enqueue New Jobs
-                    for idx, schedule in enumerate(cadence.cadence_schedules):
-                        # Check if a Communication record exists for this cadence_name and schedule_name
-                        comm = frappe.get_all("Communication", filters={
-                            "reference_doctype": "Multi Channel Cadence",
-                            "reference_name": self.name,
-                            "cadence_schedule": schedule.name
-                        }, fields=["name", "delivery_status"])
-                        
-                        if comm:
-                            if comm[0].delivery_status == "Sent":
-                                continue # Skip this schedule
-                            else:
-                                frappe.delete_doc("Communication", comm[0].name)
-                        
-                        previous_schedule_name = cadence.cadence_schedules[idx - 1].name if idx > 0 else None
-                        
-                        enqueue(
-                            "frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.process_schedule",
-                            queue="medium",
-                            cadence_name=self.name,
-                            schedule_name=schedule.name,
-                            previous_schedule_name=previous_schedule_name
-                        )
-                else:
-                    if self.status in ["Scheduled", "In Progress"]:
-                        emit_event("mcc_scheduled", {"doctype": self.doctype, "name": self.name})
-                        emit_event("mcc_in_progress", {"doctype": self.doctype, "name": self.name})
+            if self.status in ["Scheduled", "In Progress"]:
+                emit_event("mcc_scheduled", {"doctype": self.doctype, "name": self.name})
+                emit_event("mcc_in_progress", {"doctype": self.doctype, "name": self.name})
+
+
+def _is_mcc_ready_for_scheduling(cadence_name: str) -> bool:
+    """
+    Checks if all cadence schedules for a given MCC in Draft status have a completed
+    Communication (delivery_status in ['Scheduled', 'Sent']).
+    """
+    mcc = frappe.get_doc("Multi Channel Cadence", cadence_name)
+    if mcc.status != "Draft":
+        return False
+
+    cadence = frappe.get_doc("Cadence", mcc.cadence_name)
+    if not cadence.cadence_schedules:
+        return False
+
+    schedule_names = [s.name for s in cadence.cadence_schedules]
+
+    comms = frappe.get_all(
+        "Communication",
+        filters={
+            "reference_doctype": "Multi Channel Cadence",
+            "reference_name": cadence_name,
+            "cadence_schedule": ["in", schedule_names],
+            "delivery_status": ["in", ["Scheduled", "Sent"]]
+        },
+        fields=["cadence_schedule"]
+    )
+
+    completed_schedules = {c.cadence_schedule for c in comms}
+    return len(completed_schedules) == len(schedule_names)
+
+
+def check_and_transition_mcc_draft_to_scheduled(cadence_name: str) -> bool:
+    """
+    If all communications for an MCC in 'Draft' status are generated and ready,
+    automatically transitions MCC status to 'Scheduled' and emits event.
+    """
+    if not _is_mcc_ready_for_scheduling(cadence_name):
+        return False
+
+    mcc = frappe.get_doc("Multi Channel Cadence", cadence_name)
+    mcc.status = "Scheduled"
+    mcc.flags.ignore_permissions = True
+    mcc.save()
+
+    emit_event("mcc_scheduled", {"doctype": "Multi Channel Cadence", "name": cadence_name})
+    return True
+
+
+def _enqueue_schedule_jobs(mcc_doc, cadence_doc):
+    """
+    Idempotently enqueues process_schedule jobs for all schedules in a cadence.
+    """
+    existing_jobs = False
+    jobs = frappe.get_all("FS Job", filters={"status": ["in", ["queued", "started", "deferred"]]}, fields=["name", "arguments"])
+    for job in jobs:
+        try:
+            kwargs = json.loads(job.arguments)
+            if kwargs.get("cadence_name") == mcc_doc.name:
+                existing_jobs = True
+                break
+        except Exception:
+            pass
+
+    if not existing_jobs:
+        for idx, schedule in enumerate(cadence_doc.cadence_schedules):
+            comm = frappe.get_all("Communication", filters={
+                "reference_doctype": "Multi Channel Cadence",
+                "reference_name": mcc_doc.name,
+                "cadence_schedule": schedule.name
+            }, fields=["name", "delivery_status"])
+
+            if comm:
+                if comm[0].delivery_status == "Sent":
+                    continue
+                elif mcc_doc.status in ["Scheduled", "In Progress"]:
+                    frappe.delete_doc("Communication", comm[0].name)
+
+            previous_schedule_name = cadence_doc.cadence_schedules[idx - 1].name if idx > 0 else None
+
+            enqueue(
+                "frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.process_schedule",
+                queue="medium",
+                cadence_name=mcc_doc.name,
+                schedule_name=schedule.name,
+                previous_schedule_name=previous_schedule_name
+            )
 
 def on_update(doc, method):
  """Update the hidden 'cadences' child table on CRM Lead for filtering purposes"""
@@ -166,7 +217,7 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
     if mcc.status in ["Completed", "Error", "Unsubscribed"]:
         return
 
-    if mcc.status in ["Draft", "Provisioning"]:
+    if mcc.status == "Provisioning":
         wait_for_event(
             event_key="mcc_scheduled" if mcc.status != "In Progress" else "mcc_in_progress",
             condition=f"argument.get('doctype') == 'Multi Channel Cadence' and argument.get('name') == '{cadence_name}'"
@@ -241,6 +292,7 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
         })
         comm.insert(ignore_permissions=True)
         emit_event("cadence_step_completed", {"cadence_name": cadence_name, "schedule_name": schedule_name})
+        check_and_transition_mcc_draft_to_scheduled(cadence_name)
         return
 
     if template_provider in ["DSPy", "n8n"] and template.status == "Enabled":
@@ -303,9 +355,6 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             tpl_response_md = markdownify(tpl_response) if tpl_response else ""
 
             payload = {
-                "metadata": {
-                    "name": comm_name
-                },
                 "response_format": {
                     "type": "json_schema",
                     "json_schema": {
@@ -359,15 +408,32 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             payload["input"].extend(history_messages)
 
             if template_provider == "n8n":
-                payload["model"] = getattr(template, "model", None)
+                raw_model = getattr(template, "model", None)
             elif template_provider == "DSPy":
-                payload["model"] = getattr(template, "sift_id", None)
+                raw_model = getattr(template, "sift_id", None)
+            else:
+                raw_model = None
+
+            if isinstance(raw_model, str):
+                payload["model"] = raw_model
+            elif raw_model and isinstance(raw_model, (int, float)):
+                payload["model"] = str(raw_model)
             else:
                 payload["model"] = None
             
             cache_val = frappe.cache().get_value(f"ai_req:{cadence_name}:{schedule_name}")
             
             if not cache_val:
+                webhook_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
+                payload["background"] = True
+                payload["webhook"] = {
+                    "url": webhook_url,
+                    "events": ["completed", "failed"],
+                    "metadata": {
+                        "name": comm_name
+                    }
+                }
+
                 if template_provider == "n8n":
                     from frappe_cadence.integrations.n8n import trigger_execution
                     trigger_execution(template, payload, channel, cadence_name, schedule_name)
@@ -380,14 +446,6 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                         headers = {"Content-Type": "application/json"}
                         if sift_api_key:
                             headers["Authorization"] = f"Bearer {sift_api_key}"
-                        
-                        # Add webhook info to payload so Sift knows where to callback
-                        webhook_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
-                        payload["background"] = True
-                        payload["webhook"] = {
-                            "url": webhook_url,
-                            "events": ["completed", "failed"]
-                        }
 
                         payload_json = json.dumps(payload, separators=(',', ':'))
                         

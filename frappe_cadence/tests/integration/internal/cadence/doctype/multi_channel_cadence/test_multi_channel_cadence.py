@@ -131,6 +131,26 @@ class TestMultiChannelCadence(IntegrationTestCase):
         mock_enqueue.assert_has_calls(calls)
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.enqueue")
+    def test_on_update_enqueues_steps_when_saving_in_draft_status(self, mock_enqueue):
+        draft_cadence = frappe.get_doc({
+            "doctype": "Multi Channel Cadence",
+            "cadence_name": self.master_cadence.name,
+            "cadence_for": "CRM Lead",
+            "recipient": self.lead_name,
+            "start_date": "2024-01-01",
+            "status": "Draft"
+        }).insert(ignore_permissions=True)
+
+        mock_enqueue.reset_mock()
+
+        # Save again while keeping status as Draft
+        draft_cadence.on_update()
+
+        # Assert enqueue was called for all steps
+        self.assertEqual(mock_enqueue.call_count, 3)
+        frappe.delete_doc("Multi Channel Cadence", draft_cadence.name, ignore_permissions=True, force=True)
+
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.enqueue")
     def test_on_update_skips_sent_communications(self, mock_enqueue):
         self.cadence.insert(ignore_permissions=True)
         mock_enqueue.reset_mock()
@@ -319,8 +339,8 @@ class TestAgentUtils(IntegrationTestCase):
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
     def test_process_step_waits_for_mcc_status(self, mock_wait):
-        # Set MCC status to Draft
-        frappe.db.set_value("Multi Channel Cadence", self.cadence_name, "status", "Draft")
+        # Set MCC status to Provisioning
+        frappe.db.set_value("Multi Channel Cadence", self.cadence_name, "status", "Provisioning")
         
         process_schedule(self.cadence_name, self.schedule_name, self.prev_schedule_name)
         
@@ -331,6 +351,28 @@ class TestAgentUtils(IntegrationTestCase):
         
         # Restore status
         frappe.db.set_value("Multi Channel Cadence", self.cadence_name, "status", "Scheduled")
+
+    def test_draft_message_generation_and_auto_transition_to_scheduled(self):
+        # Ensure template is Enabled
+        frappe.db.set_value("Email Template", "Test Email Template", "status", "Enabled")
+        frappe.db.set_value("Email Template", "Test Email Template", "enabled", 1)
+
+        # Set status to Draft
+        frappe.db.set_value("Multi Channel Cadence", self.cadence_name, "status", "Draft")
+
+        # Process schedule while in Draft status
+        process_schedule(self.cadence_name, self.schedule_name)
+
+        # Verify Communication document created during Draft stage
+        comms = frappe.get_all("Communication", filters={
+            "reference_doctype": "Multi Channel Cadence",
+            "reference_name": self.cadence_name
+        })
+        self.assertTrue(len(comms) > 0)
+
+        # MCC should automatically transition from Draft to Scheduled upon completion
+        mcc = frappe.get_doc("Multi Channel Cadence", self.cadence_name)
+        self.assertEqual(mcc.status, "Scheduled")
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.emit_event")
     def test_on_update_emits_resume_event(self, mock_emit):
