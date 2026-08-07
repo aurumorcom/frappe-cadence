@@ -58,9 +58,26 @@ class WebhookResponse:
         return self.success and not bool(self.error)
 
 
-def extract_output_text(data: Any) -> str:
+def get_raw_payload(kwargs: Optional[dict] = None) -> dict:
+    if kwargs and isinstance(kwargs, dict):
+        return kwargs
+    if getattr(frappe, "request", None):
+        req = frappe.request
+        if hasattr(req, "get_json") and callable(req.get_json):
+            try:
+                json_payload = req.get_json(silent=True)
+                if json_payload and isinstance(json_payload, dict):
+                    return json_payload
+            except Exception:
+                pass
+        elif hasattr(req, "json") and isinstance(getattr(req, "json", None), dict):
+            return req.json
+    return getattr(frappe, "form_dict", {}) or {}
+
+
+def extract_output_text(data: Any) -> Union[str, Dict[str, Any]]:
     """
-    Extracts output text from data across array, object, or string payloads.
+    Extracts output text or dictionary from data across array, object, or string payloads.
     """
     if isinstance(data, str):
         try:
@@ -68,20 +85,31 @@ def extract_output_text(data: Any) -> str:
         except Exception:
             return data
 
+    extracted = ""
     if isinstance(data, list) and len(data) > 0:
         first = data[0]
         if isinstance(first, dict):
             content = first.get("content", [])
             if isinstance(content, list) and len(content) > 0 and isinstance(content[0], dict):
-                return content[0].get("text", "")
-            return first.get("text") or first.get("output") or ""
+                extracted = content[0].get("text", "")
+            else:
+                extracted = first.get("text") or first.get("output") or ""
     elif isinstance(data, dict):
         content = data.get("content", [])
         if isinstance(content, list) and len(content) > 0 and isinstance(content[0], dict):
-            return content[0].get("text", "")
-        return data.get("text") or data.get("output") or ""
+            extracted = content[0].get("text", "")
+        else:
+            extracted = data.get("text") or data.get("output") or ""
 
-    return ""
+    if isinstance(extracted, str) and extracted.strip().startswith("{"):
+        try:
+            parsed = json.loads(extracted)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            pass
+
+    return extracted
 
 
 def extract_agent_name(data: Any) -> Optional[str]:
@@ -175,32 +203,38 @@ def build_annotation_messages(ann) -> list:
 
     return messages
 
-def update_annotation_output(annotation_doctype: str, annotation_id: str, output_text: str) -> bool:
+def update_annotation_output(annotation_doctype: str, annotation_id: str, output_text: Union[str, Dict[str, Any]]) -> bool:
     if not annotation_id or not output_text or not annotation_doctype:
         return False
 
-    if output_text.strip().startswith("{"):
-        try:
-            parsed = json.loads(output_text)
-            for key, value in parsed.items():
-                frappe.db.set_value(annotation_doctype, annotation_id, key, value)
-            return True
-        except Exception:
-            if frappe.get_meta(annotation_doctype).has_field("output"):
-                frappe.db.set_value(annotation_doctype, annotation_id, "output", output_text)
-                return True
-    else:
-        frappe.db.set_value(annotation_doctype, annotation_id, "output", output_text)
+    if isinstance(output_text, dict):
+        for key, value in output_text.items():
+            frappe.db.set_value(annotation_doctype, annotation_id, key, value)
         return True
+
+    if isinstance(output_text, str):
+        if output_text.strip().startswith("{"):
+            try:
+                parsed = json.loads(output_text)
+                if isinstance(parsed, dict):
+                    for key, value in parsed.items():
+                        frappe.db.set_value(annotation_doctype, annotation_id, key, value)
+                    return True
+            except Exception:
+                pass
+
+        if frappe.get_meta(annotation_doctype).has_field("output"):
+            frappe.db.set_value(annotation_doctype, annotation_id, "output", output_text)
+            return True
 
     return False
 
-def handle_callback() -> dict:
+def handle_callback(**kwargs) -> dict:
     """
     Unified webhook callback handler for template Sift/n8n AI callbacks.
     """
     try:
-        raw_payload = (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
+        raw_payload = get_raw_payload(kwargs)
         payload = WebhookResponse(raw_payload)
         
         if payload.is_started:
@@ -233,11 +267,24 @@ def handle_callback() -> dict:
         if not communication_id:
             return {"status": "error", "message": "Missing communication_id in metadata"}
             
-        output_text = extract_output_text(payload.data)
-        if not output_text:
+        output_data = extract_output_text(payload.data)
+        if not output_data:
             return {"status": "error", "message": "Missing output text"}
             
-        parsed_json = json.loads(output_text)
+        if isinstance(output_data, dict):
+            parsed_json = output_data
+        elif isinstance(output_data, str):
+            if output_data.strip().startswith("{"):
+                try:
+                    parsed_json = json.loads(output_data)
+                    if not isinstance(parsed_json, dict):
+                        parsed_json = {"content": output_data}
+                except Exception:
+                    parsed_json = {"content": output_data}
+            else:
+                parsed_json = {"content": output_data}
+        else:
+            parsed_json = {}
         
         comm = frappe.get_doc("Communication", communication_id)
         if parsed_json.get("subject"):
