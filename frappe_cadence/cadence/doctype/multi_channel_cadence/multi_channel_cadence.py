@@ -174,8 +174,8 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
 
     if mcc.status == "Provisioning":
         wait_for_event(
-            event_key="mcc_scheduled" if mcc.status != "In Progress" else "mcc_in_progress",
-            condition=f"argument.get('doctype') == 'Multi Channel Cadence' and argument.get('name') == '{cadence_name}'"
+            event_key=f"doc:Multi Channel Cadence:{cadence_name}:on_update",
+            condition="argument.get('status') in ['Draft', 'Scheduled', 'In Progress']"
         )
         return
 
@@ -213,10 +213,10 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
     template = frappe.get_doc(template_doctype, template_name)
     
     if template.status != "Enabled":
-        event_key = f"{template_doctype.lower().replace(' ', '_')}_enabled"
+        event_key = f"doc:{template_doctype}:on_update"
         wait_for_event(
             event_key=event_key,
-            condition=f"argument.get('doctype') == '{template_doctype}' and argument.get('name') == '{template_name}' and argument.get('enabled') == 1"
+            condition=f"argument.get('name') == '{template_name}' and (argument.get('status') == 'Enabled' or argument.get('enabled') == 1)"
         )
         return
 
@@ -330,7 +330,10 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             sender_user = mcc.sender or mcc.owner
             sender_bio_content = get_user_bio(sender_user, mcc.cadence_name)
             if not sender_bio_content:
-                wait_for_event("user_bio_created", condition=f"argument.get('reference_user') == '{sender_user}'")
+                wait_for_event(
+                    event_key="doc:User Bio:on_update",
+                    condition=f"argument.get('reference_user') == '{sender_user}' and argument.get('enabled') == 1 and (argument.get('reference_cadence') == '{mcc.cadence_name}' or argument.get('is_default') == 1)"
+                )
                 return
                 
             sender = frappe.db.get_value("User", sender_user, ["full_name"], as_dict=True) or {}
