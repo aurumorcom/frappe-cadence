@@ -74,7 +74,7 @@ def report_event(event_type: str, context: dict, data: dict = None):
                 "url": data.get("url", "https://example.com") if data else "https://example.com"
             }).insert(ignore_permissions=True)
             emit_event("mcc_completed", {"mcc_name": mcc_name})
-            emit_event("cadence_step_completed", {"mcc_name": mcc_name})
+            emit_event("cadence_step_completed", {"cadence_name": mcc_name})
         if comm_name:
             frappe.db.set_value("Communication", comm_name, "status", "Replied")
             frappe.db.set_value("Communication", comm_name, "delivery_status", "Sent")
