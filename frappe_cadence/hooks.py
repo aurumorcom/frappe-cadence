@@ -131,28 +131,22 @@ doc_events = {
 	"Email Template": {
 		"before_save": [
 			"frappe_cadence.cadence.doctype.email_template.email_template.before_save"
-		],
-		"on_update": [
-			"frappe_cadence.cadence.doctype.email_template.email_template.on_update"
 		]
 	},
 	"SMS Template": {
 		"before_save": [
 			"frappe_cadence.cadence.doctype.sms_template.sms_template.before_save"
-		],
-		"on_update": "frappe_cadence.cadence.doctype.sms_template.sms_template.on_update"
+		]
 	},
 	"LinkedIn Template": {
 		"before_save": [
 			"frappe_cadence.cadence.doctype.linkedin_template.linkedin_template.before_save"
-		],
-		"on_update": "frappe_cadence.cadence.doctype.linkedin_template.linkedin_template.on_update"
+		]
 	},
 	"WhatsApp Template": {
 		"before_save": [
 			"frappe_cadence.cadence.doctype.whatsapp_template.whatsapp_template.before_save"
-		],
-		"on_update": "frappe_cadence.cadence.doctype.whatsapp_template.whatsapp_template.on_update"
+		]
 	},
 	"Communication": {
 		"on_update": "frappe_cadence.cadence.doctype.communication.communication.on_update"
