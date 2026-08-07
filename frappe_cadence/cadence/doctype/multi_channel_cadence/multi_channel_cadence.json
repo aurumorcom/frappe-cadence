@@ -14,6 +14,7 @@
   "start_date",
   "end_date",
   "status",
+  "last_status",
   "provider"
  ],
  "fields": [
@@ -31,6 +32,13 @@
    "fieldtype": "Select",
    "label": "Status",
    "options": "Provisioning\nDraft\nScheduled\nIn Progress\nCompleted\nUnsubscribed\nError"
+  },
+  {
+   "fieldname": "last_status",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Last Status",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_4",
