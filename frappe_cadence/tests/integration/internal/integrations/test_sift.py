@@ -78,7 +78,7 @@ class TestSiftIntegration(IntegrationTestCase):
             "subject": "Expected Subject",
             "salutation": "Expected Salutation",
             "body": "Expected Body",
-            "cta": "Expected CTA",
+            "call_to_action": "Expected CTA",
             "sign_off": "Expected Sign Off"
         })
         annotation.insert(ignore_permissions=True)
@@ -146,9 +146,12 @@ class TestSiftIntegration(IntegrationTestCase):
         template.insert(ignore_permissions=True)
         template.db_set("status", "Optimizing")
 
-        # Test completed event
+        # Test completed event using WebhookResponse schema
         completed_payload = {
+            "success": True,
             "type": "agent.completed",
+            "id": "wm-job-123",
+            "webhookId": "wh-delivery-123",
             "metadata": {
                 "doctype": template.doctype,
                 "name": template.name
@@ -156,14 +159,19 @@ class TestSiftIntegration(IntegrationTestCase):
             "data": [{"agent_name": "test_agent_123"}]
         }
         res = optimize_callback(**completed_payload)
-        self.assertEqual(res.get("status"), "success")
+        self.assertEqual(res.get("name"), template.name)
+        self.assertEqual(res.get("sift_id"), "test_agent_123")
+        self.assertEqual(res.get("status"), "Disabled")
         
         template.reload()
         self.assertEqual(template.sift_id, "test_agent_123")
         self.assertEqual(template.status, "Disabled")
 
         # Test failed event
+        template.db_set("enabled", 1)
+        template.db_set("status", "Optimizing")
         failed_payload = {
+            "success": False,
             "type": "agent.failed",
             "metadata": {
                 "doctype": template.doctype,
@@ -173,6 +181,7 @@ class TestSiftIntegration(IntegrationTestCase):
         }
         res = optimize_callback(**failed_payload)
         self.assertEqual(res.get("status"), "failed")
+        self.assertEqual(res.get("error"), "Optimization failed")
         
         template.reload()
         self.assertEqual(template.status, "Enabled")
@@ -207,6 +216,7 @@ class TestSiftIntegration(IntegrationTestCase):
 
         # Test started event
         started_payload = {
+            "success": True,
             "type": "response.started",
             "metadata": {
                 "name": annotation.name,
@@ -216,8 +226,9 @@ class TestSiftIntegration(IntegrationTestCase):
         res = predict_callback(**started_payload)
         self.assertEqual(res.get("status"), "ignored")
 
-        # Test completed event
+        # Test completed event returning updated annotation document
         completed_payload = {
+            "success": True,
             "type": "response.completed",
             "metadata": {
                 "name": annotation.name,
@@ -235,7 +246,9 @@ class TestSiftIntegration(IntegrationTestCase):
                 ]
         }
         res = predict_callback(**completed_payload)
-        self.assertEqual(res.get("status"), "success")
+        self.assertEqual(res.get("name"), annotation.name)
+        self.assertEqual(res.get("subject"), "Predicted Subject")
+        self.assertEqual(res.get("body"), "Predicted Body")
         
         annotation.reload()
         self.assertEqual(annotation.subject, "Predicted Subject")
@@ -303,7 +316,7 @@ class TestSiftUtils(IntegrationTestCase):
             "subject": "",
             "salutation": "",
             "body": "",
-            "cta": "",
+            "call_to_action": "",
             "sign_off": ""
         }).insert(ignore_if_duplicate=True, ignore_links=True)
         
@@ -318,7 +331,7 @@ class TestSiftUtils(IntegrationTestCase):
             "subject": "test subject 2",
             "salutation": "test salutation 2",
             "body": "test body 2",
-            "cta": "test cta 2",
+            "call_to_action": "test call_to_action 2",
             "sign_off": "test sign_off 2",
             "feedback": "good job"
         }).insert(ignore_if_duplicate=True, ignore_links=True)
@@ -468,6 +481,7 @@ class TestSiftUtils(IntegrationTestCase):
         from frappe_cadence.integrations.sift import optimize_callback
         
         kwargs = {
+            "success": True,
             "type": "agent.completed",
             "metadata": {
                 "doctype": "Email Template",
@@ -478,7 +492,9 @@ class TestSiftUtils(IntegrationTestCase):
         
         result = optimize_callback(**kwargs)
         
-        self.assertEqual(result.get("status"), "success")
+        self.assertEqual(result.get("name"), self.template.name)
+        self.assertEqual(result.get("sift_id"), "sift-agent-123")
+        self.assertEqual(result.get("status"), "Disabled")
         self.template.reload()
         self.assertEqual(self.template.sift_id, "sift-agent-123")
         self.assertEqual(self.template.status, "Disabled")
@@ -562,6 +578,7 @@ class TestSiftUtils(IntegrationTestCase):
         }
         
         kwargs = {
+            "success": True,
             "type": "response.completed",
             "metadata": {
                 "name": self.annotation.name,
@@ -571,7 +588,9 @@ class TestSiftUtils(IntegrationTestCase):
         }
         
         result = predict_callback(**kwargs)
-        self.assertEqual(result.get("status"), "success")
+        self.assertEqual(result.get("name"), self.annotation.name)
+        self.assertEqual(result.get("subject"), "predicted subject")
+        self.assertEqual(result.get("body"), "predicted body")
         
         self.annotation.reload()
         self.assertEqual(self.annotation.subject, "predicted subject")
@@ -581,6 +600,7 @@ class TestSiftUtils(IntegrationTestCase):
         from frappe_cadence.integrations.sift import predict_callback
         
         kwargs = {
+            "success": True,
             "type": "response.completed",
             "metadata": {
                 "name": self.whatsapp_annotation.name,
@@ -590,7 +610,8 @@ class TestSiftUtils(IntegrationTestCase):
         }
         
         result = predict_callback(**kwargs)
-        self.assertEqual(result.get("status"), "success")
+        self.assertEqual(result.get("name"), self.whatsapp_annotation.name)
+        self.assertEqual(result.get("output"), "new unstructured output")
         
         self.whatsapp_annotation.reload()
         self.assertEqual(self.whatsapp_annotation.output, "new unstructured output")
