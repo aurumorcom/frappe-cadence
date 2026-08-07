@@ -165,8 +165,9 @@ class TestN8NIntegration(IntegrationTestCase):
         self.assertIn("subject", schema["properties"])
         self.assertIn("content", schema["properties"])
 
-        # Test optimize_callback validates output and resets template status without creating Communication docs
+        # Test optimize_callback returning updated Template doc dict
         callback_payload = {
+            "success": True,
             "type": "response.completed",
             "metadata": {
                 "doctype": "Email Template",
@@ -180,7 +181,8 @@ class TestN8NIntegration(IntegrationTestCase):
         }
 
         cb_res = optimize_callback(**callback_payload)
-        self.assertEqual(cb_res.get("status"), "success")
+        self.assertEqual(cb_res.get("name"), template.name)
+        self.assertEqual(cb_res.get("status"), "Enabled")
 
         template.reload()
         self.assertEqual(template.status, "Enabled")
@@ -239,4 +241,3 @@ class TestN8NIntegration(IntegrationTestCase):
 
         template.reload()
         self.assertEqual(template.status, "Enabled")
-
