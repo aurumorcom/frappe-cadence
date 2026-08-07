@@ -1,6 +1,5 @@
 import frappe
 from frappe.model.document import Document
-from frappe_controller.utils.controller import emit_event
 
 class UserBio(Document):
     def validate(self):
@@ -18,8 +17,6 @@ class UserBio(Document):
             
         return True
 
-    def on_update(self):
-        emit_event("user_bio_created", {"reference_user": self.reference_user})
 
 @frappe.whitelist()
 def get_user_bio(reference_user, reference_cadence=None):
