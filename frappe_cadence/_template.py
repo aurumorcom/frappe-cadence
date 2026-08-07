@@ -1,7 +1,108 @@
 import json
 import frappe
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, Optional
 from frappe_controller.utils.controller import emit_event
+
+class ParsedWebhookPayload:
+    """
+    Standardized parser for WebhookResponse schema:
+    - success: bool -> Primary decision flag for completed (True) vs failed (False)
+    - type: str -> Used only to detect in-between statuses like "started"
+    - id: str -> Job ID / UUID
+    - webhookId: str -> Delivery UUID
+    - data: Any -> Payload content
+    - error: Optional[str] -> Error string
+    - metadata: Optional[Dict[str, Any]] -> Context metadata
+    """
+    def __init__(self, raw_payload: dict):
+        self.success: bool = bool(raw_payload.get("success", True))
+        self.type: str = str(raw_payload.get("type") or "").strip().lower()
+        self.id: str = str(raw_payload.get("id") or "").strip()
+        self.webhook_id: str = str(raw_payload.get("webhookId") or raw_payload.get("webhook_id") or "").strip()
+        self.error: Optional[str] = raw_payload.get("error")
+
+        # Normalize metadata (dict or stringified JSON)
+        raw_meta = raw_payload.get("metadata") or {}
+        if isinstance(raw_meta, str):
+            try:
+                raw_meta = json.loads(raw_meta)
+            except Exception:
+                raw_meta = {}
+        self.metadata: Dict[str, Any] = raw_meta if isinstance(raw_meta, dict) else {}
+
+        # Normalize data (list, dict, or stringified JSON)
+        raw_data = raw_payload.get("data")
+        if isinstance(raw_data, str):
+            try:
+                raw_data = json.loads(raw_data)
+            except Exception:
+                pass
+        self.data: Any = raw_data
+
+    @property
+    def is_started(self) -> bool:
+        """Type is only inspected to filter out in-between 'started' events."""
+        action = self.type.split(".")[-1] if "." in self.type else self.type
+        return action in ("started", "start")
+
+    @property
+    def is_failed(self) -> bool:
+        if self.is_started:
+            return False
+        return not self.success or bool(self.error)
+
+    @property
+    def is_completed(self) -> bool:
+        if self.is_started:
+            return False
+        return self.success and not bool(self.error)
+
+
+def extract_output_text(data: Any) -> str:
+    """
+    Extracts output text from data across array, object, or string payloads.
+    """
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except Exception:
+            return data
+
+    if isinstance(data, list) and len(data) > 0:
+        first = data[0]
+        if isinstance(first, dict):
+            content = first.get("content", [])
+            if isinstance(content, list) and len(content) > 0 and isinstance(content[0], dict):
+                return content[0].get("text", "")
+            return first.get("text") or first.get("output") or ""
+    elif isinstance(data, dict):
+        content = data.get("content", [])
+        if isinstance(content, list) and len(content) > 0 and isinstance(content[0], dict):
+            return content[0].get("text", "")
+        return data.get("text") or data.get("output") or ""
+
+    return ""
+
+
+def extract_agent_name(data: Any) -> Optional[str]:
+    """
+    Extracts agent_name / sift_id from data across array, object, or string payloads.
+    """
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except Exception:
+            return None
+
+    if isinstance(data, list) and len(data) > 0:
+        first = data[0]
+        if isinstance(first, dict):
+            return first.get("agent_name") or first.get("sift_id")
+    elif isinstance(data, dict):
+        return data.get("agent_name") or data.get("sift_id")
+
+    return None
+
 
 def get_annotation_system_fields() -> list:
     return ['name', 'owner', 'creation', 'modified', 'modified_by', 'parent', 'parentfield', 'parenttype', 'idx', 'reference_doctype', 'reference_name', 'sender', 'score', 'feedback', '_user_tags', '_comments', '_assign', '_liked_by']
@@ -99,13 +200,13 @@ def handle_callback() -> dict:
     Unified webhook callback handler for template Sift/n8n AI callbacks.
     """
     try:
-        payload = frappe.request.json
-        event_type = payload.get("type")
+        raw_payload = (getattr(frappe, "request", None) and frappe.request.json) or getattr(frappe, "form_dict", {}) or {}
+        payload = ParsedWebhookPayload(raw_payload)
         
-        if event_type and event_type.endswith(".started"):
+        if payload.is_started:
             return {"status": "ignored"}
             
-        communication_id = payload.get("metadata", {}).get("name")
+        communication_id = payload.metadata.get("name")
         if communication_id and frappe.db.exists("Communication", communication_id):
             comm = frappe.get_doc("Communication", communication_id)
             if comm.cadence_schedule:
@@ -120,25 +221,19 @@ def handle_callback() -> dict:
                 except Exception as ex:
                     frappe.log_error("Failed to reset template status on callback failure", str(ex))
 
-            if event_type and event_type.endswith(".failed"):
-                error_msg = payload.get("error") or "Unknown error"
+            if payload.is_failed:
+                error_msg = payload.error or "Unknown error"
                 frappe.log_error(title="Sift Callback Failed", message=error_msg)
                 comm.delivery_status = "Failed"
                 comm.content = f"AI Generation Failed: {error_msg}"
                 comm.save(ignore_permissions=True)
                 emit_event("callback", {"communication_id": communication_id, "error": error_msg})
-                return {"status": "failed"}
+                return {"status": "failed", "error": error_msg, "communication": comm.as_dict()}
 
         if not communication_id:
             return {"status": "error", "message": "Missing communication_id in metadata"}
             
-        data = payload.get("data", [])
-        output_text = ""
-        if isinstance(data, list) and len(data) > 0:
-            content_list = data[0].get("content", [])
-            if content_list and isinstance(content_list, list) and len(content_list) > 0:
-                output_text = content_list[0].get("text", "")
-                
+        output_text = extract_output_text(payload.data)
         if not output_text:
             return {"status": "error", "message": "Missing output text"}
             
@@ -175,7 +270,7 @@ def handle_callback() -> dict:
         
         emit_event("callback", {"communication_id": communication_id})
 
-        return {"status": "success"}
+        return comm.as_dict()
     except Exception as e:
         frappe.log_error(title="Sift Callback Error", message=str(e))
         return {"status": "error", "message": str(e)}
