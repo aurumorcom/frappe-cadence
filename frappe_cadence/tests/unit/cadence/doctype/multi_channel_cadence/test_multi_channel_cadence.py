@@ -377,13 +377,17 @@ class TestMultiChannelCadence(UnitTestCase):
                         condition="argument.get('communication_id') == 'COMM-001'"
                     )
 
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.today")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_months")
     @patch("frappe_cadence.cadence.doctype.history.history.get_history")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.get_url")
     @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio")
-    def test_process_cadence_step_sift_payload_markdown(self, mock_get_user_bio, mock_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history):
+    def test_process_cadence_step_sift_payload_markdown(self, mock_get_user_bio, mock_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history, mock_add_months, mock_today):
+        mock_today.return_value = "2024-01-01"
+        mock_add_months.return_value = "2023-10-01"
         mock_get_url.return_value = "http://test.com/webhook"
         from frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence import process_schedule
         import json
@@ -442,6 +446,8 @@ class TestMultiChannelCadence(UnitTestCase):
                 return mock_lead
             elif len(args) == 1 and isinstance(args[0], dict) and args[0].get("doctype") == "Communication":
                 return mock_comm
+            elif args and args[0] == "System Settings":
+                return mock_sys_settings
             return original_get_doc(*args, **kwargs)
             
         original_get_single = frappe.get_single
@@ -478,6 +484,7 @@ class TestMultiChannelCadence(UnitTestCase):
                         self.assertIn("Sender Name: Test User", system_content)
                         self.assertIn("I am a **bold** user.", system_content)
 
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.today")
     @patch("frappe_cadence.cadence.doctype.history.history.get_history")
     @patch("frappe_cadence.integrations.n8n.requests.post")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
@@ -485,7 +492,8 @@ class TestMultiChannelCadence(UnitTestCase):
     @patch("frappe_cadence.integrations.n8n.get_url")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_months")
     @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio")
-    def test_process_cadence_step_n8n_integration(self, mock_get_user_bio, mock_add_months, mock_n8n_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history):
+    def test_process_cadence_step_n8n_integration(self, mock_get_user_bio, mock_add_months, mock_n8n_get_url, mock_get_all, mock_wait_for_event, mock_post, mock_get_history, mock_today):
+        mock_today.return_value = "2024-01-01"
         mock_get_user_bio.return_value = "<p>User Bio</p>"
         mock_n8n_get_url.return_value = "http://test.com/webhook"
         mock_add_months.return_value = "2024-01-01"
