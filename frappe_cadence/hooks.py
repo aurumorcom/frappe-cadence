@@ -154,6 +154,9 @@ doc_events = {
 		],
 		"on_update": "frappe_cadence.cadence.doctype.whatsapp_template.whatsapp_template.on_update"
 	},
+	"Communication": {
+		"on_update": "frappe_cadence.cadence.doctype.communication.communication.on_update"
+	},
 	"CRM Lead": {
 		"on_update": "frappe_cadence.cadence.doctype.cadence.cadence.on_update"
 	},
