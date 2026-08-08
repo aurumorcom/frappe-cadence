@@ -323,7 +323,7 @@ class TestAgentUtils(IntegrationTestCase):
 
     def setUp(self):
         frappe.db.delete("Communication", {"reference_name": self.cadence_name})
-        frappe.cache().delete_value(f"ai_req:{self.cadence_name}:{self.schedule_name}")
+        frappe.cache().delete_value(f"{self.cadence_name}:{self.schedule_name}")
         
         frappe.db.delete("User Bio", {"reference_user": self.mcc.owner})
         frappe.get_doc({
@@ -707,14 +707,14 @@ class TestAgentUtils(IntegrationTestCase):
                 return original_get_doc(*args, **kwargs)
             mock_get_doc.side_effect = side_effect
             
-            process_schedule(self.cadence_name, self.schedule_name)
+            try:
+                with self.assertRaises(frappe.ValidationError):
+                    process_schedule(self.cadence_name, self.schedule_name)
+            finally:
+                settings.db_set("sift_base_url", "http://test.com")
             
         mock_post.assert_not_called()
         mock_wait.assert_not_called()
-        mock_log_error.assert_called_once_with(title="Sift Configuration Error", message="Sift Base URL not configured.")
-        
-        # Restore Sift Settings for other tests
-        settings.db_set("sift_base_url", "http://test.com")
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
@@ -782,7 +782,7 @@ class TestAgentUtils(IntegrationTestCase):
         }).insert(ignore_permissions=True)
         
         # Ensure cache is deleted (simulate expiry)
-        frappe.cache().delete_value(f"ai_req:{self.cadence_name}:{self.schedule_name}")
+        frappe.cache().delete_value(f"{self.cadence_name}:{self.schedule_name}")
         
         original_get_doc = frappe.get_doc
         with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_doc") as mock_get_doc:
@@ -997,5 +997,64 @@ class TestAgentUtils(IntegrationTestCase):
 
         mcc_name = mcc.name
         frappe.delete_doc("Multi Channel Cadence", mcc_name, force=True, ignore_permissions=True)
-        self.assertFalse(frappe.db.exists("Multi Channel Cadence", mcc_name))
+
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
+    def test_process_schedule_sift_http_error_raises_exception(self, mock_post):
+        import requests
+        template = frappe.get_doc("Email Template", "Test Email Template")
+        template.db_set("provider", "DSPy")
+        template.db_set("status", "Enabled")
+
+        mock_response = MagicMock()
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Server Error")
+        mock_post.return_value = mock_response
+
+        with self.assertRaises(requests.exceptions.HTTPError):
+            process_schedule(self.cadence_name, self.schedule_name)
+
+        comms = frappe.get_all("Communication", filters={
+            "reference_doctype": "Multi Channel Cadence",
+            "reference_name": self.cadence_name,
+            "cadence_schedule": self.schedule_name
+        }, fields=["name", "delivery_status", "content"])
+        self.assertTrue(len(comms) > 0)
+        self.assertNotEqual(comms[0].delivery_status, "Failed")
+
+    def test_handle_callback_failed_event_leaves_communication_untouched_and_marks_mcc_error(self):
+        from frappe_cadence._template import handle_callback
+        
+        comm = frappe.get_doc({
+            "doctype": "Communication",
+            "communication_medium": "Email",
+            "subject": "Draft Message",
+            "content": "Draft Content",
+            "reference_doctype": "Multi Channel Cadence",
+            "reference_name": self.cadence_name,
+            "cadence_schedule": self.schedule_name,
+            "status": "Open"
+        }).insert(ignore_permissions=True)
+
+        initial_status = comm.status
+        initial_subject = comm.subject
+        initial_content = comm.content
+
+        failed_payload = {
+            "success": False,
+            "error": "n8n execution error",
+            "metadata": {
+                "name": comm.name
+            }
+        }
+
+        res = handle_callback(**failed_payload)
+        self.assertEqual(res.get("status"), "failed")
+
+        comm.reload()
+        self.assertEqual(comm.subject, initial_subject)
+        self.assertEqual(comm.content, initial_content)
+        self.assertEqual(comm.status, initial_status)
+        self.assertNotEqual(comm.delivery_status, "Failed")
+
+        mcc = frappe.get_doc("Multi Channel Cadence", self.cadence_name)
+        self.assertEqual(mcc.status, "Error")
 

@@ -270,7 +270,12 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             })
             comm.insert(ignore_permissions=True)
             comm_name = comm.name
-            
+        else:
+            comm_name = draft_comm[0].name
+
+        cache_val = frappe.cache().get_value(f"{cadence_name}:{schedule_name}")
+        
+        if not cache_val:
             # Construct AI Agent payload
             cadence = frappe.get_doc("Multi Channel Cadence", cadence_name)
             lead = frappe.get_doc(cadence.cadence_for, cadence.recipient)
@@ -378,44 +383,42 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
             else:
                 payload["model"] = None
             
-            cache_val = frappe.cache().get_value(f"ai_req:{cadence_name}:{schedule_name}")
-            
-            if not cache_val:
-                webhook_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
-                payload["background"] = True
-                payload["webhook"] = {
-                    "url": webhook_url,
-                    "events": ["completed", "failed"],
-                    "metadata": {
-                        "name": comm_name
-                    }
+            webhook_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
+            if frappe.conf.get("host_name", "").startswith("https://") and webhook_url.startswith("http://"):
+                webhook_url = webhook_url.replace("http://", "https://", 1)
+
+            payload["background"] = True
+            payload["webhook"] = {
+                "url": webhook_url,
+                "events": ["completed", "failed"],
+                "metadata": {
+                    "name": comm_name
                 }
+            }
 
-                if template_provider == "n8n":
-                    from frappe_cadence.integrations.n8n import trigger_execution
-                    trigger_execution(template, payload, channel, cadence_name, schedule_name)
-                else:
-                    sift_settings = frappe.get_single("Sift Settings")
-                    sift_base_url = sift_settings.sift_base_url
-                    sift_api_key = sift_settings.get_password("sift_api_key")
-                    
-                    if sift_base_url:
-                        headers = {"Content-Type": "application/json"}
-                        if sift_api_key:
-                            headers["Authorization"] = f"Bearer {sift_api_key}"
+            if template_provider == "n8n":
+                from frappe_cadence.integrations.n8n import trigger_execution
+                success = trigger_execution(template, payload, channel, cadence_name, schedule_name)
+                if not success:
+                    frappe.throw(
+                        f"Failed to trigger n8n execution for template {template.name}",
+                        title="n8n Trigger Execution Error"
+                    )
+            else:
+                sift_settings = frappe.get_single("Sift Settings")
+                sift_base_url = sift_settings.sift_base_url
+                sift_api_key = sift_settings.get_password("sift_api_key")
+                
+                if not sift_base_url:
+                    frappe.throw("Sift Base URL not configured in Sift Settings", title="Sift Configuration Error")
 
-                        payload_json = json.dumps(payload, separators=(',', ':'))
-                        
-                        try:
-                            requests.post(f"{sift_base_url}/responses", headers=headers, data=payload_json, timeout=10)
-                            frappe.cache().set_value(f"ai_req:{cadence_name}:{schedule_name}", 1, expires_in_sec=86400)
-                        except Exception as e:
-                            frappe.log_error(title="Agent Error", message=f"Failed to send task to Agent: {str(e)}")
-                            return
-                    else:
-                        frappe.log_error(title="Sift Configuration Error", message="Sift Base URL not configured.")
-                        return
-        else:
-            comm_name = draft_comm[0].name
+                headers = {"Content-Type": "application/json"}
+                if sift_api_key:
+                    headers["Authorization"] = f"Bearer {sift_api_key}"
+
+                payload_json = json.dumps(payload, separators=(',', ':'))
+                res = requests.post(f"{sift_base_url}/responses", headers=headers, data=payload_json, timeout=10)
+                res.raise_for_status()
+                frappe.cache().set_value(f"{cadence_name}:{schedule_name}", 1, expires_in_sec=86400)
             
         wait_for_event("callback", condition=f"argument.get('communication_id') == '{comm_name}'")

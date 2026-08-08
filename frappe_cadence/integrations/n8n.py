@@ -40,7 +40,7 @@ def trigger_execution(template, payload: dict, channel: str, cadence_name: str, 
     request_url = template.get("request_url")
     if not request_url:
         frappe.log_error(
-            title="n8n Integration Error",
+            title="frappe_cadence.integrations.n8n.trigger_execution",
             message=f"Request URL not configured on {template.doctype} {template.name}"
         )
         return False
@@ -52,6 +52,8 @@ def trigger_execution(template, payload: dict, channel: str, cadence_name: str, 
         headers["Authorization"] = f"Bearer {webhook_secret}"
 
     callback_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
+    if frappe.conf.get("host_name", "").startswith("https://") and callback_url.startswith("http://"):
+        callback_url = callback_url.replace("http://", "https://", 1)
     payload["background"] = True
     existing_webhook = payload.get("webhook") if isinstance(payload.get("webhook"), dict) else {}
     payload["webhook"] = {
@@ -65,11 +67,11 @@ def trigger_execution(template, payload: dict, channel: str, cadence_name: str, 
     try:
         response = requests.post(request_url, headers=headers, data=payload_json, timeout=10)
         response.raise_for_status()
-        frappe.cache().set_value(f"ai_req:{cadence_name}:{schedule_name}", 1, expires_in_sec=86400)
+        frappe.cache().set_value(f"{cadence_name}:{schedule_name}", 1, expires_in_sec=86400)
         return True
     except Exception as e:
         frappe.log_error(
-            title="n8n Integration Error",
+            title="frappe_cadence.integrations.n8n.trigger_execution",
             message=f"Failed to send request to n8n ({request_url}): {str(e)}"
         )
         return False
@@ -81,7 +83,7 @@ def trigger_test_execution(template, payload: dict) -> bool:
     request_url = template.get("request_url")
     if not request_url:
         frappe.log_error(
-            title="n8n Integration Test Error",
+            title="frappe_cadence.integrations.n8n.trigger_test_execution",
             message=f"Request URL not configured on {template.doctype} {template.name}"
         )
         return False
@@ -112,7 +114,7 @@ def trigger_test_execution(template, payload: dict) -> bool:
         return True
     except Exception as e:
         frappe.log_error(
-            title="n8n Test Webhook Endpoint Error",
+            title="frappe_cadence.integrations.n8n.trigger_test_execution",
             message=f"Failed to send test request to n8n test webhook ({test_url}): {str(e)}"
         )
         return False
@@ -279,7 +281,7 @@ def optimize(template_doctype: str, template_name: str) -> Dict[str, Any]:
         template.status = "Enabled" if template.enabled else "Disabled"
         template.flags.ignore_links = True
         template.save(ignore_permissions=True)
-        frappe.log_error(title="n8n Optimize Error", message=str(e))
+        frappe.log_error(title="frappe_cadence.integrations.n8n.optimize", message=str(e))
         frappe.msgprint(f"Failed to optimize template: {str(e)}", alert=True, indicator="orange")
         return {"status": "failed", "error": str(e)}
 
@@ -297,7 +299,7 @@ def optimize_callback(**kwargs) -> Dict[str, Any]:
 
     if payload.is_failed:
         error = payload.error or "Unknown error"
-        frappe.log_error("n8n Optimize Callback Failed", error)
+        frappe.log_error(title="frappe_cadence.integrations.n8n.optimize_callback", message=error)
         if template:
             template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
@@ -326,7 +328,7 @@ def optimize_callback(**kwargs) -> Dict[str, Any]:
                     if hasattr(comm_doc, "_validate_mandatory"):
                         comm_doc._validate_mandatory()
                 except Exception as ex:
-                    frappe.log_error("n8n Optimize Response Validation Error", str(ex))
+                    frappe.log_error(title="frappe_cadence.integrations.n8n.optimize_callback", message=str(ex))
 
             template.status = "Enabled" if template.enabled else "Disabled"
             template.flags.ignore_links = True
@@ -391,7 +393,10 @@ def predict(template_doctype: str, template_name: str) -> Dict[str, Any]:
                 response = requests.post(request_url, json=payload, headers=headers, timeout=10)
                 response.raise_for_status()
             except Exception as e:
-                frappe.log_error(f"n8n Predict Error for annotation {ann.name}: {str(e)}", "n8n API")
+                frappe.log_error(title="frappe_cadence.integrations.n8n.predict", message=f"n8n Predict Error for annotation {ann.name}: {str(e)}")
+                template.status = "Enabled" if getattr(template, "enabled", False) else "Disabled"
+                template.flags.ignore_links = True
+                template.save(ignore_permissions=True)
 
     if not has_pending:
         template.status = "Disabled"
@@ -414,7 +419,7 @@ def predict_callback(**kwargs) -> Dict[str, Any]:
 
     if payload.is_failed:
         error = payload.error or "Unknown error"
-        frappe.log_error("n8n Predict Failed", error)
+        frappe.log_error(title="frappe_cadence.integrations.n8n.predict_callback", message=error)
         return {"status": "failed", "error": error}
 
     if payload.is_completed:

@@ -594,3 +594,135 @@ class TestMultiChannelCadence(UnitTestCase):
                 self.assertEqual(data["webhook"]["metadata"], {"name": "COMM-N8N"})
                 self.assertIn("response_format", data)
                 self.assertTrue(all(msg.get("role") == "user" for msg in data.get("input", [])))
+
+    @patch("frappe_cadence.integrations.n8n.trigger_execution", return_value=False)
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
+    @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio", return_value="<p>Bio</p>")
+    def test_process_schedule_n8n_trigger_failure_raises_exception_for_fs_job(self, mock_get_bio, mock_get_all, mock_trigger):
+        from frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence import process_schedule
+        
+        mock_schedule = MagicMock(reference_doctype="Email Template", reference_name="Template-N8N")
+        mock_mcc = MagicMock(status="Scheduled", cadence_for="CRM Lead", recipient="LEAD-N8N", sender=None, owner="user@test.com")
+        mock_template = MagicMock(status="Enabled", provider="n8n", model="agent-n8n-model")
+        mock_template.get.side_effect = lambda k, default=None: getattr(mock_template, k, default)
+        mock_comm = MagicMock(name="COMM-N8N")
+
+        mock_get_all.return_value = []
+
+        original_get_doc = frappe.get_doc
+        def get_doc_side_effect(*args, **kwargs):
+            if len(args) == 2 and args[0] == "Cadence Multi Channel Schedule": return mock_schedule
+            elif len(args) == 2 and args[0] == "Multi Channel Cadence": return mock_mcc
+            elif len(args) == 2 and args[0] == "Email Template": return mock_template
+            elif len(args) == 2 and args[0] == "CRM Lead": return MagicMock(name="LEAD-N8N")
+            elif len(args) == 1 and isinstance(args[0], dict) and args[0].get("doctype") == "Communication": return mock_comm
+            return original_get_doc(*args, **kwargs)
+
+        original_get_value = frappe.db.get_value
+        def get_value_side_effect(*args, **kwargs):
+            doctype = kwargs.get("doctype") or (args[0] if len(args) > 0 else None)
+            filters = kwargs.get("filters") or (args[1] if len(args) > 1 else None)
+            if doctype == "User" and filters == "user@test.com":
+                return {"full_name": "Test User"}
+            return original_get_value(*args, **kwargs)
+
+        with patch.object(frappe, "get_doc", side_effect=get_doc_side_effect):
+            with patch.object(frappe.db, "get_value", side_effect=get_value_side_effect):
+                with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.cache") as mock_cache:
+                    mock_cache.return_value.get_value.return_value = None
+                    with self.assertRaises(frappe.ValidationError):
+                        process_schedule("MCC-N8N", "SCHED-N8N")
+
+        self.assertNotEqual(getattr(mock_comm, "delivery_status", None), "Failed")
+
+    @patch("frappe_cadence.integrations.n8n.trigger_execution", return_value=True)
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
+    @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio", return_value="<p>Bio</p>")
+    def test_process_schedule_recreates_deleted_draft_communication(self, mock_get_bio, mock_get_all, mock_wait, mock_trigger):
+        from frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence import process_schedule
+
+        mock_schedule = MagicMock(reference_doctype="Email Template", reference_name="Template-N8N")
+        mock_mcc = MagicMock(status="Scheduled", cadence_for="CRM Lead", recipient="LEAD-N8N", sender=None, owner="user@test.com")
+        mock_template = MagicMock(status="Enabled", provider="n8n", model="agent-n8n-model")
+        mock_template.get.side_effect = lambda k, default=None: getattr(mock_template, k, default)
+        mock_comm = MagicMock()
+        mock_comm.name = "COMM-RECREATED"
+
+        mock_get_all.return_value = []
+
+        original_get_doc = frappe.get_doc
+        def get_doc_side_effect(*args, **kwargs):
+            if len(args) == 2 and args[0] == "Cadence Multi Channel Schedule": return mock_schedule
+            elif len(args) == 2 and args[0] == "Multi Channel Cadence": return mock_mcc
+            elif len(args) == 2 and args[0] == "Email Template": return mock_template
+            elif len(args) == 2 and args[0] == "CRM Lead": return MagicMock(name="LEAD-N8N")
+            elif len(args) == 1 and isinstance(args[0], dict) and args[0].get("doctype") == "Communication": return mock_comm
+            return original_get_doc(*args, **kwargs)
+
+        original_get_value = frappe.db.get_value
+        def get_value_side_effect(*args, **kwargs):
+            doctype = kwargs.get("doctype") or (args[0] if len(args) > 0 else None)
+            filters = kwargs.get("filters") or (args[1] if len(args) > 1 else None)
+            if doctype == "User" and filters == "user@test.com":
+                return {"full_name": "Test User"}
+            return original_get_value(*args, **kwargs)
+
+        with patch.object(frappe, "get_doc", side_effect=get_doc_side_effect):
+            with patch.object(frappe.db, "get_value", side_effect=get_value_side_effect):
+                with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.cache") as mock_cache:
+                    mock_cache.return_value.get_value.return_value = None
+                    process_schedule("MCC-N8N", "SCHED-N8N")
+
+        mock_comm.insert.assert_called_once_with(ignore_permissions=True)
+        mock_wait.assert_called_once_with("callback", condition="argument.get('communication_id') == 'COMM-RECREATED'")
+
+    @patch("frappe_cadence.integrations.n8n.trigger_execution", return_value=True)
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
+    @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
+    @patch("frappe_cadence.cadence.doctype.user_bio.user_bio.get_user_bio", return_value="<p>Bio</p>")
+    def test_process_schedule_replay_retries_trigger_when_comm_exists_and_no_cache(self, mock_get_bio, mock_get_all, mock_wait, mock_trigger):
+        from frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence import process_schedule
+
+        mock_schedule = MagicMock(reference_doctype="Email Template", reference_name="Template-N8N")
+        mock_mcc = MagicMock(status="Scheduled", cadence_for="CRM Lead", recipient="LEAD-N8N", sender=None, owner="user@test.com")
+        mock_template = MagicMock(status="Enabled", provider="n8n", model="agent-n8n-model")
+        mock_template.get.side_effect = lambda k, default=None: getattr(mock_template, k, default)
+        
+        existing_comm_info = MagicMock()
+        existing_comm_info.name = "COMM-EXISTING"
+
+        def get_all_side_effect(doctype, *args, **kwargs):
+            if doctype == "Communication":
+                filters = kwargs.get("filters", {})
+                if filters.get("delivery_status"):
+                    return []
+                return [existing_comm_info]
+            return []
+
+        mock_get_all.side_effect = get_all_side_effect
+
+        original_get_doc = frappe.get_doc
+        def get_doc_side_effect(*args, **kwargs):
+            if len(args) == 2 and args[0] == "Cadence Multi Channel Schedule": return mock_schedule
+            elif len(args) == 2 and args[0] == "Multi Channel Cadence": return mock_mcc
+            elif len(args) == 2 and args[0] == "Email Template": return mock_template
+            elif len(args) == 2 and args[0] == "CRM Lead": return MagicMock(name="LEAD-N8N")
+            return original_get_doc(*args, **kwargs)
+
+        original_get_value = frappe.db.get_value
+        def get_value_side_effect(*args, **kwargs):
+            doctype = kwargs.get("doctype") or (args[0] if len(args) > 0 else None)
+            filters = kwargs.get("filters") or (args[1] if len(args) > 1 else None)
+            if doctype == "User" and filters == "user@test.com":
+                return {"full_name": "Test User"}
+            return original_get_value(*args, **kwargs)
+
+        with patch.object(frappe, "get_doc", side_effect=get_doc_side_effect):
+            with patch.object(frappe.db, "get_value", side_effect=get_value_side_effect):
+                with patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.cache") as mock_cache:
+                    mock_cache.return_value.get_value.return_value = None
+                    process_schedule("MCC-N8N", "SCHED-N8N")
+
+        mock_trigger.assert_called_once()
+        mock_wait.assert_called_once_with("callback", condition="argument.get('communication_id') == 'COMM-EXISTING'")

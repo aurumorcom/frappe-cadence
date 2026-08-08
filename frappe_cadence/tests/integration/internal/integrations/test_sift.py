@@ -615,3 +615,38 @@ class TestSiftUtils(IntegrationTestCase):
         
         self.whatsapp_annotation.reload()
         self.assertEqual(self.whatsapp_annotation.output, "new unstructured output")
+
+    @patch("frappe_cadence.integrations.sift.requests.post")
+    def test_predict_sift_post_exception_resets_template_status(self, mock_post):
+        from frappe_cadence.integrations.sift import predict
+
+        template = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "Sift Test Predict Exception Template",
+            "title": "Sift Test Predict Exception Template",
+            "subject": "Sift Predict Test Subject",
+            "status": "Enabled",
+            "enabled": 1,
+            "sift_id": "agent-sift-exception"
+        }).insert(ignore_permissions=True)
+
+        lead = frappe.get_doc({
+            "doctype": "CRM Lead",
+            "first_name": "Sift Predict Lead"
+        }).insert(ignore_permissions=True)
+
+        annotation = frappe.get_doc({
+            "doctype": "Email Template Annotation",
+            "parent": template.name,
+            "parentfield": "annotations",
+            "parenttype": "Email Template",
+            "reference_doctype": "CRM Lead",
+            "reference_name": lead.name
+        }).insert(ignore_permissions=True)
+
+        mock_post.side_effect = Exception("Sift HTTP 500 Error")
+
+        predict("Email Template", template.name)
+
+        template.reload()
+        self.assertEqual(template.status, "Enabled")
