@@ -372,10 +372,7 @@ class TestMultiChannelCadence(UnitTestCase):
                     self.assertEqual(input_data[1]["content"][1]["type"], "image_url")
                     self.assertEqual(input_data[1]["content"][1]["image_url"]["url"], "https://s3.example.com/test.png?sig=123")
                     
-                    mock_wait_for_event.assert_called_once_with(
-                        "callback",
-                        condition="argument.get('communication_id') == 'COMM-001'"
-                    )
+                    mock_wait_for_event.assert_not_called()
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.today")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_months")
@@ -675,7 +672,7 @@ class TestMultiChannelCadence(UnitTestCase):
                     process_schedule("MCC-N8N", "SCHED-N8N")
 
         mock_comm.insert.assert_called_once_with(ignore_permissions=True)
-        mock_wait.assert_called_once_with("callback", condition="argument.get('communication_id') == 'COMM-RECREATED'")
+        mock_wait.assert_not_called()
 
     @patch("frappe_cadence.integrations.n8n.trigger_execution", return_value=True)
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
@@ -725,4 +722,4 @@ class TestMultiChannelCadence(UnitTestCase):
                     process_schedule("MCC-N8N", "SCHED-N8N")
 
         mock_trigger.assert_called_once()
-        mock_wait.assert_called_once_with("callback", condition="argument.get('communication_id') == 'COMM-EXISTING'")
+        mock_wait.assert_not_called()

@@ -98,6 +98,10 @@ class TestN8NIntegration(IntegrationTestCase):
     def test_optimize_success_and_callback(self, mock_post, mock_get_history, mock_publish, mock_xadd):
         mock_get_history.return_value = []
 
+        frappe.db.delete("Email Template", {"name": "N8N Test Optimize Real Payload Email"})
+        frappe.db.delete("Cadence", {"cadence_name": "N8N Test Cadence Active"})
+        frappe.db.delete("CRM Lead", {"lead_name": "N8N Lead Active"})
+
         template = frappe.get_doc({
             "doctype": "Email Template",
             "name": "N8N Test Optimize Real Payload Email",
@@ -193,6 +197,10 @@ class TestN8NIntegration(IntegrationTestCase):
     @patch("frappe_cadence.integrations.n8n.requests.post")
     def test_n8n_optimize_reverts_status_on_failure(self, mock_post, mock_get_history, mock_publish, mock_xadd):
         mock_get_history.return_value = []
+
+        frappe.db.delete("Email Template", {"name": "N8N Test Optimize Failure Revert Email"})
+        frappe.db.delete("Cadence", {"cadence_name": "N8N Test Cadence Fail"})
+        frappe.db.delete("CRM Lead", {"lead_name": "N8N Lead Fail"})
 
         template = frappe.get_doc({
             "doctype": "Email Template",
