@@ -86,6 +86,45 @@ class TestTemplate(unittest.TestCase):
         self.assertIsInstance(payload.data, list)
         self.assertEqual(extract_output_text(payload.data), "Parsed Output")
 
+    def test_payload_dict_body_wrapper(self):
+        raw = {
+            "body": {
+                "metadata": {"name": "COMM-002"},
+                "data": {"subject": "Wrapped Subject", "content": "Wrapped Body"},
+                "success": "true"
+            },
+            "headers": {"authorization": "Bearer token"}
+        }
+        payload = WebhookResponse(raw)
+        self.assertTrue(payload.is_completed)
+        self.assertEqual(payload.metadata.get("name"), "COMM-002")
+        self.assertEqual(payload.data.get("subject"), "Wrapped Subject")
+
+    def test_payload_stringified_body_wrapper(self):
+        raw = {
+            "body": json.dumps({
+                "metadata": {"name": "COMM-003"},
+                "data": {"subject": "Stringified Subject", "content": "Stringified Body"},
+                "success": True
+            }),
+            "headers": {}
+        }
+        payload = WebhookResponse(raw)
+        self.assertTrue(payload.is_completed)
+        self.assertEqual(payload.metadata.get("name"), "COMM-003")
+        self.assertEqual(payload.data.get("subject"), "Stringified Subject")
+
+    def test_payload_fallback_name_at_root(self):
+        raw = {
+            "body": {
+                "name": "COMM-004",
+                "data": "Sample content",
+                "success": True
+            }
+        }
+        payload = WebhookResponse(raw)
+        self.assertEqual(payload.metadata.get("name"), "COMM-004")
+
     def test_extract_output_text_nested_content(self):
         # Case 1: Array of dicts with content array
         data1 = [{"content": [{"text": "Text 1"}]}]
