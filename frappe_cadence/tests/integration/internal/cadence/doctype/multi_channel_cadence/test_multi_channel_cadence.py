@@ -563,7 +563,7 @@ class TestAgentUtils(IntegrationTestCase):
             process_schedule(self.cadence_name, self.schedule_name)
             
         mock_post.assert_called_once()
-        mock_wait.assert_called_once()
+        mock_wait.assert_not_called()
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
@@ -615,7 +615,7 @@ class TestAgentUtils(IntegrationTestCase):
             process_schedule(self.cadence_name, self.schedule_name)
             
         mock_post.assert_not_called()
-        mock_wait.assert_called_once()
+        mock_wait.assert_not_called()
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.frappe.get_all")
@@ -804,7 +804,7 @@ class TestAgentUtils(IntegrationTestCase):
             
         # Post should be called again since cache expired
         mock_post.assert_called_once()
-        mock_wait.assert_called_once()
+        mock_wait.assert_not_called()
 
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.requests.post")
     @patch("frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.wait_for_event")

@@ -248,6 +248,42 @@ class TestTemplateIntegration(IntegrationTestCase):
         self.assertEqual(mock_comm.subject, "Form Sub")
         self.assertIn("Form Body", mock_comm.content)
 
+    @patch("frappe_cadence._template.emit_event")
+    @patch("frappe_cadence._template.frappe.get_doc")
+    def test_callback_emits_cadence_step_completed(self, mock_get_doc, mock_emit_event):
+        frappe.local.request = frappe._dict(json={
+            "success": True,
+            "type": "response.completed",
+            "metadata": {
+                "communication_id": "COMM-MCC-001"
+            },
+            "data": [{"content": [{"text": "{\"subject\": \"Generated Subject\", \"body\": \"Generated Content\"}"}]}]
+        })
+
+        mock_comm = MagicMock()
+        mock_comm.communication_medium = "Email"
+        mock_comm.name = "COMM-MCC-001"
+        mock_comm.doctype = "Communication"
+        mock_comm.reference_doctype = "Multi Channel Cadence"
+        mock_comm.reference_name = "MCC-2026-00001"
+        mock_comm.cadence_schedule = "SCHED-001"
+        mock_comm.as_dict.return_value = {
+            "name": "COMM-MCC-001",
+            "doctype": "Communication",
+            "delivery_status": "Scheduled"
+        }
+        mock_get_doc.return_value = mock_comm
+
+        result = handle_callback()
+
+        self.assertEqual(result.get("name"), "COMM-MCC-001")
+        self.assertEqual(mock_comm.delivery_status, "Scheduled")
+        mock_emit_event.assert_any_call("cadence_step_completed", {
+            "cadence_name": "MCC-2026-00001",
+            "schedule_name": "SCHED-001"
+        })
+        mock_emit_event.assert_any_call("callback", {"communication_id": "COMM-MCC-001"})
+
     def test_n8n_and_dspy_template_creation_without_subject(self):
         doc = frappe.get_doc({
             "doctype": "Email Template",
