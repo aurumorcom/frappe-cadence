@@ -46,9 +46,13 @@ class WebhookResponse:
                 raw_meta = {}
         self.metadata: Dict[str, Any] = raw_meta if isinstance(raw_meta, dict) else {}
 
-        # Fall back if name/communication_id is supplied directly in payload root
+        # Fall back if name/communication_id is supplied directly in payload root or metadata
         if "name" not in self.metadata:
-            fallback_name = raw_payload.get("name") or raw_payload.get("communication_id")
+            fallback_name = (
+                self.metadata.get("communication_id")
+                or raw_payload.get("name")
+                or raw_payload.get("communication_id")
+            )
             if fallback_name:
                 self.metadata["name"] = str(fallback_name)
 
@@ -273,7 +277,7 @@ def handle_callback(**kwargs) -> dict:
         if payload.is_started:
             return {"status": "ignored"}
             
-        communication_id = payload.metadata.get("name")
+        communication_id = payload.metadata.get("name") or payload.metadata.get("communication_id")
         if communication_id and frappe.db.exists("Communication", communication_id):
             comm = frappe.get_doc("Communication", communication_id)
             if comm.cadence_schedule:
@@ -350,6 +354,12 @@ def handle_callback(**kwargs) -> dict:
             except Exception as ex:
                 frappe.log_error("Failed to reset template status on callback success", str(ex))
         
+        if comm.reference_doctype == "Multi Channel Cadence" and comm.reference_name and comm.cadence_schedule:
+            emit_event("cadence_step_completed", {
+                "cadence_name": comm.reference_name,
+                "schedule_name": comm.cadence_schedule
+            })
+
         emit_event("callback", {"communication_id": communication_id})
 
         return comm.as_dict()
