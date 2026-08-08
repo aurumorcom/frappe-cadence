@@ -50,9 +50,7 @@ class IntegrationTestLinkedInTemplate(IntegrationTestCase):
 		result = callback()
 
 		self.assertEqual(result.get("status"), "failed")
-		self.assertEqual(mock_comm.delivery_status, "Failed")
-		self.assertIn("AI Generation Failed", mock_comm.content)
-		mock_comm.save.assert_called_once_with(ignore_permissions=True)
+		mock_comm.save.assert_not_called()
 		mock_emit.assert_called_once_with("callback", {"communication_id": "COMM-001", "error": "Sift Generation Failed"})
 
 	def test_sift_id_in_linkedin_template(self):

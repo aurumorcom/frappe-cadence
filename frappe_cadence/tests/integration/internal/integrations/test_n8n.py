@@ -241,3 +241,39 @@ class TestN8NIntegration(IntegrationTestCase):
 
         template.reload()
         self.assertEqual(template.status, "Enabled")
+
+    @patch("frappe_cadence.integrations.n8n.requests.post")
+    def test_predict_n8n_post_exception_resets_template_status(self, mock_post):
+        from frappe_cadence.integrations.n8n import predict
+
+        template = frappe.get_doc({
+            "doctype": "Email Template",
+            "name": "N8N Test Predict Exception Template",
+            "title": "N8N Test Predict Exception Template",
+            "subject": "Predict Test Subject",
+            "provider": "n8n",
+            "enabled": 1,
+            "status": "Enabled"
+        }).insert(ignore_permissions=True)
+        template.db_set("request_url", "https://n8n.example.com/webhook/test")
+
+        lead = frappe.get_doc({
+            "doctype": "CRM Lead",
+            "first_name": "Predict Lead"
+        }).insert(ignore_permissions=True)
+
+        annotation = frappe.get_doc({
+            "doctype": "Email Template Annotation",
+            "parent": template.name,
+            "parentfield": "annotations",
+            "parenttype": "Email Template",
+            "reference_doctype": "CRM Lead",
+            "reference_name": lead.name
+        }).insert(ignore_permissions=True)
+
+        mock_post.side_effect = Exception("HTTP 500 Error")
+
+        predict("Email Template", template.name)
+
+        template.reload()
+        self.assertEqual(template.status, "Enabled")
