@@ -15,6 +15,22 @@ class WebhookResponse:
     - metadata: Optional[Dict[str, Any]] -> Context metadata
     """
     def __init__(self, raw_payload: dict):
+        if isinstance(raw_payload, dict):
+            # Unwrap top-level "body" if present (dict or JSON string)
+            if "body" in raw_payload:
+                body_val = raw_payload["body"]
+                if isinstance(body_val, dict) and ("metadata" in body_val or "data" in body_val or "success" in body_val or "error" in body_val):
+                    raw_payload = body_val
+                elif isinstance(body_val, str) and body_val.strip().startswith("{"):
+                    try:
+                        parsed_body = json.loads(body_val)
+                        if isinstance(parsed_body, dict) and ("metadata" in parsed_body or "data" in parsed_body or "success" in parsed_body or "error" in parsed_body):
+                            raw_payload = parsed_body
+                    except Exception:
+                        pass
+        else:
+            raw_payload = {}
+
         self.success: bool = bool(raw_payload.get("success", True))
         self.type: str = str(raw_payload.get("type") or "").strip().lower()
         self.id: str = str(raw_payload.get("id") or "").strip()
@@ -29,6 +45,12 @@ class WebhookResponse:
             except Exception:
                 raw_meta = {}
         self.metadata: Dict[str, Any] = raw_meta if isinstance(raw_meta, dict) else {}
+
+        # Fall back if name/communication_id is supplied directly in payload root
+        if "name" not in self.metadata:
+            fallback_name = raw_payload.get("name") or raw_payload.get("communication_id")
+            if fallback_name:
+                self.metadata["name"] = str(fallback_name)
 
         # Normalize data (list, dict, or stringified JSON)
         raw_data = raw_payload.get("data")
@@ -78,11 +100,16 @@ def get_raw_payload(kwargs: Optional[dict] = None) -> dict:
 def extract_output_text(data: Any) -> Union[str, Dict[str, Any]]:
     """
     Extracts output text or dictionary from data across array, object, or string payloads.
+    Recursively handles stringified JSON payloads.
     """
     if isinstance(data, str):
-        try:
-            data = json.loads(data)
-        except Exception:
+        s_data = data.strip()
+        if s_data.startswith("{") or s_data.startswith("["):
+            try:
+                data = json.loads(s_data)
+            except Exception:
+                return data
+        else:
             return data
 
     extracted = ""
@@ -94,6 +121,8 @@ def extract_output_text(data: Any) -> Union[str, Dict[str, Any]]:
                 extracted = content[0].get("text", "")
             else:
                 extracted = first.get("text") or first.get("output") or ""
+        elif isinstance(first, str):
+            extracted = first
     elif isinstance(data, dict):
         content = data.get("content", [])
         if isinstance(content, list) and len(content) > 0 and isinstance(content[0], dict):
@@ -101,13 +130,17 @@ def extract_output_text(data: Any) -> Union[str, Dict[str, Any]]:
         else:
             extracted = data.get("text") or data.get("output") or ""
 
-    if isinstance(extracted, str) and extracted.strip().startswith("{"):
-        try:
-            parsed = json.loads(extracted)
-            if isinstance(parsed, dict):
-                return parsed
-        except Exception:
-            pass
+    if isinstance(extracted, str):
+        s_extracted = extracted.strip()
+        if s_extracted.startswith("{") or s_extracted.startswith("["):
+            try:
+                parsed = json.loads(s_extracted)
+                if isinstance(parsed, dict):
+                    return parsed
+                elif isinstance(parsed, list):
+                    return extract_output_text(parsed)
+            except Exception:
+                pass
 
     return extracted
 
