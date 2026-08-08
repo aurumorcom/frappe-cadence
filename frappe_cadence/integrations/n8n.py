@@ -52,6 +52,8 @@ def trigger_execution(template, payload: dict, channel: str, cadence_name: str, 
         headers["Authorization"] = f"Bearer {webhook_secret}"
 
     callback_url = get_url(f"/api/method/frappe_cadence.{channel.lower()}_template.callback")
+    if frappe.conf.get("host_name", "").startswith("https://") and callback_url.startswith("http://"):
+        callback_url = callback_url.replace("http://", "https://", 1)
     payload["background"] = True
     existing_webhook = payload.get("webhook") if isinstance(payload.get("webhook"), dict) else {}
     payload["webhook"] = {
@@ -65,7 +67,7 @@ def trigger_execution(template, payload: dict, channel: str, cadence_name: str, 
     try:
         response = requests.post(request_url, headers=headers, data=payload_json, timeout=10)
         response.raise_for_status()
-        frappe.cache().set_value(f"ai_req:{cadence_name}:{schedule_name}", 1, expires_in_sec=86400)
+        frappe.cache().set_value(f"{cadence_name}:{schedule_name}", 1, expires_in_sec=86400)
         return True
     except Exception as e:
         frappe.log_error(
@@ -392,6 +394,9 @@ def predict(template_doctype: str, template_name: str) -> Dict[str, Any]:
                 response.raise_for_status()
             except Exception as e:
                 frappe.log_error(f"n8n Predict Error for annotation {ann.name}: {str(e)}", "n8n API")
+                template.status = "Enabled" if getattr(template, "enabled", False) else "Disabled"
+                template.flags.ignore_links = True
+                template.save(ignore_permissions=True)
 
     if not has_pending:
         template.status = "Disabled"

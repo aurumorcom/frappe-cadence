@@ -202,6 +202,9 @@ def predict(template_doctype: str, template_name: str) -> None:
                 response.raise_for_status()
             except Exception as e:
                 frappe.log_error(f"Sift Predict Error for annotation {ann.name}: {str(e)}", "Sift API")
+                template.status = "Enabled" if getattr(template, "enabled", False) else "Disabled"
+                template.flags.ignore_links = True
+                template.save(ignore_permissions=True)
                 
     if not has_pending:
         template.status = "Disabled"
