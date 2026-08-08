@@ -420,5 +420,3 @@ def process_schedule(cadence_name, schedule_name, previous_schedule_name=None):
                 res = requests.post(f"{sift_base_url}/responses", headers=headers, data=payload_json, timeout=10)
                 res.raise_for_status()
                 frappe.cache().set_value(f"{cadence_name}:{schedule_name}", 1, expires_in_sec=86400)
-            
-        wait_for_event("callback", condition=f"argument.get('communication_id') == '{comm_name}'")
