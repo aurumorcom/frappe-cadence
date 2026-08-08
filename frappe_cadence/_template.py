@@ -291,11 +291,13 @@ def handle_callback(**kwargs) -> dict:
             if payload.is_failed:
                 error_msg = payload.error or "Unknown error"
                 frappe.log_error(title="Sift Callback Failed", message=error_msg)
-                comm.delivery_status = "Failed"
-                comm.content = f"AI Generation Failed: {error_msg}"
-                comm.save(ignore_permissions=True)
+                if comm.reference_doctype == "Multi Channel Cadence" and comm.reference_name:
+                    if frappe.db.exists("Multi Channel Cadence", comm.reference_name):
+                        mcc = frappe.get_doc("Multi Channel Cadence", comm.reference_name)
+                        mcc.status = "Error"
+                        mcc.save(ignore_permissions=True)
                 emit_event("callback", {"communication_id": communication_id, "error": error_msg})
-                return {"status": "failed", "error": error_msg, "communication": comm.as_dict()}
+                return {"status": "failed", "error": error_msg}
 
         if not communication_id:
             return {"status": "error", "message": "Missing communication_id in metadata"}
