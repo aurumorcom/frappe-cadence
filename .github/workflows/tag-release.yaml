@@ -1,0 +1,16 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-release:
+    if: "!startsWith(github.event.head_commit.message, 'chore: release')"
+    permissions:
+      contents: write
+    uses: aurumorcom/.github/.github/workflows/tag-release.yaml@main
+    secrets:
+      RELEASE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
