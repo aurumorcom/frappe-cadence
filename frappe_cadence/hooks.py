@@ -5,7 +5,6 @@ app_description = "Open-Source Cold Outreach & Sales Engagement Automation"
 app_email = "hello@aurumor.com"
 app_license = "mit"
 
-# Apps
 required_apps = ["frappe_controller", "frappe_playbook", "crm"]
 
 # include js in doctype views
