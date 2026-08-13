@@ -9,9 +9,6 @@ This document defines the C3 Component model for the `frappe_cadence` applicatio
 erDiagram
     Cadence ||--o{ CadenceMultiChannelSchedule : "contains_step_schedules"
     Cadence ||--o{ MultiChannelCadence : "instantiates_lead_execution"
-    MultiChannelCadence ||--o{ MCCCadenceProvider : "contains_provider_snapshots"
-    CadenceProvider ||--o{ CadenceProviderChannel : "configures_channel_support"
-    MCCCadenceProvider }|..|| CadenceProvider : "references_configured_provider"
     MultiChannelCadence ||--o{ Communication : "dispatches_step_communications"
     UserBio }|..|| User : "belongs_to_sender"
     UserBio }|..|| Cadence : "scoped_to_cadence"
@@ -43,26 +40,6 @@ erDiagram
         string cadence_name FK
         string recipient
         string status
-    }
-
-    MCCCadenceProvider {
-        string name PK
-        string parent FK
-        string channel
-        string cadence_provider FK
-    }
-
-    CadenceProvider {
-        string name PK
-        int enabled
-        int priority
-    }
-
-    CadenceProviderChannel {
-        string name PK
-        string parent FK
-        string channel
-        int enabled
     }
 
     Communication {
@@ -139,9 +116,6 @@ erDiagram
 - **Cadence**: Master orchestration DocType tracking schedules, assignment rules, and linked playbook executions.
 - **CadenceMultiChannelSchedule**: Child table specifying individual channel steps (Email, SMS, etc.) and delay intervals.
 - **MultiChannelCadence**: Active execution tracking for a specific `CRMLead`, managing state from `Provisioning` to `Completed` or `Error`.
-- **MCCCadenceProvider**: Snapshot of resolved communication providers at the time of execution.
-- **CadenceProvider**: Configuration for an external provider's routing priority.
-- **CadenceProviderChannel**: Specific channels enabled for a particular provider.
 - **UserBio**: Sender's personal bio injected into Sift API prompts for personalized messaging.
 - **Communication**: Standard Frappe DocType used to track outgoing messages and delivery statuses.
 - **EmailTemplate**, **SMSTemplate**, etc.: Channel-specific templates holding the base prompt or static message, and the `sift_id` AI model reference.

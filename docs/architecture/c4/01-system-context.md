@@ -11,9 +11,8 @@ erDiagram
     User ||--o{ UserBio : "maintains_personal_bio"
     CRMLead ||--o{ MultiChannelCadence : "enrolled_in_outreach_sequence"
     Cadence ||--o{ MultiChannelCadence : "instantiates_lead_sequences"
-    MultiChannelCadence ||--o{ CadenceProvider : "routes_channel_delivery"
     MultiChannelCadence ||--o{ SiftAPI : "requests_prompt_personalization"
-    CadenceProvider ||--o{ ChannelDeliveryProviders : "dispatches_email_sms_linkedin_whatsapp"
+    MultiChannelCadence ||--o{ ChannelDeliveryProviders : "dispatches_email_sms_linkedin_whatsapp"
     ChannelDeliveryProviders ||--o{ CRMLead : "delivers_messages_and_tracks_engagement"
     ChannelDeliveryProviders ||--o{ Communication : "reports_delivery_and_reply_webhooks"
 
@@ -51,12 +50,6 @@ erDiagram
         string status
     }
 
-    CadenceProvider {
-        string name PK
-        string provider_name
-        int priority
-    }
-
     Communication {
         string name PK
         string communication_medium
@@ -80,7 +73,6 @@ erDiagram
 - **UserBio**: Personal sender bio and background context used by Sift API during template optimization.
 - **CRMLead**: Target prospect record containing lead attributes, assignment tags, and cadence references.
 - **MultiChannelCadence**: Active execution instance tracking a specific lead's progression through cadence schedule steps.
-- **CadenceProvider**: Integrated multi-channel provider configuration with router weights.
 - **Communication**: System communication record logging dispatched outreach messages and engagement status.
 - **SiftAPI**: External Sift optimization and prediction API service.
 - **ChannelDeliveryProviders**: Third-party outreach channels (e.g. SendGrid, Twilio, LinkedIn, WhatsApp).
