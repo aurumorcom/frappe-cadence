@@ -1,15 +1,8 @@
-# Changelog v16.2.0
+## New Features
 
-## Features
+* **Cadence and Listmonk Integration Utilities and Handlers** - Added utility functions, Pydantic schemas for lead evaluation and cadence status updates, and cadence/Listmonk integration job handlers. ([2d9c66f](https://github.com/aurumorcom/frappe-cadence/commit/2d9c66fd), [e60359f](https://github.com/aurumorcom/frappe-cadence/commit/e60359fc), [3d48845](https://github.com/aurumorcom/frappe-cadence/commit/3d488451))
 
-* **Integrate Listmonk cadence system**: Refactored the cadence system to integrate Listmonk as the primary contact and sequence management platform, including the new Listmonk Settings doctype, API client, and webhook configuration ([8ef11d9](https://github.com/aurumorcom/frappe-cadence/commit/8ef11d93), [dda4f79](https://github.com/aurumorcom/frappe-cadence/commit/dda4f796)).
+## Improvements
 
-## Infrastructure
-
-* **Migrate to bumpversion config**: Moved bumpversion configuration from `pyproject.toml` to a dedicated `bumpversion.toml` file and updated `.gitignore` ([392db39](https://github.com/aurumorcom/frappe-cadence/commit/392db399)).
-* **Add release workflow**: Added a GitHub Actions workflow to automatically tag and release on pushes to the main branch ([bb132db](https://github.com/aurumorcom/frappe-cadence/commit/bb132dbd)).
-
-## Docs
-
-* **Update architecture documentation**: Removed the cadence provider abstraction layer from documentation and simplified architecture references across C4 diagrams, arc42, and workflows ([7279ff0](https://github.com/aurumorcom/frappe-cadence/commit/7279ff0d)).
-* **Add listmonk skill documentation**: Added initial documentation for the listmonk skill detailing its purpose, configuration, and debugging procedures ([1c65de4](https://github.com/aurumorcom/frappe-cadence/commit/1c65de4e)).
+* **Listmonk Architecture Restructuring** - Restructured Listmonk architecture documentation, reorganized hooks and sidebar navigation, refactored Listmonk integration into a dedicated client package, and cleaned up unused custom fields. ([324c87f](https://github.com/aurumorcom/frappe-cadence/commit/324c87f7), [662415b](https://github.com/aurumorcom/frappe-cadence/commit/662415b9), [1364348](https://github.com/aurumorcom/frappe-cadence/commit/1364348f))
+* **Test Coverage Enhancement** - Added extensive unit tests and end-to-end journey tests using lightweight fixtures while removing obsolete external integration tests. ([5b418eb](https://github.com/aurumorcom/frappe-cadence/commit/5b418eb7), [d4962b1](https://github.com/aurumorcom/frappe-cadence/commit/d4962b1e), [d5b30a6](https://github.com/aurumorcom/frappe-cadence/commit/d5b30a61))
