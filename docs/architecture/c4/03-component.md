@@ -1,123 +1,146 @@
 # C3: Component Diagram
 
 ## 🎯 Component Architecture
-This document defines the C3 Component model for the `frappe_cadence` application, breaking down the internal modules and controllers.
+This document details the internal DocType models, controller components, integration handlers, and relationship cardinalities within [`frappe_cadence`](apps/frappe_cadence/frappe_cadence/hooks.py:1).
 
 ## 📊 Component ERD
 
 ```mermaid
 erDiagram
-    Cadence ||--o{ CadenceMultiChannelSchedule : "contains_step_schedules"
-    Cadence ||--o{ MultiChannelCadence : "instantiates_lead_execution"
-    MultiChannelCadence ||--o{ Communication : "dispatches_step_communications"
-    UserBio }|..|| User : "belongs_to_sender"
-    UserBio }|..|| Cadence : "scoped_to_cadence"
-    EmailTemplate ||--o{ EmailTemplateAnnotation : "has_ai_annotations"
-    SMSTemplate ||--o{ SMSTemplateAnnotation : "has_ai_annotations"
-    LinkedInTemplate ||--o{ LinkedInTemplateAnnotation : "has_ai_annotations"
-    WhatsAppTemplate ||--o{ WhatsAppTemplateAnnotation : "has_ai_annotations"
-    HistoryGroup ||--o{ HistoryGroupHistory : "groups_history_logs"
-    History }|..|| CRMLead : "tracks_prospect_history"
-    SiftAPI ||--|| SiftSettings : "loads_api_credentials"
+    Cadence ||--o{ MultiChannelCadence : "generates"
+    Cadence ||--o{ UserBio : "overrides_bio"
+    CRMLead ||--o{ MultiChannelCadence : "enrolled_as_recipient"
+    MultiChannelCadence ||--o| Context : "context_attached"
+    Context ||--o{ ContextHistory : "tracks_revisions"
+    MultiChannelCadence ||--o| PlaybookExecution : "triggers"
+    HistoryGroup ||--o{ HistoryGroupHistory : "contains_items"
+    HistoryGroupHistory }|--|| History : "references_record"
+    ListmonkSettings ||--|| ListmonkClient : "configures"
+    MultiChannelCadence }|--|| ListmonkClient : "dispatches_to"
+    Cadence }|--|| ListmonkClient : "provisions_via"
 
     Cadence {
-        string cadence_code PK
-        string cadence_name
-        string rule
-        string assign_condition
-    }
-
-    CadenceMultiChannelSchedule {
         string name PK
-        string parent FK
-        string channel
-        int step_number
-        int delay_days
+        string cadence_name
+        int enabled
+        string naming_series
+        string cadence_code
+        int listmonk_id
+        string assign_condition
+        string assign_condition_json
+        string rule
+        string reference_playbook
+        string last_user FK
     }
 
     MultiChannelCadence {
         string name PK
         string cadence_name FK
-        string recipient
         string status
+        string last_status
+        string cadence_for
+        string recipient FK
+        string sender FK
+        int listmonk_contact_id
+        int listmonk_sequence_id
+        string playbook_execution FK
+        date start_date
+        date end_date
     }
 
-    Communication {
+    CRMLead {
         string name PK
-        string delivery_status
+        string first_name
+        string email
+        string email_id
+        string company_name
         string status
+        int listmonk_id
+        string enrichment_status FK
+        string location
     }
 
     UserBio {
         string name PK
+        int enabled
+        int is_default
         string reference_user FK
+        string reference_cadence FK
         string content
     }
 
-    EmailTemplate {
+    Context {
         string name PK
-        string subject
-        string response
-        string sift_id
+        string reference_doctype
+        string reference_doc
+        string content
     }
 
-    SMSTemplate {
+    ContextHistory {
         string name PK
-        string message
-        string sift_id
+        string parent FK
+        datetime timestamp
+        string user FK
+        string content_snapshot
     }
 
-    LinkedInTemplate {
+    History {
         string name PK
-        string message
-        string sift_id
-    }
-
-    WhatsAppTemplate {
-        string name PK
-        string message
-        string sift_id
+        string url
+        string markdown
+        string screenshot
+        string html
+        string reference_doctype
+        string reference_doc
     }
 
     HistoryGroup {
         string name PK
+        string url
+        string reference_doctype
+        string reference_doc
     }
 
     HistoryGroupHistory {
         string name PK
         string parent FK
+        string history FK
     }
 
-    History {
+    PlaybookExecution {
         string name PK
-        string reference_doctype
-        string reference_name
+        string playbook FK
+        string multi_channel_cadence FK
+        string status
     }
 
-    SiftSettings {
+    ListmonkSettings {
         string name PK
-        string sift_base_url
+        string base_url
+        string access_token
+        string webhook_secret
+        string status
+        int enabled
     }
 
-    SiftAPI {
-        string endpoint_url
-    }
-
-    User {
-        string name PK
-    }
-
-    CRMLead {
-        string name PK
+    ListmonkClient {
+        string base_url
+        string token
+        int timeout
     }
 ```
 
 ## 📝 Component Descriptions
-- **Cadence**: Master orchestration DocType tracking schedules, assignment rules, and linked playbook executions.
-- **CadenceMultiChannelSchedule**: Child table specifying individual channel steps (Email, SMS, etc.) and delay intervals.
-- **MultiChannelCadence**: Active execution tracking for a specific `CRMLead`, managing state from `Provisioning` to `Completed` or `Error`.
-- **UserBio**: Sender's personal bio injected into Sift API prompts for personalized messaging.
-- **Communication**: Standard Frappe DocType used to track outgoing messages and delivery statuses.
-- **EmailTemplate**, **SMSTemplate**, etc.: Channel-specific templates holding the base prompt or static message, and the `sift_id` AI model reference.
-- **History**, **HistoryGroup**: Entities for tracking the chronological sequence of events and engagement.
-- **SiftSettings**: Single DocType securely storing Sift API keys and base URLs.
+
+- **Cadence**: Core configuration DocType containing condition definitions, assignment strategy (Round Robin vs Load Balancing), and sequence metadata.
+- **MultiChannelCadence**: State-machine managing document tracking each prospect's lifecycle from `Draft` through `Enriching`, `Provisioning`, `Scheduled`, `In Progress`, and terminal states (`Replied`, `Finished`, `Opted Out`, `Failed`).
+- **CRMLead**: Lead record representing the prospect, carrying demographic data, enrichment flags, and Listmonk subscriber ID pointers.
+- **UserBio**: Personalization profile providing sender identity bios customized per sales rep and specific outreach cadence.
+- **Context**: Structured dossier and research notes collected during playbook enrichment, with immutable revision history.
+- **ContextHistory**: Child table recording point-in-time snapshots of research content whenever updated.
+- **History**: Granular log of crawled web pages, markdown content, and screenshot attachments associated with CRM documents.
+- **HistoryGroup**: Aggregate container bundling multiple history items for a target URL.
+- **HistoryGroupHistory**: Child table joining history items into a HistoryGroup.
+- **PlaybookExecution**: Background runner orchestrating multi-step research and intelligence gathering before outreach dispatch.
+- **ListmonkSettings**: Single DocType configuring API authentication tokens, base URLs, and automated webhook subscriptions for Listmonk.
+- **ListmonkClient**: Dedicated HTTP communication wrapper exposing typed methods for managing subscribers, sequences, campaigns, and webhooks.

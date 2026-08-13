@@ -1,54 +1,74 @@
 # C2: Container Diagram
 
 ## 🎯 Container Architecture
-This document defines the runnable services, databases, queues, and external API integrations for the `frappe_cadence` application.
+This document defines the runnable runtime containers, data stores, background brokers, workers, and external service containers for [`frappe_cadence`](apps/frappe_cadence/frappe_cadence/hooks.py:1).
 
 ## 📊 Container ERD
 
 ```mermaid
 erDiagram
-    FrappeDeskUI ||--|| FrappeWSGIApp : "HTTPS / JSON"
-    FrappeWSGIApp ||--|| MariaDBDatabase : "SQL"
-    FrappeWSGIApp ||--o{ BackgroundWorkerPool : "Redis / RQ"
-    BackgroundWorkerPool }|--|| MariaDBDatabase : "reads_and_writes"
-    BackgroundWorkerPool }|--|| SiftService : "HTTPS / REST"
-    BackgroundWorkerPool }|--|| ExternalChannelGateways : "HTTPS / REST / SMTP"
-    SiftService ||--o{ FrappeWSGIApp : "Webhooks"
-    ExternalChannelGateways ||--o{ FrappeWSGIApp : "Webhooks"
+    BrowserFrontend ||--|| Nginx : "HTTPS / Port 443"
+    Nginx ||--|| Gunicorn : "WSGI Proxy / Port 8000"
+    Gunicorn ||--|| MariaDB : "SQL / Port 3306"
+    Gunicorn ||--o{ RedisBroker : "Enqueue Jobs / Port 6379"
+    FastStreamWorker }|--|| RedisBroker : "Consumes Tasks"
+    FastStreamWorker ||--|| MariaDB : "SQL / State Transitions"
+    FastStreamWorker }|--|| ListmonkSubscriberAPI : "REST / Port 9000"
+    FastStreamWorker }|--|| ListmonkSequenceAPI : "REST / Port 9000"
+    ListmonkEngine ||--|| Gunicorn : "Webhook POST / Port 8000"
 
-    FrappeDeskUI {
-        string type "Web Browser / SPA"
-        string framework "Frappe JS"
+    BrowserFrontend {
+        string technology "Frappe Desk SPA / Vue 3"
+        string client "Chrome / Firefox / Edge"
     }
 
-    FrappeWSGIApp {
-        string runtime "Python 3 / Gunicorn"
-        string framework "Frappe Framework"
+    Nginx {
+        string type "Reverse Proxy & TLS Termination"
+        int port 443
     }
 
-    MariaDBDatabase {
-        string engine "MariaDB / InnoDB"
-        string storage "Persistent Volume"
+    Gunicorn {
+        string runtime "Python 3.14 / Frappe WSGI"
+        int port 8000
     }
 
-    BackgroundWorkerPool {
-        string broker "Redis"
-        string runner "Frappe RQ Worker"
+    MariaDB {
+        string engine "MariaDB 10.11 / InnoDB"
+        int port 3306
     }
 
-    SiftService {
-        string external_endpoint "Sift AI API"
+    RedisBroker {
+        string type "Redis 7 / Message Broker"
+        int port 6379
     }
 
-    ExternalChannelGateways {
-        string external_endpoint "Vendor APIs (Twilio, SendGrid, etc.)"
+    FastStreamWorker {
+        string runner "Frappe Controller / FastStream"
+        string concurrency "Multi-Threaded Worker"
+    }
+
+    ListmonkEngine {
+        string runtime "Go Service / Listmonk 3+"
+        int port 9000
+    }
+
+    ListmonkSubscriberAPI {
+        string external_endpoint "api.listmonk.app/api/contacts"
+    }
+
+    ListmonkSequenceAPI {
+        string external_endpoint "api.listmonk.app/api/lists"
     }
 ```
 
 ## 📝 Container Descriptions
-- **FrappeDeskUI**: User-facing web application serving the interactive UI for managing Cadences, Templates, and Analytics.
-- **FrappeWSGIApp**: Core backend API handling business logic, whitelisted endpoints, and inbound webhooks.
-- **MariaDBDatabase**: Primary transactional datastore for domain aggregates (`Cadence`, `Multi Channel Cadence`, `Communication`, etc.).
-- **BackgroundWorkerPool**: Message broker and background workers managing asynchronous job execution (`process_schedule`, assignments).
-- **SiftService**: External AI service providing prompt personalization and optimization.
-- **ExternalChannelGateways**: External third-party APIs for dispatching emails, SMS, LinkedIn messages, and WhatsApp.
+
+- **BrowserFrontend**: User interface for sales managers and reps to author cadences, monitor enrollments, and view outreach analytics.
+- **Nginx**: Edge proxy server managing TLS termination, asset caching, and routing requests to the WSGI backend.
+- **Gunicorn**: Primary Frappe web server handling HTTP API routes, desk UI views, document transactions, and webhook ingestion.
+- **MariaDB**: Relational transactional database storing DocType records, relational schemas, user bios, contexts, and engagement histories.
+- **RedisBroker**: In-memory message broker coordinating background task queues and `frappe_controller` execution streams.
+- **FastStreamWorker**: Asynchronous background worker executing decoupled tasks including lead qualification, cadence batching, and Listmonk synchronization.
+- **ListmonkEngine**: Standalone external cold outreach and email newsletter engine executing multi-step sequences, intervals, and sending pipelines.
+- **ListmonkSubscriberAPI**: REST interface of Listmonk handling subscriber creation, attribute synchronization, and metadata updates.
+- **ListmonkSequenceAPI**: REST interface of Listmonk managing list creation, status toggles, and subscriber list attachments.
