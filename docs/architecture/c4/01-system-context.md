@@ -1,45 +1,46 @@
 # C1: System Context Diagram
 
 ## 🎯 System Boundaries
-This document defines the C1 System Context and external boundaries for the `frappe_cadence` application.
+This document defines the high-level system context, primary domain entities, external systems, and user actors interacting with [`frappe_cadence`](apps/frappe_cadence/frappe_cadence/hooks.py:1).
 
 ## 📊 Context ERD
 
 ```mermaid
 erDiagram
-    User ||--o{ Cadence : "configures_and_manages"
-    User ||--o{ UserBio : "maintains_personal_bio"
-    CRMLead ||--o{ MultiChannelCadence : "enrolled_in_outreach_sequence"
-    Cadence ||--o{ MultiChannelCadence : "instantiates_lead_sequences"
-    MultiChannelCadence ||--o{ SiftAPI : "requests_prompt_personalization"
-    MultiChannelCadence ||--o{ ChannelDeliveryProviders : "dispatches_email_sms_linkedin_whatsapp"
-    ChannelDeliveryProviders ||--o{ CRMLead : "delivers_messages_and_tracks_engagement"
-    ChannelDeliveryProviders ||--o{ Communication : "reports_delivery_and_reply_webhooks"
+    SalesRepresentative ||--o{ Cadence : "manages"
+    SalesRepresentative ||--o{ MultiChannelCadence : "executes"
+    CRMLead ||--o{ MultiChannelCadence : "enrolled_into"
+    Cadence ||--o{ MultiChannelCadence : "instantiates"
+    Cadence ||--|| Playbook : "references"
+    MultiChannelCadence ||--o| PlaybookExecution : "triggers_enrichment"
+    MultiChannelCadence }|--|| ListmonkSubscriberAPI : "synchronizes_lead"
+    Cadence }|--|| ListmonkSequenceAPI : "provisions_campaign_list"
+    ListmonkWebhookReceiver ||--o{ MultiChannelCadence : "updates_engagement_status"
 
-    User {
-        string name PK
-        string full_name
+    SalesRepresentative {
+        string user_id PK
         string email
+        string full_name
+        string role_profile
+    }
+
+    CRMLead {
+        string lead_id PK
+        string first_name
+        string email
+        string company_name
+        string status
+        int listmonk_id
     }
 
     Cadence {
         string cadence_code PK
         string cadence_name
+        int enabled
+        string assign_condition
         string rule
-    }
-
-    UserBio {
-        string name PK
-        string reference_user FK
-        string reference_cadence FK
-        string content
-    }
-
-    CRMLead {
-        string name PK
-        string first_name
-        string last_name
-        string email_id
+        int listmonk_id
+        string reference_playbook
     }
 
     MultiChannelCadence {
@@ -48,31 +49,49 @@ erDiagram
         string recipient FK
         string sender FK
         string status
+        int listmonk_contact_id
+        int listmonk_sequence_id
+        string playbook_execution FK
     }
 
-    Communication {
+    Playbook {
         string name PK
-        string communication_medium
-        string reference_doctype
-        string reference_name FK
-        string delivery_status
+        string playbook_name
+        string document_type
+        int is_active
     }
 
-    SiftAPI {
-        string endpoint_url
+    PlaybookExecution {
+        string name PK
+        string playbook FK
+        string multi_channel_cadence FK
+        string status
     }
 
-    ChannelDeliveryProviders {
-        string provider_name
+    ListmonkSubscriberAPI {
+        string endpoint "/api/contacts"
+        string protocol "HTTPS_JSON"
+    }
+
+    ListmonkSequenceAPI {
+        string endpoint "/api/lists"
+        string protocol "HTTPS_JSON"
+    }
+
+    ListmonkWebhookReceiver {
+        string endpoint "/api/method/webhook"
+        string signature_header "Listmonk-Signature"
     }
 ```
 
 ## 📝 Entity Descriptions
-- **User**: Sales representative, account executive, or system administrator operating the CRM desk.
-- **Cadence**: Master multi-step sales cadence template defining triggers, steps, rules, and user pools.
-- **UserBio**: Personal sender bio and background context used by Sift API during template optimization.
-- **CRMLead**: Target prospect record containing lead attributes, assignment tags, and cadence references.
-- **MultiChannelCadence**: Active execution instance tracking a specific lead's progression through cadence schedule steps.
-- **Communication**: System communication record logging dispatched outreach messages and engagement status.
-- **SiftAPI**: External Sift optimization and prediction API service.
-- **ChannelDeliveryProviders**: Third-party outreach channels (e.g. SendGrid, Twilio, LinkedIn, WhatsApp).
+
+- **SalesRepresentative**: Sales user or manager who configures automated cadences, provides personal bio profiles, and oversees outreach execution.
+- **CRMLead**: Prospective client record in Frappe CRM containing demographic, organization, and contact channel details.
+- **Cadence**: Template defining outreach campaign strategies, AST-evaluated qualification criteria, sender distribution rules, and attached playbooks.
+- **MultiChannelCadence**: Concrete instance of an enrolled lead navigating an active outreach sequence with associated sender profile and progression status.
+- **Playbook**: Automated enrichment workflow definition orchestrating contextual research and data gathering tasks.
+- **PlaybookExecution**: Runtime tracking document for an executing enrichment run for a specific MultiChannelCadence.
+- **ListmonkSubscriberAPI**: External REST endpoint for creating and updating subscriber attributes and list memberships.
+- **ListmonkSequenceAPI**: External REST endpoint for provisioning and status management of campaign mailing lists.
+- **ListmonkWebhookReceiver**: Inbound webhook handler validating HMAC-SHA256 signatures and recording delivery and engagement updates.

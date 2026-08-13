@@ -20,106 +20,8 @@
   },
   {
    "child": 0,
-   "label": "CRM Lead Cadence",
-   "link_to": "CRM Lead Cadence",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Cadence Multi Channel Schedule",
-   "link_to": "Cadence Multi Channel Schedule",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Cadence Provider",
-   "link_to": "Cadence Provider",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Cadence Provider Channel",
-   "link_to": "Cadence Provider Channel",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "MCC Cadence Provider",
-   "link_to": "MCC Cadence Provider",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Sift Settings",
-   "link_to": "Sift Settings",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Email Template",
-   "link_to": "Email Template",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "SMS Template",
-   "link_to": "SMS Template",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "WhatsApp Template",
-   "link_to": "WhatsApp Template",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "LinkedIn Template",
-   "link_to": "LinkedIn Template",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Email Template Annotation",
-   "link_to": "Email Template Annotation",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "SMS Template Annotation",
-   "link_to": "SMS Template Annotation",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Whatsapp Template Annotation",
-   "link_to": "Whatsapp Template Annotation",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Linkedin Template Annotation",
-   "link_to": "Linkedin Template Annotation",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "label": "Communication",
-   "link_to": "Communication",
+   "label": "Listmonk Settings",
+   "link_to": "Listmonk Settings",
    "link_type": "DocType",
    "type": "Link"
   },
@@ -132,6 +34,13 @@
   },
   {
    "child": 0,
+   "label": "User Bio",
+   "link_to": "User Bio",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
    "label": "History",
    "link_to": "History",
    "link_type": "DocType",
@@ -139,8 +48,15 @@
   },
   {
    "child": 0,
-   "label": "History Image",
-   "link_to": "History Image",
+   "label": "History Group",
+   "link_to": "History Group",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Context",
+   "link_to": "Context",
    "link_type": "DocType",
    "type": "Link"
   },
