@@ -1,0 +1,47 @@
+{
+	"actions": [],
+	"allow_rename": 1,
+	"creation": "2024-03-27 12:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"timestamp",
+		"user",
+		"content_snapshot"
+	],
+	"fields": [
+		{
+			"fieldname": "timestamp",
+			"fieldtype": "Datetime",
+			"in_list_view": 1,
+			"label": "Timestamp",
+			"reqd": 1
+		},
+		{
+			"fieldname": "user",
+			"fieldtype": "Link",
+			"in_list_view": 1,
+			"label": "User",
+			"options": "User"
+		},
+		{
+			"fieldname": "content_snapshot",
+			"fieldtype": "Text Editor",
+			"label": "Content Snapshot"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"istable": 1,
+	"links": [],
+	"modified": "2024-03-27 12:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "Cadence",
+	"name": "Context History",
+	"naming_rule": "Random",
+	"owner": "Administrator",
+	"permissions": [],
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}

@@ -7,13 +7,13 @@ class TestCadenceIntegration(IntegrationTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.patcher = patch('frappe_controller.utils.controller.emit_event')
+        cls.patcher = patch('frappe.publish_event')
         cls.mock_emit = cls.patcher.start()
         cls.patcher2 = patch('frappe.utils.global_search.sync_value_in_queue')
         cls.mock_gs = cls.patcher2.start()
         cls.patcher3 = patch('frappe.enqueue')
         cls.mock_enq = cls.patcher3.start()
-        cls.patcher4 = patch('frappe_controller.utils.background_jobs.enqueue')
+        cls.patcher4 = patch('frappe.enqueue')
         cls.mock_fc_enq = cls.patcher4.start()
         from frappe.tests.utils import make_test_records
         make_test_records("CRM Lead Status")
@@ -309,13 +309,13 @@ class TestCadenceAstOrm(IntegrationTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.patcher = patch('frappe_controller.utils.controller.emit_event')
+        cls.patcher = patch('frappe.publish_event')
         cls.mock_emit = cls.patcher.start()
         cls.patcher2 = patch('frappe.utils.global_search.sync_value_in_queue')
         cls.mock_gs = cls.patcher2.start()
         cls.patcher3 = patch('frappe.enqueue')
         cls.mock_enq = cls.patcher3.start()
-        cls.patcher4 = patch('frappe_controller.utils.background_jobs.enqueue')
+        cls.patcher4 = patch('frappe.enqueue')
         cls.mock_fc_enq = cls.patcher4.start()
 
     @classmethod

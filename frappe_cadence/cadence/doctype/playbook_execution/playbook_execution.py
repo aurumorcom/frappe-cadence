@@ -1,36 +1,28 @@
 import frappe
 from frappe.model.document import Document
 
-def on_update(doc: Document, method: str) -> None:
-    """
-    Event listener for Playbook Execution.
-    Transitions the state of the Multi Channel Cadence when its playbook is completed.
-    """
-    if doc.reference_doctype != "Multi Channel Cadence" or not doc.reference_name:
-        return
 
-    # Check if the status transitioned to a terminal state
-    if not doc.has_value_changed("status"):
-        return
-        
-    if doc.status not in ["success", "error", "canceled"]:
-        return
+class PlaybookExecution(Document):
+	def on_update(self) -> None:
+		on_update(self)
 
-    # Safely fetch the Multi Channel Cadence document
-    if not frappe.db.exists("Multi Channel Cadence", doc.reference_name):
-        return
 
-    mcc = frappe.get_doc("Multi Channel Cadence", doc.reference_name)
+def on_update(doc, method=None) -> None:
+	mcc_name = doc.get("multi_channel_cadence") or doc.get("reference_name")
+	if not mcc_name or not frappe.db.exists("Multi Channel Cadence", mcc_name):
+		return
 
-    # Only process if in Provisioning state
-    if mcc.status != "Provisioning":
-        return
+	mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
 
-    # Transition state based on playbook result
-    if doc.status == "success":
-        mcc.status = "Draft"
-    elif doc.status in ["error", "canceled"]:
-        mcc.status = "Error"
-
-    # Save the document without triggering permissions
-    mcc.save(ignore_permissions=True)
+	status = (doc.status or "").lower()
+	if status in ["running"]:
+		mcc.db_set("status", "Enriching")
+	elif status in ["completed", "success"]:
+		mcc.db_set("status", "Provisioning")
+		frappe.enqueue(
+			"frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence",
+			queue="high",
+			mcc_name=mcc.name,
+		)
+	elif status in ["failed", "error", "canceled"]:
+		mcc.db_set("status", "Failed")

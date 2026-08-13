@@ -1,16 +1,4 @@
-// Copyright (c) 2021, Frappe Technologies Pvt. Ltd. and contributors
-// For license information, please see license.txt
-
 frappe.ui.form.on("Cadence", {
-	setup: function(frm) {
-		frm.set_query("reference_name", "cadence_schedules", function(doc, cdt, cdn) {
-			return {
-				filters: {
-					include_disabled: 1
-				}
-			};
-		});
-	},
 	refresh: function (frm) {
 		if (frm.is_new()) {
 			frm.toggle_display("cadence_code", false);
@@ -27,6 +15,24 @@ frappe.ui.form.on("Cadence", {
 				"fa fa-list",
 				true
 			);
+
+			if (frm.doc.listmonk_id) {
+				frm.add_custom_button(
+					__("Cadence Builder"),
+					function () {
+						frappe.db.get_doc("Listmonk Settings").then(function (settings) {
+							var baseUrl = (settings.base_url || "").replace(/\/+$/, "");
+							if (baseUrl) {
+								window.open(baseUrl + "/admin/sequences/" + frm.doc.listmonk_id, "_blank");
+							} else {
+								frappe.msgprint(__("Listmonk Base URL is not configured in Listmonk Settings."));
+							}
+						});
+					},
+					null,
+					true
+				);
+			}
 		}
 	},
 });

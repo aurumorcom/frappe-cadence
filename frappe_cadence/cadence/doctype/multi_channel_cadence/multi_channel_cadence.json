@@ -1,116 +1,133 @@
 {
- "actions": [],
- "autoname": "format:MCC-{YYYY}-{#####}",
- "creation": "2019-06-30 16:05:30.015615",
- "doctype": "DocType",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "cadence_name",
-  "cadence_for",
-  "recipient",
-  "sender",
-  "column_break_4",
-  "start_date",
-  "end_date",
-  "status",
-  "last_status",
-  "provider"
- ],
- "fields": [
-  {
-   "fieldname": "cadence_name",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Cadence",
-   "options": "Cadence",
-   "reqd": 1
-  },
-  {
-   "default": "Provisioning",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Provisioning\nDraft\nScheduled\nIn Progress\nCompleted\nUnsubscribed\nError"
-  },
-  {
-   "fieldname": "last_status",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Last Status",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_4",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "label": "Start Date",
-   "reqd": 0
-  },
-  {
-   "fieldname": "end_date",
-   "fieldtype": "Date",
-   "label": "End Date",
-   "read_only": 1
-  },
-  {
-   "default": "CRM Lead",
-   "fieldname": "cadence_for",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Cadence For",
-   "options": "\nCRM Lead\nContact\nEmail Group",
-   "reqd": 1
-  },
-  {
-   "fieldname": "recipient",
-   "fieldtype": "Dynamic Link",
-   "label": "Recipient",
-   "options": "cadence_for",
-   "reqd": 1
-  },
-  {
-   "default": "__user",
-   "fieldname": "sender",
-   "fieldtype": "Link",
-   "label": "Sender",
-   "options": "User"
-  },
-  {
-   "fieldname": "provider",
-   "fieldtype": "Table",
-   "label": "Providers",
-   "options": "MCC Cadence Provider"
-  }
- ],
- "links": [],
- "modified": "2026-07-02 20:11:17.868666",
- "modified_by": "Administrator",
- "module": "Cadence",
- "name": "Multi Channel Cadence",
- "naming_rule": "Expression (old style)",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  }
- ],
- "quick_entry": 1,
- "row_format": "Dynamic",
- "sort_field": "creation",
- "sort_order": "DESC",
- "states": [],
- "track_changes": 1
+	"actions": [],
+	"autoname": "format:MCC-{YYYY}-{#####}",
+	"creation": "2019-06-30 16:05:30.015615",
+	"doctype": "DocType",
+	"editable_grid": 1,
+	"engine": "InnoDB",
+	"field_order": [
+		"cadence_name",
+		"cadence_for",
+		"recipient",
+		"sender",
+		"listmonk_contact_id",
+		"listmonk_sequence_id",
+		"playbook_execution",
+		"column_break_4",
+		"start_date",
+		"end_date",
+		"status",
+		"last_status"
+	],
+	"fields": [
+		{
+			"fieldname": "cadence_name",
+			"fieldtype": "Link",
+			"in_list_view": 1,
+			"label": "Cadence",
+			"options": "Cadence",
+			"reqd": 1
+		},
+		{
+			"default": "Draft",
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"label": "Status",
+			"options": "Draft\nEnriching\nProvisioning\nFailed\nScheduled\nIn Progress\nReplied\nFinished\nOpted Out"
+		},
+		{
+			"fieldname": "last_status",
+			"fieldtype": "Data",
+			"hidden": 1,
+			"label": "Last Status",
+			"read_only": 1
+		},
+		{
+			"fieldname": "listmonk_contact_id",
+			"fieldtype": "Int",
+			"hidden": 1,
+			"label": "Listmonk Contact ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "listmonk_sequence_id",
+			"fieldtype": "Int",
+			"hidden": 1,
+			"label": "Listmonk Sequence ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "playbook_execution",
+			"fieldtype": "Link",
+			"label": "Playbook Execution",
+			"options": "Playbook Execution",
+			"read_only": 1
+		},
+		{
+			"fieldname": "column_break_4",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "start_date",
+			"fieldtype": "Date",
+			"label": "Start Date",
+			"reqd": 0
+		},
+		{
+			"fieldname": "end_date",
+			"fieldtype": "Date",
+			"label": "End Date",
+			"read_only": 1
+		},
+		{
+			"default": "CRM Lead",
+			"fieldname": "cadence_for",
+			"fieldtype": "Select",
+			"in_list_view": 1,
+			"label": "Cadence For",
+			"options": "\nCRM Lead\nContact\nEmail Group",
+			"reqd": 1
+		},
+		{
+			"fieldname": "recipient",
+			"fieldtype": "Dynamic Link",
+			"label": "Recipient",
+			"options": "cadence_for",
+			"reqd": 1
+		},
+		{
+			"default": "__user",
+			"fieldname": "sender",
+			"fieldtype": "Link",
+			"label": "Sender",
+			"options": "User"
+		}
+	],
+	"links": [],
+	"modified": "2026-07-02 20:11:17.868666",
+	"modified_by": "Administrator",
+	"module": "Cadence",
+	"name": "Multi Channel Cadence",
+	"naming_rule": "Expression (old style)",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"quick_entry": 1,
+	"row_format": "Dynamic",
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
 }
