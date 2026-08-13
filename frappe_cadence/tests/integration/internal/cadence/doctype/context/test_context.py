@@ -4,10 +4,12 @@ from frappe.tests.utils import FrappeTestCase
 
 class TestContextIntegration(FrappeTestCase):
 	def test_context_creation_and_history_tracking(self) -> None:
-		ctx = frappe.get_doc({
-			"doctype": "Context",
-			"content": "Initial Context Text",
-		}).insert(ignore_permissions=True, ignore_links=True)
+		ctx = frappe.get_doc(
+			{
+				"doctype": "Context",
+				"content": "Initial Context Text",
+			}
+		).insert(ignore_permissions=True, ignore_links=True)
 
 		self.assertEqual(ctx.content, "Initial Context Text")
 
