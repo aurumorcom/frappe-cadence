@@ -15,11 +15,45 @@ doctype_js = {
 	"Listmonk Settings": "cadence/doctype/listmonk_settings/listmonk_settings.js",
 }
 doctype_list_js = {
-	"Communication": "cadence/doctype/communication/communication_list.js",
 	"Multi Channel Cadence": "cadence/doctype/multi_channel_cadence/multi_channel_cadence_list.js",
 }
 
-# Document Events
+controller_events = {
+	# Listmonk Integration Jobs
+	"frappe_cadence.integrations.listmonk.jobs.webhook.setup_webhook": {
+		"rate_limit_per_minute": 30,
+		"retries": 3,
+	},
+	"frappe_cadence.integrations.listmonk.jobs.contact.sync_all_crm_leads": {
+		"rate_limit_per_minute": 10,
+		"retries": 1,
+	},
+	"frappe_cadence.integrations.listmonk.jobs.contact.upsert_contact": {
+		"rate_limit_per_minute": 120,
+		"retries": 3,
+	},
+	"frappe_cadence.integrations.listmonk.jobs.contact.delete_contact": {
+		"rate_limit_per_minute": 60,
+		"retries": 3,
+	},
+	# Core Cadence Jobs
+	"frappe_cadence.jobs.cadence.upsert_sequence": {"rate_limit_per_minute": 60, "retries": 3},
+	"frappe_cadence.jobs.cadence.update_sequence_status": {"rate_limit_per_minute": 60, "retries": 3},
+	"frappe_cadence.jobs.cadence.delete_sequence": {"rate_limit_per_minute": 60, "retries": 3},
+	"frappe_cadence.jobs.cadence.evaluate_leads_for_cadence": {"rate_limit_per_minute": 30, "retries": 1},
+	"frappe_cadence.jobs.cadence.evaluate_cadences_for_lead": {"rate_limit_per_minute": 60, "retries": 1},
+	"frappe_cadence.jobs.cadence.add_lead_batch_to_cadence": {"rate_limit_per_minute": 60, "retries": 3},
+	# Multi Channel Cadence Jobs
+	"frappe_cadence.jobs.multi_channel_cadence.add_contact_to_sequence": {
+		"rate_limit_per_minute": 60,
+		"retries": 3,
+	},
+	"frappe_cadence.jobs.multi_channel_cadence.remove_contact_from_sequence": {
+		"rate_limit_per_minute": 60,
+		"retries": 3,
+	},
+}
+
 doc_events = {
 	"CRM Lead": {
 		"on_update": "frappe_cadence.cadence.doctype.crm_lead.crm_lead.on_update",
@@ -36,68 +70,7 @@ doc_events = {
 	"Playbook Execution": {
 		"on_update": "frappe_cadence.cadence.doctype.playbook_execution.playbook_execution.on_update",
 	},
-	"Communication": {
-		"on_update": "frappe_cadence.cadence.doctype.communication.communication.on_update",
-	},
 }
-
-# Scheduled Tasks
-scheduler_events = {}
-
-# Controller Events
-controller_events = {
-	"frappe_cadence.cadence.doctype.listmonk_settings.listmonk_settings.setup_webhook": {
-		"retries": 3,
-		"timeout": 120,
-	},
-	"frappe_cadence.cadence.doctype.listmonk_settings.listmonk_settings.sync_all_crm_leads": {
-		"retries": 1,
-		"timeout": 600,
-	},
-	"frappe_cadence.cadence.doctype.crm_lead.crm_lead.upsert_contact": {
-		"retries": 3,
-		"timeout": 120,
-	},
-	"frappe_cadence.cadence.doctype.crm_lead.crm_lead.delete_contact": {
-		"retries": 3,
-		"timeout": 120,
-	},
-	"frappe_cadence.cadence.doctype.crm_lead.crm_lead.evaluate_cadences_for_lead": {
-		"retries": 1,
-		"timeout": 300,
-	},
-	"frappe_cadence.cadence.doctype.cadence.cadence.upsert_sequence": {
-		"retries": 3,
-		"timeout": 120,
-	},
-	"frappe_cadence.cadence.doctype.cadence.cadence.update_sequence_status": {
-		"retries": 3,
-		"timeout": 120,
-	},
-	"frappe_cadence.cadence.doctype.cadence.cadence.delete_sequence": {
-		"retries": 3,
-		"timeout": 120,
-	},
-	"frappe_cadence.cadence.doctype.cadence.cadence.evaluate_leads_for_cadence": {
-		"retries": 1,
-		"timeout": 300,
-	},
-	"frappe_cadence.cadence.doctype.cadence.cadence.add_lead_batch_to_cadence": {
-		"retries": 3,
-		"timeout": 300,
-	},
-	"frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence": {
-		"retries": 3,
-		"timeout": 120,
-	},
-	"frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.remove_contact_from_sequence": {
-		"retries": 3,
-		"timeout": 120,
-	},
-}
-
-export_python_type_annotations = True
-require_type_annotated_api_methods = True
 
 fixtures = [
 	{"dt": "Custom Field", "filters": [["module", "in", ["Cadence", "CRM"]]]},
