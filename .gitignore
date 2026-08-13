@@ -56,3 +56,8 @@ jspm_packages/
 
 # Agents
 plans/
+
+# Rune
+.rune/*
+!.rune/config
+!.rune/index
