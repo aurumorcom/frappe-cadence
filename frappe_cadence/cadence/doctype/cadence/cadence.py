@@ -1,44 +1,27 @@
-# Copyright (c) 2021, Frappe Technologies Pvt. Ltd. and contributors
-# For license information, please see license.txt
-
+import ast
+import json
+from typing import Optional
 import frappe
+from frappe import _
 from frappe.model.document import Document
+from frappe_cadence.integrations.listmonk import (
+	create_sequence,
+	delete_sequence as api_delete_sequence,
+	ensure_listmonk_authorized,
+	update_sequence,
+	update_sequence_status,
+)
 
 
 class Cadence(Document):
-	# begin: auto-generated types
-	# This code is auto-generated. Do not modify anything in this block.
-
-	from typing import TYPE_CHECKING
-
-	if TYPE_CHECKING:
-		from frappe.automation.doctype.assignment_rule_user.assignment_rule_user import AssignmentRuleUser
-		from frappe.types import DF
-		from frappe_cadence.cadence.doctype.cadence_provider_channel.cadence_provider_channel import CadenceProviderChannel
-		from frappe_cadence.cadence.doctype.cadence_multi_channel_schedule.cadence_multi_channel_schedule import CadenceMultiChannelSchedule
-
-		assign_condition: DF.Code | None
-		assign_condition_json: DF.Code | None
-		cadence_code: DF.Data
-		cadence_name: DF.Data
-		cadence_schedules: DF.Table[CadenceMultiChannelSchedule]
-		provider: DF.Table[CadenceProviderChannel]
-		description: DF.Text | None
-		last_user: DF.Link | None
-		naming_series: DF.Literal["CAD-.YYYY.-"]
-		reference_playbook: DF.Link | None
-		rule: DF.Literal["Round Robin", "Load Balancing"]
-		users: DF.TableMultiSelect[AssignmentRuleUser]
-	# end: auto-generated types
-
-	def autoname(self):
+	def autoname(self) -> None:
 		if not self.cadence_code:
 			from frappe.model.naming import set_name_by_naming_series
 			set_name_by_naming_series(self)
 			self.cadence_code = self.name
 		self.name = self.cadence_code
 
-	def after_insert(self):
+	def after_insert(self) -> None:
 		self.ensure_playbook()
 		if frappe.db.exists("UTM Campaign", self.name):
 			mc = frappe.get_doc("UTM Campaign", self.name)
@@ -49,24 +32,19 @@ class Cadence(Document):
 		mc.crm_cadence = self.name
 		mc.save(ignore_permissions=True)
 
-	def before_save(self):
-		import ast
-		import json
-
+	def before_save(self) -> None:
 		if not self.assign_condition:
 			self.assign_condition_json = ""
 			return
 
 		try:
-			tree = ast.parse(self.assign_condition, mode='eval')
+			tree = ast.parse(self.assign_condition, mode="eval")
 			filters = self._ast_to_filters(tree.body)
 			self.assign_condition_json = json.dumps(filters)
 		except Exception as e:
 			frappe.throw(f"Invalid condition syntax: {str(e)}", frappe.ValidationError)
 
-	def _ast_to_filters(self, node):
-		import ast
-
+	def _ast_to_filters(self, node: ast.AST) -> list:
 		operators = {
 			ast.Eq: "=",
 			ast.NotEq: "!=",
@@ -115,7 +93,7 @@ class Cadence(Document):
 		else:
 			raise ValueError("Unsupported expression structure")
 
-	def on_change(self):
+	def on_change(self) -> None:
 		if frappe.db.exists("UTM Campaign", self.name):
 			mc = frappe.get_doc("UTM Campaign", self.name)
 		else:
@@ -125,17 +103,28 @@ class Cadence(Document):
 		mc.crm_cadence = self.name
 		mc.save(ignore_permissions=True)
 
-	def on_update(self):
-		from frappe_controller.utils.background_jobs import enqueue
-
+	def on_update(self) -> None:
 		self.ensure_playbook()
-		enqueue(
-			"frappe_cadence.cadence.doctype.cadence.cadence.evaluate_cadence_for_leads",
-			queue="low",
-			cadence_name=self.name
+		frappe.enqueue(
+			"frappe_cadence.cadence.doctype.cadence.cadence.upsert_sequence",
+			queue="high",
+			cadence_name=self.name,
+		)
+		frappe.enqueue(
+			"frappe_cadence.cadence.doctype.cadence.cadence.evaluate_leads_for_cadence",
+			queue="medium",
+			cadence_name=self.name,
 		)
 
-	def ensure_playbook(self):
+	def on_trash(self) -> None:
+		if self.listmonk_id:
+			frappe.enqueue(
+				"frappe_cadence.cadence.doctype.cadence.cadence.delete_sequence",
+				queue="high",
+				listmonk_id=self.listmonk_id,
+			)
+
+	def ensure_playbook(self) -> None:
 		if not self.get("reference_playbook"):
 			try:
 				if frappe.db.exists("Playbook", self.name):
@@ -151,124 +140,131 @@ class Cadence(Document):
 						"is_active": 0,
 						"filters": [
 							{"fieldname": "cadence_name", "operator": "=", "value": self.name},
-							{"fieldname": "status", "operator": "=", "value": "Provisioning"}
-						]
+							{"fieldname": "status", "operator": "=", "value": "Provisioning"},
+						],
 					}).insert(ignore_permissions=True)
 					self.db_set("reference_playbook", playbook.name)
 					self.reference_playbook = playbook.name
 			except Exception as e:
 				frappe.log_error(title="Failed to create/link playbook for Cadence", message=str(e))
 
-import json
 
-def on_update(doc, method):
-	"""Enqueues the lead for cadence evaluation."""
-	from frappe_controller.utils.background_jobs import enqueue
+def on_update(doc, method=None) -> None:
+	if hasattr(doc, "on_update"):
+		doc.on_update()
 
-	enqueue(
-		"frappe_cadence.cadence.doctype.cadence.cadence.evaluate_lead_for_cadences",
-		queue="high",
-		lead_name=doc.name
-	)
 
-def evaluate_cadence_for_leads(cadence_name):
-	"""Evaluates a single Cadence against all leads."""
-	try:
-		cadence = frappe.get_doc("Cadence", cadence_name)
-	except frappe.DoesNotExistError:
-		frappe.log_error(title="Cadence evaluation failed", message=f"Cadence {cadence_name} does not exist.")
+def on_trash(doc, method=None) -> None:
+	if hasattr(doc, "on_trash"):
+		doc.on_trash()
+
+
+def upsert_sequence(cadence_name: str) -> None:
+	ensure_listmonk_authorized()
+
+	if not frappe.db.exists("Cadence", cadence_name):
 		return
 
-	if not cadence.assign_condition_json:
+	cadence = frappe.get_doc("Cadence", cadence_name)
+	payload = {
+		"name": cadence.cadence_name or cadence.name,
+		"description": cadence.description or "",
+	}
+
+	listmonk_id = cadence.get("listmonk_id")
+	if listmonk_id:
+		update_sequence(int(listmonk_id), payload)
+	else:
+		res = create_sequence(payload)
+		if isinstance(res, dict) and res.get("id"):
+			listmonk_id = res["id"]
+			cadence.db_set("listmonk_id", listmonk_id)
+
+	if listmonk_id:
+		status_str = "active" if cadence.enabled else "paused"
+		update_sequence_status(int(listmonk_id), status_str)
+
+
+def delete_sequence(listmonk_id: int) -> None:
+	ensure_listmonk_authorized()
+	api_delete_sequence(int(listmonk_id))
+
+
+def evaluate_leads_for_cadence(cadence_name: str) -> None:
+	if not frappe.db.exists("Cadence", cadence_name):
 		return
 
-	# Fetch already enrolled leads
+	cadence = frappe.get_doc("Cadence", cadence_name)
+	if not cadence.assign_condition_json or not cadence.enabled:
+		return
+
 	enrolled_leads = frappe.get_all(
 		"Multi Channel Cadence",
 		filters={"cadence_name": cadence_name},
-		pluck="recipient"
+		pluck="recipient",
 	)
 
 	try:
 		filters = json.loads(cadence.assign_condition_json)
 		if not isinstance(filters, list):
-			frappe.log_error(title="Invalid Cadence Assign Condition JSON", message="Filters must be a list.")
-		else:
-			# Append the exclusion filter
-			if enrolled_leads:
-				filters.append(["name", "not in", enrolled_leads])
-			try:
-				# Fetch leads directly matching the condition
-				targeted_leads = frappe.get_all("CRM Lead", filters=filters, pluck="name")
-				for lead_name in targeted_leads:
-					add_lead_to_cadence(cadence, lead_name)
-			except Exception as e:
-				frappe.log_error(title="Error evaluating Cadence assignment JSON", message=str(e))
-	except (json.JSONDecodeError, TypeError) as e:
-		frappe.log_error(title="Invalid Cadence Assign Condition JSON", message=str(e))
+			return
 
-def evaluate_lead_for_cadences(lead_name):
-	"""Evaluates a single Lead against all Cadences."""
-	try:
-		lead_doc = frappe.get_doc("CRM Lead", lead_name)
-	except frappe.DoesNotExistError:
-		frappe.log_error(title="Lead evaluation failed", message=f"Lead {lead_name} does not exist.")
-		return
-		
-	# Get cadences with condition set
-	cadences = frappe.get_all(
-		"Cadence",
-		or_filters=[
-			["assign_condition_json", "!=", ""],
-			["assign_condition_json", "is", "set"]
-		],
-		pluck="name"
-	)
+		if enrolled_leads:
+			filters.append(["name", "not in", enrolled_leads])
 
-	for cadence_name in cadences:
-		cadence = frappe.get_doc("Cadence", cadence_name)
+		matching_leads = frappe.get_all("CRM Lead", filters=filters, pluck="name")
+		if not matching_leads:
+			return
 
-		# Skip if enrolled
-		if frappe.db.exists("Multi Channel Cadence", {"cadence_name": cadence.name, "recipient": lead_name}):
+		chunk_size = 100
+		for i in range(0, len(matching_leads), chunk_size):
+			chunk = matching_leads[i : i + chunk_size]
+			frappe.enqueue(
+				"frappe_cadence.cadence.doctype.cadence.cadence.add_lead_batch_to_cadence",
+				queue="medium",
+				cadence_name=cadence_name,
+				lead_names=chunk,
+				as_child=True,
+			)
+	except Exception as exc:
+		frappe.logger("cadence").error(f"Error evaluating leads for cadence {cadence_name}: {exc}")
+
+
+def add_lead_batch_to_cadence(cadence_name: str, lead_names: list[str]) -> list[str]:
+	if not frappe.db.exists("Cadence", cadence_name):
+		return []
+
+	cadence = frappe.get_doc("Cadence", cadence_name)
+	created_mccs = []
+
+	for lead_name in lead_names:
+		if frappe.db.exists("Multi Channel Cadence", {"cadence_name": cadence_name, "recipient": lead_name}):
 			continue
 
-		matched = False
+		try:
+			sender = determine_sender(cadence)
+			mcc = frappe.get_doc({
+				"doctype": "Multi Channel Cadence",
+				"cadence_name": cadence_name,
+				"cadence_for": "CRM Lead",
+				"recipient": lead_name,
+				"sender": sender,
+				"status": "Draft",
+			}).insert(ignore_permissions=True)
+			created_mccs.append(mcc.name)
+		except Exception as exc:
+			frappe.logger("cadence").error(f"Failed to add lead {lead_name} to cadence {cadence_name}: {exc}")
 
-		# JSON eval via DB
-		if cadence.assign_condition_json:
-			try:
-				filters = json.loads(cadence.assign_condition_json)
-				filters.append(["name", "=", lead_name])
-				if frappe.get_all("CRM Lead", filters=filters, limit=1):
-					matched = True
-			except Exception as e:
-				frappe.log_error(title="Error evaluating Cadence assignment JSON", message=str(e))
+	return created_mccs
 
-		if matched:
-			add_lead_to_cadence(cadence, lead_name)
 
-def add_lead_to_cadence(cadence, lead_name):
-	# Check again to avoid race conditions
-	if frappe.db.exists("Multi Channel Cadence", {"cadence_name": cadence.name, "recipient": lead_name}):
-		return
-		
-	sender = determine_sender(cadence)
-	
-	try:
-		email_cadence = frappe.new_doc("Multi Channel Cadence")
-		email_cadence.cadence_name = cadence.name
-		email_cadence.cadence_for = "CRM Lead"
-		email_cadence.recipient = lead_name
-		email_cadence.sender = sender
-		email_cadence.save(ignore_permissions=True)
-	except Exception as e:
-		frappe.log_error(title="Failed to enroll lead in cadence", message=str(e))
-
-def determine_sender(cadence):
+def determine_sender(cadence: Cadence) -> str:
 	if not cadence.users:
 		return cadence.owner or frappe.session.user
-		
-	user_ids = [u.user for u in cadence.users]
+
+	user_ids = [u.user for u in cadence.users if getattr(u, "user", None)]
+	if not user_ids:
+		return cadence.owner or frappe.session.user
 
 	if cadence.rule == "Round Robin":
 		if not cadence.last_user or cadence.last_user not in user_ids:
@@ -277,50 +273,27 @@ def determine_sender(cadence):
 			idx = user_ids.index(cadence.last_user)
 			next_idx = (idx + 1) % len(user_ids)
 			sender = user_ids[next_idx]
-			
+
 		cadence.db_set("last_user", sender)
 		return sender
-		
+
 	elif cadence.rule == "Load Balancing":
-		# Query to find the user with the fewest Multi Channel Cadences
 		counts = frappe.db.sql(
 			"""
 			SELECT sender, COUNT(name) as cnt
 			FROM `tabMulti Channel Cadence`
 			WHERE sender IN %s AND docstatus != 2
 			GROUP BY sender
-			""", (tuple(user_ids),), as_dict=True
+			""",
+			(tuple(user_ids),),
+			as_dict=True,
 		)
-		
-		# Map counts to users
+
 		user_counts = {u: 0 for u in user_ids}
 		for c in counts:
-			user_counts[c.sender] = c.cnt
-			
-		# Find user with minimum count
+			user_counts[c["sender"]] = c["cnt"]
+
 		sender = min(user_counts, key=user_counts.get)
 		return sender
-		
+
 	return cadence.owner or frappe.session.user
-
-def get_sequence_message(lead_name, sequence_name, step, test):
-	"""
-	Fetches the email body for the specified sequence and step.
-	"""
-	# 1. Find the Sequence Contact record
-	# Note: Assuming 'reference_name' stores the Lead ID
-	seq_contact = frappe.db.get_value("Sequence Contact",
-		{"reference_name": lead_name, "sequence": sequence_name},
-		"name"
-	)
-	
-	if not seq_contact:
-		return ""
-
-	# 2. Fetch the content linked to this sequence contact and step
-	content = frappe.db.get_value("Sequence Email",
-		{"sequence_contact": seq_contact, "step": step, "test": test},
-		"message"
-	)
-	
-	return content or ""

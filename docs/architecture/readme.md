@@ -13,8 +13,7 @@
 - [03. MCC Step Scheduling](bpmn/03-mcc-step-scheduling.md)
 - [04. Sift Template Optimization](bpmn/04-sift-template-optimization.md)
 - [05. Communication Engagement Tracking](bpmn/05-communication-engagement-tracking.md)
-- [06. Cadence Provider Allocation](bpmn/06-cadence-provider-allocation.md)
-- [07. User Bio Provisioning](bpmn/07-user-bio-provisioning.md)
+- [06. User Bio Provisioning](bpmn/07-user-bio-provisioning.md)
 
 ### 3. arc42 Documentation (`arc42/`)
 - [01. Introduction & Goals](arc42/01-introduction-and-goals.md)

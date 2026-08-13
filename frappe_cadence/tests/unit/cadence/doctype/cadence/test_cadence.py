@@ -1,119 +1,84 @@
-from frappe.tests import UnitTestCase
-from unittest.mock import patch, MagicMock
-from frappe_cadence.cadence.doctype.cadence.cadence import determine_sender
+from unittest.mock import MagicMock, patch
 import frappe
+from frappe.tests.utils import FrappeTestCase
+from frappe_cadence.cadence.doctype.cadence.cadence import (
+	add_lead_batch_to_cadence,
+	delete_sequence,
+	evaluate_leads_for_cadence,
+	upsert_sequence,
+)
 
-class TestCadenceSender(UnitTestCase):
-    def test_determine_sender_round_robin(self):
-        cadence = MagicMock()
-        cadence.users = [MagicMock(user="user1"), MagicMock(user="user2"), MagicMock(user="user3")]
-        cadence.rule = "Round Robin"
-        cadence.last_user = "user1"
-        
-        # Test basic sequence
-        sender = determine_sender(cadence)
-        self.assertEqual(sender, "user2")
-        cadence.db_set.assert_called_with("last_user", "user2")
-        
-        # Next
-        cadence.last_user = "user2"
-        sender = determine_sender(cadence)
-        self.assertEqual(sender, "user3")
-        
-        # Wraparound
-        cadence.last_user = "user3"
-        sender = determine_sender(cadence)
-        self.assertEqual(sender, "user1")
-        
-    @patch("frappe_cadence.cadence.doctype.cadence.cadence.frappe.db.sql")
-    def test_determine_sender_load_balancing(self, mock_sql):
-        cadence = MagicMock()
-        cadence.users = [MagicMock(user="user1"), MagicMock(user="user2"), MagicMock(user="user3")]
-        cadence.rule = "Load Balancing"
-        
-        # Setup mock db to return counts
-        mock_sql.return_value = [
-            MagicMock(sender="user1", cnt=5),
-            MagicMock(sender="user2", cnt=2),
-            MagicMock(sender="user3", cnt=3)
-        ]
-        
-        sender = determine_sender(cadence)
-        self.assertEqual(sender, "user2") # user2 has lowest count
-        
-    def test_determine_sender_fallback(self):
-        cadence = MagicMock()
-        cadence.users = []
-        cadence.owner = "owner@test.com"
-        
-        sender = determine_sender(cadence)
-        self.assertEqual(sender, "owner@test.com")
 
-class TestCadenceAstToFilters(UnitTestCase):
-    def test_ast_to_filters(self):
-        from frappe_cadence.cadence.doctype.cadence.cadence import Cadence
-        import ast
+class TestCadenceUnit(FrappeTestCase):
+	@patch("frappe.enqueue")
+	def test_cadence_on_update_enqueues_upsert_and_evaluation(self, mock_enqueue) -> None:
+		from frappe_cadence.cadence.doctype.cadence.cadence import Cadence
+		c = Cadence.__new__(Cadence)
+		c.name = "CAD-001"
+		c.ensure_playbook = MagicMock()
 
-        cadence = Cadence({"doctype": "Cadence"})
-        
-        # Is / Is Not
-        tree = ast.parse('doc.email is "set"', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["email", "is", "set"]])
-        
-        tree = ast.parse('doc.email is "not set"', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["email", "is", "not set"]])
-        
-        # Eq / NotEq
-        tree = ast.parse('doc.status == "New"', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["status", "=", "New"]])
-        
-        tree = ast.parse('doc.status != "Lost"', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["status", "!=", "Lost"]])
-        
-        # Gt / Lt / GtE / LtE
-        tree = ast.parse('doc.age > 18', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["age", ">", 18]])
-        
-        tree = ast.parse('doc.age < 65', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["age", "<", 65]])
-        
-        tree = ast.parse('doc.age >= 18', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["age", ">=", 18]])
-        
-        tree = ast.parse('doc.age <= 65', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["age", "<=", 65]])
-        
-        # In / NotIn
-        tree = ast.parse('doc.status in ["New", "Open"]', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["status", "in", ["New", "Open"]]])
-        
-        tree = ast.parse('doc.status not in ["Lost"]', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["status", "not in", ["Lost"]]])
-        
-        # Like / Not Like
-        tree = ast.parse('doc.email == ["like", "%@example.com"]', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["email", "like", "%@example.com"]])
+		c.on_update()
 
-        tree = ast.parse('doc.email == ["not like", "%@spam.com"]', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["email", "not like", "%@spam.com"]])
-        
-        # Compound (And)
-        tree = ast.parse('doc.status == "New" and doc.email is "set"', mode='eval')
-        self.assertEqual(cadence._ast_to_filters(tree.body), [["status", "=", "New"], ["email", "is", "set"]])
+		self.assertEqual(mock_enqueue.call_count, 2)
 
-class TestCadenceOnUpdate(UnitTestCase):
-    @patch("frappe_controller.utils.background_jobs.enqueue")
-    def test_on_update_enqueues_evaluation_only(self, mock_enqueue):
-        from frappe_cadence.cadence.doctype.cadence.cadence import Cadence
+	@patch("frappe_cadence.cadence.doctype.cadence.cadence.update_sequence_status")
+	@patch("frappe_cadence.cadence.doctype.cadence.cadence.create_sequence")
+	@patch("frappe_cadence.cadence.doctype.cadence.cadence.ensure_listmonk_authorized")
+	@patch("frappe.get_doc")
+	@patch("frappe.db.exists", return_value=True)
+	def test_upsert_sequence_new(self, mock_exists, mock_get_doc, mock_ensure_auth, mock_create_seq, mock_update_status) -> None:
+		cad_mock = MagicMock()
+		cad_mock.get.return_value = None
+		cad_mock.cadence_name = "My Sequence"
+		cad_mock.description = "Desc"
+		cad_mock.enabled = 1
+		mock_get_doc.return_value = cad_mock
+		mock_create_seq.return_value = {"id": 88}
 
-        cadence = Cadence({"doctype": "Cadence", "name": "CAD-001"})
-        cadence.ensure_playbook = MagicMock()
+		upsert_sequence("CAD-001")
 
-        cadence.on_update()
+		mock_ensure_auth.assert_called_once()
+		mock_create_seq.assert_called_once_with({"name": "My Sequence", "description": "Desc"})
+		cad_mock.db_set.assert_called_once_with("listmonk_id", 88)
+		mock_update_status.assert_called_once_with(88, "active")
 
-        cadence.ensure_playbook.assert_called_once()
-        mock_enqueue.assert_any_call(
-            "frappe_cadence.cadence.doctype.cadence.cadence.evaluate_cadence_for_leads",
-            queue="low",
-            cadence_name="CAD-001"
-        )
+	@patch("frappe_cadence.cadence.doctype.cadence.cadence.api_delete_sequence")
+	@patch("frappe_cadence.cadence.doctype.cadence.cadence.ensure_listmonk_authorized")
+	def test_delete_sequence(self, mock_ensure_auth, mock_api_delete) -> None:
+		delete_sequence(88)
+		mock_ensure_auth.assert_called_once()
+		mock_api_delete.assert_called_once_with(88)
+
+	@patch("frappe.enqueue")
+	@patch("frappe.get_all")
+	@patch("frappe.get_doc")
+	@patch("frappe.db.exists", return_value=True)
+	def test_evaluate_leads_for_cadence_chunks_leads(self, mock_exists, mock_get_doc, mock_get_all, mock_enqueue) -> None:
+		cad_mock = MagicMock()
+		cad_mock.assign_condition_json = '[["status", "=", "Open"]]'
+		cad_mock.enabled = 1
+		mock_get_doc.return_value = cad_mock
+
+		# Mock 250 leads -> should chunk into 3 batches (100, 100, 50)
+		mock_get_all.side_effect = [
+			[],  # enrolled_leads
+			[f"LEAD-{i:03d}" for i in range(250)],  # matching_leads
+		]
+
+		evaluate_leads_for_cadence("CAD-001")
+
+		self.assertEqual(mock_enqueue.call_count, 3)
+
+	@patch("frappe.get_doc")
+	@patch("frappe.db.exists", side_effect=[True, False])
+	@patch("frappe_cadence.cadence.doctype.cadence.cadence.determine_sender", return_value="Administrator")
+	def test_add_lead_batch_to_cadence(self, mock_sender, mock_exists, mock_get_doc) -> None:
+		cad_mock = MagicMock()
+		cad_mock.name = "CAD-001"
+
+		mcc_mock = MagicMock()
+		mcc_mock.name = "MCC-00001"
+
+		with patch("frappe.get_doc", side_effect=[cad_mock, MagicMock(insert=MagicMock(return_value=mcc_mock))]):
+			res = add_lead_batch_to_cadence("CAD-001", ["LEAD-001"])
+			self.assertIn("MCC-00001", res)

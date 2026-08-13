@@ -1,13 +1,12 @@
 # 03 Multi Channel Cadence Step Scheduling Workflow
 
-This workflow documents multi-step cadence execution across email, SMS, LinkedIn, and WhatsApp channels, triggered by [`frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:47) updates and the background task [`process_schedule`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:161).
+This workflow documents multi-step cadence execution across email, SMS, LinkedIn, and WhatsApp channels, triggered by [`frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:1) updates.
 
 ## Workflow Diagram
 
 ```mermaid
 flowchart TD
-    StartMCCUpdate(["Trigger: Multi Channel Cadence on_update / after_insert"]) --> ResolveProviders["Execute resolve_providers_for_mcc() & Snapshot MCC Cadence Provider"]
-    ResolveProviders --> SyncLeadTable["Update Hidden Cadences Table on CRM Lead"]
+    StartMCCUpdate(["Trigger: Multi Channel Cadence on_update / after_insert"]) --> SyncLeadTable["Update Hidden Cadences Table on CRM Lead"]
     SyncLeadTable --> EnqueueSteps["Enqueue process_schedule() for Each Step Schedule"]
     
     EnqueueSteps --> StartProcessSchedule(["Execute process_schedule() Job"])
@@ -42,20 +41,18 @@ flowchart TD
     CheckSiftCache -- Yes --> RenderMessage["Render Message with Sift AI Output"]
     HasPromptTemplate -- No --> RenderStandard["Render Template with Jinja & Bio Context"]
     
-    RenderMessage --> CreateComm["Insert Communication Record with Provider Mapping"]
+    RenderMessage --> CreateComm["Insert Communication Record"]
     RenderStandard --> CreateComm
-    CreateComm --> DispatchMessage["Dispatch Message via Assigned Cadence Provider"]
+    CreateComm --> DispatchMessage["Dispatch Message"]
     DispatchMessage --> EmitStepComplete["Emit step_communication_dispatched & Update MCC Progress"]
     EmitStepComplete --> EndStepSuccess(["End: Step Dispatched Successfully"])
 ```
 
 ## Step Specifications
 
-1. **Provider Resolution & Snapshotting**:
-   - `resolve_providers_for_mcc()` dynamically binds active providers to each channel (Email, SMS, LinkedIn, WhatsApp) based on priority and channel capabilities.
-2. **Sequential Step Dependency**:
+1. **Sequential Step Dependency**:
    - `process_schedule` uses `wait_for_event()` to pause processing if a preceding step has not completed or if MCC status is `Draft` or `Paused`.
-3. **Template & Sift AI Personalization**:
+2. **Template & Sift AI Personalization**:
    - Evaluates template enablement, retrieves sender bio context via [`get_user_bio`](apps/frappe_cadence/frappe_cadence/cadence/doctype/user_bio/user_bio.py:25), and optionally posts prompt payloads to external Sift AI services.
-4. **Communication Creation**:
-   - Generates a [`frappe_cadence.cadence.doctype.communication.communication`](apps/frappe_cadence/frappe_cadence/cadence/doctype/communication/communication.py:2) document tracking channel, step, provider, and output payload.
+3. **Communication Creation**:
+   - Generates a [`frappe_cadence.cadence.doctype.communication.communication`](apps/frappe_cadence/frappe_cadence/cadence/doctype/communication/communication.py:1) document tracking channel, step, and output payload.
