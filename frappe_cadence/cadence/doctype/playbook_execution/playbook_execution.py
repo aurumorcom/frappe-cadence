@@ -1,3 +1,5 @@
+from typing import Optional
+
 import frappe
 from frappe.model.document import Document
 
@@ -7,7 +9,7 @@ class PlaybookExecution(Document):
 		on_update(self)
 
 
-def on_update(doc, method=None) -> None:
+def on_update(doc, method: str | None = None) -> None:
 	mcc_name = doc.get("multi_channel_cadence") or doc.get("reference_name")
 	if not mcc_name or not frappe.db.exists("Multi Channel Cadence", mcc_name):
 		return
@@ -20,7 +22,7 @@ def on_update(doc, method=None) -> None:
 	elif status in ["completed", "success"]:
 		mcc.db_set("status", "Provisioning")
 		frappe.enqueue(
-			"frappe_cadence.cadence.doctype.multi_channel_cadence.multi_channel_cadence.add_contact_to_sequence",
+			"frappe_cadence.jobs.multi_channel_cadence.add_contact_to_sequence",
 			queue="high",
 			mcc_name=mcc.name,
 		)
