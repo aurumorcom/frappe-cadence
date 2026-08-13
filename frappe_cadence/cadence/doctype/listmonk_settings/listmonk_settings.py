@@ -27,7 +27,6 @@ class ListmonkSettings(Document):
 		try:
 			if client.test_connection():
 				self.db_set("status", "Authorized")
-				frappe.publish_event("listmonk_authorized", {"enabled": 1, "status": "Authorized"})
 				frappe.enqueue(
 					"frappe_cadence.integrations.listmonk.jobs.webhook.setup_webhook",
 					queue="high",

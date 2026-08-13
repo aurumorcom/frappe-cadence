@@ -20,21 +20,6 @@ class UserBio(Document):
 
 		return True
 
-	def on_update(self) -> None:
-		on_update(self)
-
-
-def on_update(doc, method: str | None = None) -> None:
-	reference_user = getattr(doc, "reference_user", None)
-	if reference_user:
-		frappe.publish_event(
-			f"cadence:user:{reference_user}:bio_provisioned",
-			argument={
-				"content": getattr(doc, "content", ""),
-				"reference_cadence": getattr(doc, "reference_cadence", None),
-			},
-		)
-
 
 @frappe.whitelist()
 def get_user_bio(reference_user: str, reference_cadence: str | None = None) -> str | None:
