@@ -1,0 +1,382 @@
+interactions:
+- request:
+    body: '{"email": "seq_test_25a279@example.com", "name": "Seq Sub", "status": "enabled"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '80'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/contacts
+  response:
+    body:
+      string: '{"data":{"id":11,"created_at":"2026-08-15T14:20:33.476189Z","updated_at":"2026-08-15T14:20:33.476189Z","uuid":"af5e4e96-9e93-4e35-8c66-f6d233210547","email":"seq_test_25a279@example.com","name":"Seq
+        Sub","phone":null,"attribs":{},"status":"enabled","lists":[]}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8d73528823c58-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 14:20:33 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=isD01bDCdA5ZgpzgUlskHa%2FcYeOUG74Pl%2B2Vhji%2BwjOo8xy4lAyx7KW4LxfAhueYHOOIKup7ko7EupDf4rFffIzr4lHRJLGRDh%2BYyt5KCzDSShf7SskUliPd4k4Un2CIF0t9DmCXlrb656Q%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"type": "public", "optin": "single", "status": "active", "name": "Enrollment
+      Test List"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '89'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/lists
+  response:
+    body:
+      string: '{"data":{"id":15,"created_at":"2026-08-15T14:20:33.514026Z","updated_at":"2026-08-15T14:20:33.514026Z","uuid":"ff8d2f53-69aa-4b9f-a04f-44af7f2fded2","name":"Enrollment
+        Test List","type":"public","optin":"single","status":"active","tags":[],"description":"","subscriber_count":0,"subscriber_statuses":{},"subscription_created_at":null,"subscription_updated_at":null}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8d7355a1dbd1d-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 14:20:33 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=mJBbkEsikWVG9LON7yZUPEAnPtFdPms0tT2qv16%2F624ORZie0iyNm%2FnPaKKmo8ChJ2RR0oo5stFOjkQxbMHldZX29wWAcv3Cww5TYo9J5%2FKeWY%2BpiyavlbZUc8W1D9PwOyV5OIyX1%2FzEJQw%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"status": "active", "description": "", "lists": [15], "email_ids": [],
+      "waha_sessions": [], "name": "Enrollment Test Sequence"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '128'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/sequences
+  response:
+    body:
+      string: '{"data":{"id":21,"created_at":"2026-08-15T14:20:33.567106Z","updated_at":"2026-08-15T14:20:33.567106Z","uuid":"58b5ca3d-6459-4b47-b725-d685a92e1669","name":"Enrollment
+        Test Sequence","description":"","status":"active","schedule_id":null,"timezone":"","send_schedule":null,"send_window":{},"email_ids":[],"waha_sessions":[],"archive":false,"archive_template_id":null,"archive_slug":null,"archive_meta":{},"lists":[{"id":15,"name":"Enrollment
+        Test List"}]}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8d735aec380c1-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 14:20:33 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=OknAE0Wc5ooZrTLq1E9erd7K63vJO9exxGr%2B5WRWKSr2BzRtrO4%2B7Y3BnhP5F0%2FWP%2BEvO8IXcdLqR5JGQ2W%2FPY%2FKtPhKdOAPnuqZBdygMVzke5BwrF%2BebrGfwj3no6YAX14Vbi2fuQfITJw%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"action": "add", "ids": [11], "target_list_ids": [15], "status": "confirmed"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '78'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: PUT
+    uri: https://listmonk-dev.aurumor.com/api/contacts/lists
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8d735fa2485f4-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 14:20:33 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=Lthbkm41MswmfNoVSi3XwKOi%2BftpRmVLhI0J3ZVGNcDn40a3JPRGja%2Bmk4yHV1lXb57abf00%2FgsHVsJowJr6p0see%2B1J4Rao6Nf9yvdxd42Bvr9nBKO%2Bm%2BOTqUNH7o6gqf4E2nNaD80Hn4I%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"action": "remove", "ids": [11], "target_list_ids": [15], "status": "confirmed"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '81'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: PUT
+    uri: https://listmonk-dev.aurumor.com/api/contacts/lists
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8d7364f9c8c3a-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 14:20:33 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=8%2F7NpNX2ZLRCP6QbrX6V5z4RvIloIEnKIM1rLq2QbfXsH74WKnKLpB39x2PB%2FtzFiXWQgil4LMq%2Bi9Mxxf%2Bz4egOktRMDdvW%2B2h0xvUQI0CfRFcFpUhGOYZy3RNTsul%2F8BeYxPe57F2p7n0%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/contacts/11
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8d73689237143-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 14:20:33 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=EB4kz2XY9FWiRaP1GMRtKxHLEVWlJAY7Ff%2FcC2PtI%2Bfrdu%2BWyF9yshomwz40ims%2BT16447JFnAT8i5TYaQargYvT8e1kFr%2Fg2gfLcIq%2BZYRUqVJAhXpoxcqSsHC4mh1u54H7uW50irMOxAU%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/sequences/21
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8d736cceb4565-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 14:20:33 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=g1yZMY07SHHEyqBsKzSK2Fc7NFyC%2FulqImBvLfPmYGfC8Cnj3GyW%2FJnWBRIL61LXVbPZYhMwWWdMhqNsTFRYmgFBPOJ2quVY3Y1o8DadPosxdNCN94%2BQ3ytpzNDBw1m2gEMl6T%2FbUjIWNwI%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/lists/15
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8d7370cff3f5b-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 14:20:33 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=ZYzh%2Bc4EHgTWuNA0sok7jfpdYu5KFnAR4yGm4qRbX63q93SIThqYFcLJnJkc8eBuwj1XJMcOiMUg6bEtOd7MWN16%2F2LJFklQJoUZN51zY8vPcpwKIphUTYHHFydxt6YBKVcAksbsww3AohU%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -1,0 +1,98 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: GET
+    uri: https://listmonk-dev.aurumor.com/api/webhooks
+  response:
+    body:
+      string: '{"data":[{"id":1,"name":"Frappe Cadence Webhook","url":"http://crm-dev.local/api/method/frappe_cadence.listmonk.webhook","secret":"***********","events":["contact.created","contact.updated","sequence.step_executed"],"enabled":true,"created_at":"2026-08-15T11:46:25.11468Z","updated_at":"2026-08-15T11:48:05.866059Z"}]}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8266e1d451699-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:52 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=5gUUe0mV6Ovfu9qMZMeqb9Q3THvUt6l9jXPGoUCUh7P5bcQj155LFdxqzwnPsR2fi%2FG6jxm9p3yTP0tOGBzq8ZxxVF5Zs1KTwQ9MuTaOJA2vjwBsz%2F0ZqOGF94ow5%2FLKFoULJ817U0RJ5RI%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"name": "Frappe Cadence Webhook", "url": "http://crm-dev.local/api/method/frappe_cadence.listmonk.webhook",
+      "secret": "***********", "events": ["contact.created", "contact.updated", "sequence.step_executed"],
+      "enabled": true}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '226'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: PUT
+    uri: https://listmonk-dev.aurumor.com/api/webhooks/1
+  response:
+    body:
+      string: '{"data":{"id":1,"name":"Frappe Cadence Webhook","url":"http://crm-dev.local/api/method/frappe_cadence.listmonk.webhook","secret":"***********","events":["contact.created","contact.updated","sequence.step_executed"],"enabled":true,"created_at":"2026-08-15T11:46:25.11468Z","updated_at":"2026-08-15T12:19:52.721058Z"}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8266e5fe3c6be-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:52 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=%2BJzgkH7wvMKKwvTVSa%2FHIi1YFsaanEJDidm%2FrRIF5x7gqcmdQYGYuPzLOWbcD6qMQ9VG8w4MPXko5aXxS%2F6D8Ozn1%2BEZHb56sHsWiuPAU2uTu4z%2Bs0TS9TKBz70kKc%2Ba4GpFVIYKQMCoOCs%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+version: 1
