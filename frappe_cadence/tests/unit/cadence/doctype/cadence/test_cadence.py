@@ -1,3 +1,4 @@
+import ast
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -11,16 +12,12 @@ from frappe_cadence.cadence.doctype.cadence.cadence import (
 class TestCadenceUnit(unittest.TestCase):
 	def test_ast_to_filters_simple(self) -> None:
 		doc = Cadence.__new__(Cadence)
-		import ast
-
 		tree = ast.parse("doc.status == 'Open'", mode="eval")
 		filters = doc._ast_to_filters(tree.body)
 		self.assertEqual(filters, [["status", "=", "Open"]])
 
 	def test_ast_to_filters_and(self) -> None:
 		doc = Cadence.__new__(Cadence)
-		import ast
-
 		tree = ast.parse("doc.status == 'Open' and doc.country == 'US'", mode="eval")
 		filters = doc._ast_to_filters(tree.body)
 		self.assertEqual(filters, [["status", "=", "Open"], ["country", "=", "US"]])
