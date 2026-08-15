@@ -5,6 +5,16 @@ from typing import Optional
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe_cadence.integrations.listmonk import (
+	create_list,
+	create_sequence,
+	delete_list as api_delete_list,
+	delete_sequence as api_delete_sequence,
+	ensure_listmonk_authorized,
+	update_list,
+	update_sequence,
+	update_sequence_status,
+)
 
 
 class Cadence(Document):
@@ -113,7 +123,7 @@ class Cadence(Document):
 	def on_update(self) -> None:
 		self.ensure_playbook()
 		frappe.enqueue(
-			"frappe_cadence.jobs.cadence.upsert_sequence",
+			"frappe_cadence.cadence.doctype.cadence.cadence.upsert_list_sequence",
 			queue="high",
 			cadence_name=self.name,
 		)
@@ -124,11 +134,12 @@ class Cadence(Document):
 		)
 
 	def on_trash(self) -> None:
-		if self.listmonk_id:
+		if self.listmonk_id or self.listmonk_list_id:
 			frappe.enqueue(
-				"frappe_cadence.jobs.cadence.delete_sequence",
+				"frappe_cadence.cadence.doctype.cadence.cadence.delete_list_sequence",
 				queue="high",
-				listmonk_id=int(self.listmonk_id),
+				listmonk_id=self.listmonk_id,
+				listmonk_list_id=self.listmonk_list_id,
 			)
 
 	def ensure_playbook(self) -> None:
@@ -166,3 +177,215 @@ def on_update(doc, method: str | None = None) -> None:
 def on_trash(doc, method: str | None = None) -> None:
 	if hasattr(doc, "on_trash"):
 		doc.on_trash()
+
+
+def upsert_list_sequence(cadence_name: str) -> None:
+	ensure_listmonk_authorized()
+
+	if not frappe.db.exists("Cadence", cadence_name):
+		return
+
+	cadence = frappe.get_doc("Cadence", cadence_name)
+	list_id = upsert_list(cadence)
+	upsert_sequence(cadence, list_id)
+
+
+def upsert_list(cadence: Cadence) -> int:
+	list_payload = {
+		"name": cadence.cadence_name or cadence.name,
+		"type": "public",
+		"optin": "single",
+		"status": "active",
+		"description": cadence.description or "",
+		"tags": ["cadence"],
+	}
+
+	list_id = cadence.get("listmonk_list_id")
+	if list_id:
+		update_list(int(list_id), list_payload)
+	else:
+		res = create_list(list_payload)
+		if isinstance(res, dict) and res.get("id"):
+			list_id = res["id"]
+			cadence.db_set("listmonk_list_id", list_id)
+			cadence.listmonk_list_id = list_id
+
+	return int(list_id) if list_id else 0
+
+
+def upsert_sequence(cadence: Cadence, list_id: int | None = None) -> int:
+	status_str = "active" if cadence.enabled else "paused"
+	lists = [int(list_id)] if list_id else []
+	seq_payload = {
+		"name": cadence.cadence_name or cadence.name,
+		"description": cadence.description or "",
+		"status": status_str,
+		"lists": lists,
+	}
+
+	listmonk_id = cadence.get("listmonk_id")
+	if listmonk_id:
+		update_sequence(int(listmonk_id), seq_payload)
+	else:
+		res = create_sequence(seq_payload)
+		if isinstance(res, dict) and res.get("id"):
+			listmonk_id = res["id"]
+			cadence.db_set("listmonk_id", listmonk_id)
+			cadence.listmonk_id = listmonk_id
+
+	if listmonk_id:
+		update_sequence_status(int(listmonk_id), status_str)
+
+	return int(listmonk_id) if listmonk_id else 0
+
+
+def delete_list_sequence(
+	listmonk_id: int | None = None,
+	listmonk_list_id: int | None = None,
+) -> None:
+	ensure_listmonk_authorized()
+	if listmonk_id:
+		delete_sequence(int(listmonk_id))
+	if listmonk_list_id:
+		delete_list(int(listmonk_list_id))
+
+
+def delete_sequence(listmonk_id: int) -> bool:
+	return api_delete_sequence(int(listmonk_id))
+
+
+def delete_list(listmonk_list_id: int) -> bool:
+	return api_delete_list(int(listmonk_list_id))
+
+
+def evaluate_leads_for_cadence(cadence_name: str) -> None:
+	if not frappe.db.exists("Cadence", cadence_name):
+		return
+
+	cadence = frappe.get_doc("Cadence", cadence_name)
+	if not cadence.assign_condition_json or not cadence.enabled:
+		return
+
+	try:
+		filters = json.loads(cadence.assign_condition_json)
+		if not isinstance(filters, list):
+			frappe.log_error(
+				title="Invalid Cadence Assign Condition JSON",
+				message=f"Condition JSON for {cadence_name} is not a list",
+			)
+			return
+	except Exception as exc:
+		frappe.log_error(
+			title="Invalid Cadence Assign Condition JSON",
+			message=str(exc),
+		)
+		return
+
+	enrolled_leads = frappe.get_all(
+		"Multi Channel Cadence",
+		filters={"cadence_name": cadence_name},
+		pluck="recipient",
+	)
+
+	try:
+		if enrolled_leads:
+			filters.append(["name", "not in", enrolled_leads])
+
+		matching_leads = frappe.get_all("CRM Lead", filters=filters, pluck="name")
+		if not matching_leads:
+			return
+
+		chunk_size = 100
+		for i in range(0, len(matching_leads), chunk_size):
+			chunk = matching_leads[i : i + chunk_size]
+			frappe.enqueue(
+				"frappe_cadence.cadence.doctype.cadence.cadence.add_lead_batch_to_cadence",
+				queue="medium",
+				cadence_name=cadence_name,
+				lead_names=chunk,
+				as_child=True,
+			)
+	except Exception as exc:
+		frappe.logger("cadence").error(f"Error evaluating leads for cadence {cadence_name}: {exc}")
+
+
+evaluate_cadence_for_leads = evaluate_leads_for_cadence
+
+
+def evaluate_lead_for_cadences(lead_name: str) -> None:
+	from frappe_cadence.cadence.doctype.crm_lead.crm_lead import evaluate_cadences_for_lead
+
+	evaluate_cadences_for_lead(lead_name)
+
+
+def add_lead_to_cadence(cadence: Cadence | str, lead_name: str) -> list[str]:
+	cadence_name = cadence.name if hasattr(cadence, "name") else str(cadence)
+	return add_lead_batch_to_cadence(cadence_name, [lead_name])
+
+
+def add_lead_batch_to_cadence(cadence_name: str, lead_names: list[str]) -> list[str]:
+	if not frappe.db.exists("Cadence", cadence_name):
+		return []
+
+	cadence = frappe.get_doc("Cadence", cadence_name)
+	created_mccs = []
+
+	for lead_name in lead_names:
+		if frappe.db.exists("Multi Channel Cadence", {"cadence_name": cadence_name, "recipient": lead_name}):
+			continue
+
+		try:
+			sender = determine_sender(cadence)
+			mcc = frappe.get_doc(
+				{
+					"doctype": "Multi Channel Cadence",
+					"cadence_name": cadence_name,
+					"cadence_for": "CRM Lead",
+					"recipient": lead_name,
+					"sender": sender,
+					"status": "Draft",
+				}
+			).insert(ignore_permissions=True)
+			created_mccs.append(mcc.name)
+		except Exception as exc:
+			frappe.logger("cadence").error(f"Failed to add lead {lead_name} to cadence {cadence_name}: {exc}")
+
+	return created_mccs
+
+
+def determine_sender(cadence: Cadence) -> str:
+	if not cadence.users:
+		return cadence.owner or frappe.session.user
+
+	user_ids = [
+		getattr(u, "user", None) or (u.get("user") if isinstance(u, dict) else None)
+		for u in (cadence.users or [])
+	]
+	user_ids = [uid for uid in user_ids if uid]
+	if not user_ids:
+		return cadence.owner or frappe.session.user
+
+	if cadence.rule == "Round Robin":
+		if not cadence.last_user or cadence.last_user not in user_ids:
+			sender = user_ids[0]
+		else:
+			idx = user_ids.index(cadence.last_user)
+			next_idx = (idx + 1) % len(user_ids)
+			sender = user_ids[next_idx]
+
+		cadence.db_set("last_user", sender)
+		return sender
+
+	elif cadence.rule == "Load Balancing":
+		user_counts = {
+			u: frappe.db.count(
+				"Multi Channel Cadence",
+				filters=[["sender", "=", u], ["docstatus", "!=", 2]],
+				distinct=False,
+			)
+			for u in user_ids
+		}
+		sender = min(user_counts, key=user_counts.get)
+		return sender
+
+	return cadence.owner or frappe.session.user

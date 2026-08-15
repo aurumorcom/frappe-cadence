@@ -17,4 +17,4 @@ class TestCadenceInternalIntegration(FrappeTestCase):
 		).insert(ignore_permissions=True)
 
 		self.assertEqual(cadence.assign_condition_json, '[["first_name", "=", "Lead"]]')
-		mock_enqueue.assert_called()
+		self.assertTrue(mock_enqueue.called)

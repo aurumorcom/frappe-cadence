@@ -1,0 +1,250 @@
+interactions:
+- request:
+    body: '{"type": "public", "optin": "single", "status": "active", "name": "External
+      Integration Test Cadence", "description": "Sequence description for external
+      test", "tags": ["cadence"]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '180'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/lists
+  response:
+    body:
+      string: '{"data":{"id":14,"created_at":"2026-08-15T12:19:11.507153Z","updated_at":"2026-08-15T12:19:11.507153Z","uuid":"e23c425e-c0c2-4752-b8bb-bb132b2045fb","name":"External
+        Integration Test Cadence","type":"public","optin":"single","status":"active","tags":["cadence"],"description":"Sequence
+        description for external test","subscriber_count":0,"subscriber_statuses":{},"subscription_created_at":null,"subscription_updated_at":null}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8256cd855f321-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:11 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=4sRD2FZMjAHrvHPmjOmVhcuYR%2FHUHdRV1cgk2FBz2%2BxIXvrQRyO9iVAPDJZtgq0gE0c7ndtBouTIAlbBcAARY1yGoRujnnT7mSHwKzOccAYPBt%2BbB2BDAN88o%2BzZAYAXP93AaaU2j7YZmgI%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"status": "active", "description": "Sequence description for external
+      test", "lists": [14], "email_ids": [], "waha_sessions": [], "name": "External
+      Integration Test Cadence"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '175'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/sequences
+  response:
+    body:
+      string: '{"data":{"id":17,"created_at":"2026-08-15T12:19:11.557006Z","updated_at":"2026-08-15T12:19:11.557006Z","uuid":"a453a923-ccc6-4afa-9fdf-1ce8e651483f","name":"External
+        Integration Test Cadence","description":"Sequence description for external
+        test","status":"active","schedule_id":null,"timezone":"","send_schedule":null,"send_window":{},"email_ids":[],"waha_sessions":[],"archive":false,"archive_template_id":null,"archive_slug":null,"archive_meta":{},"lists":[{"id":14,"name":"External
+        Integration Test Cadence"}]}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8256d297fd5f0-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:11 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=VoOZ4Y0vWns%2Bd7V4Y09afqH5VAGr6bG%2Fb4GUGnvBLtR3OEkfaU0TczhwJPXB8vV6dcD6yBFO95SSUuXZjq44KhLIu4F84TVwIyktK404HIkjx8MsMyzX1oaQVG9%2F9mAZinIWRcr%2BlMiadB4%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"status": "active"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '20'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: PUT
+    uri: https://listmonk-dev.aurumor.com/api/sequences/17/status
+  response:
+    body:
+      string: '{"data":{"id":17,"created_at":"2026-08-15T12:19:11.557006Z","updated_at":"2026-08-15T12:19:11.617922Z","uuid":"a453a923-ccc6-4afa-9fdf-1ce8e651483f","name":"External
+        Integration Test Cadence","description":"Sequence description for external
+        test","status":"active","schedule_id":null,"timezone":"","send_schedule":null,"send_window":{},"email_ids":[],"waha_sessions":[],"archive":false,"archive_template_id":null,"archive_slug":null,"archive_meta":{},"lists":[{"id":14,"name":"External
+        Integration Test Cadence"}]}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8256d7d673a1c-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:11 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=L5AKqMK57ysm6xNCBWRnRK2z9b%2FHsjXKgRGkzLmcmZKMGqhsZ3fgd3Vi0mF7R51jtjofuBuiLPsN0ULWRoLEm6F5%2F2JjMXBDdtRKiStv1HUFJOZ8QhELWcBzIYfV0pfjEBpKcCv93iya0LA%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/sequences/17
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8256dce8bdfad-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:11 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=0alOf5RF5HIfhdyDcS3CEXg4F8phNJzGqUJCNe9jrlMeJUJqBZV0XtQFQhpZWxNeudicTuWl7YQ2MnQ%2FwaoO3Oo1CNtLbLEDBkYTaEYizBp%2Fz4YkIYVsCJ%2F7Gb1%2BSHFSAHfL8B7Dm52UUaM%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/lists/14
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8256e1dceb8bf-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:11 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=GxlpitFac%2FuAJ476wRjeSrOJlyKYpZvxubGuTNYtU5Dnhbt2iL4lTdcGZiVloT4KMCY3eN24bmne9MjIjd8mG0O10cA7VkLELrlgw6XOaXTrcwk2diAmgIZ%2FOsepbds79OcJ5kfPUudMefs%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+version: 1

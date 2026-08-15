@@ -1,0 +1,129 @@
+interactions:
+- request:
+    body: '{"email": "crm_lead_a28d4d@example.com", "name": "External CRM Lead Sync
+      Test", "status": "enabled", "attribs": {"contact": {"annual_revenue": 0.0, "apollo_ref_code":
+      null, "communication_status": "Open", "converted": 0, "creation": "2026-08-15
+      17:49:37.328382", "docstatus": 0, "doctype": "CRM Lead", "email": "crm_lead_a28d4d@example.com",
+      "engagement_rate": null, "enrichment_status": null, "facebook": null, "facebook_form_id":
+      null, "facebook_lead_id": null, "first_name": "External CRM Lead Sync Test",
+      "first_responded_on": null, "first_response_time": null, "gender": null, "idx":
+      0, "image": null, "industry": null, "instagram": null, "job_title": null, "last_name":
+      null, "last_responded_on": null, "last_response_time": null, "lead_name": "External
+      CRM Lead Sync Test", "lead_owner": null, "linkedin": null, "listmonk_id": 0,
+      "location": null, "lost_notes": null, "lost_reason": null, "middle_name": null,
+      "mobile_no": null, "modified": "2026-08-15 17:49:37.328382", "modified_by":
+      "Administrator", "name": "CRM-LEAD-2026-00025", "naming_series": "CRM-LEAD-.YYYY.-",
+      "net_total": 0.0, "no_of_employees": "1-10", "organization": null, "owner":
+      "Administrator", "phone": null, "products": [], "response_by": null, "rolling_responses":
+      [], "salutation": null, "sla": null, "sla_creation": null, "sla_status": "",
+      "source": null, "status": "New", "status_change_log": [{"creation": "2026-08-15
+      17:49:37.369071", "docstatus": 0, "doctype": "CRM Status Change Log", "duration":
+      null, "from": "New", "from_date": "2026-08-15 12:19:37.364569", "from_type":
+      "", "idx": 1, "last_status_change_log": null, "log_owner": "Administrator",
+      "modified": "2026-08-15 17:49:37.369071", "modified_by": "Administrator", "name":
+      "vbtogkgti4", "owner": "Administrator", "parent": "CRM-LEAD-2026-00025", "parentfield":
+      "status_change_log", "parenttype": "CRM Lead", "to": "", "to_date": null, "to_type":
+      ""}], "teable_ref_code": null, "territory": null, "total": 0.0, "website": null,
+      "x": null, "youtube": null}}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '2001'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/contacts
+  response:
+    body:
+      string: '{"data":{"id":7,"created_at":"2026-08-15T12:19:37.422952Z","updated_at":"2026-08-15T12:19:37.422952Z","uuid":"5171ddd4-2395-4d23-9aa5-1c1667a6f78a","email":"crm_lead_a28d4d@example.com","name":"External
+        CRM Lead Sync Test","phone":null,"attribs":{"contact":{"annual_revenue":0,"apollo_ref_code":null,"communication_status":"Open","converted":0,"creation":"2026-08-15
+        17:49:37.328382","docstatus":0,"doctype":"CRM Lead","email":"crm_lead_a28d4d@example.com","engagement_rate":null,"enrichment_status":null,"facebook":null,"facebook_form_id":null,"facebook_lead_id":null,"first_name":"External
+        CRM Lead Sync Test","first_responded_on":null,"first_response_time":null,"gender":null,"idx":0,"image":null,"industry":null,"instagram":null,"job_title":null,"last_name":null,"last_responded_on":null,"last_response_time":null,"lead_name":"External
+        CRM Lead Sync Test","lead_owner":null,"linkedin":null,"listmonk_id":0,"location":null,"lost_notes":null,"lost_reason":null,"middle_name":null,"mobile_no":null,"modified":"2026-08-15
+        17:49:37.328382","modified_by":"Administrator","name":"CRM-LEAD-2026-00025","naming_series":"CRM-LEAD-.YYYY.-","net_total":0,"no_of_employees":"1-10","organization":null,"owner":"Administrator","phone":null,"products":[],"response_by":null,"rolling_responses":[],"salutation":null,"sla":null,"sla_creation":null,"sla_status":"","source":null,"status":"New","status_change_log":[{"creation":"2026-08-15
+        17:49:37.369071","docstatus":0,"doctype":"CRM Status Change Log","duration":null,"from":"New","from_date":"2026-08-15
+        12:19:37.364569","from_type":"","idx":1,"last_status_change_log":null,"log_owner":"Administrator","modified":"2026-08-15
+        17:49:37.369071","modified_by":"Administrator","name":"vbtogkgti4","owner":"Administrator","parent":"CRM-LEAD-2026-00025","parentfield":"status_change_log","parenttype":"CRM
+        Lead","to":"","to_date":null,"to_type":""}],"teable_ref_code":null,"territory":null,"total":0,"website":null,"x":null,"youtube":null}},"status":"enabled","lists":[]}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8260ecbbfff6b-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:37 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=w%2BHUfui%2Bz%2BtfMzjqySB0T%2FS31KNibdz%2FEnYqULiDr4y32%2F48OtdtvctLeqKuSISL4yFlULNxUy37177LAxBOKloiJIbt%2FUQvDCq8irN2%2BCXR4j1cWklEom5%2BQ%2BINUR0WM1cf3yqcuS7eo1U%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/contacts/7
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2b8260f2e0c3a99-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 15 Aug 2026 12:19:37 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=CbYZZEn5b2Po1U9KC3UDQF3SO%2FX%2BJvjK%2Few64z%2BneAnPtVGLEGqceovZYVM8dyAj2W%2Fk2FW2CEouvwoYpgTMPmzeWNgK7GIwCmRNrUgSMDyTAgpryRgDmv7tcBFR08njNV8uWRpsxXKalMQ%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+version: 1

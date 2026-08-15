@@ -35,12 +35,13 @@ class MultiChannelCadence(Document):
 					)
 
 	def on_trash(self) -> None:
-		if self.listmonk_contact_id and self.listmonk_sequence_id:
+		if self.listmonk_contact_id and (self.listmonk_list_id or self.listmonk_sequence_id):
 			frappe.enqueue(
 				"frappe_cadence.jobs.multi_channel_cadence.remove_contact_from_sequence",
 				queue="high",
 				mcc_name=self.name,
 				listmonk_contact_id=self.listmonk_contact_id,
+				listmonk_list_id=getattr(self, "listmonk_list_id", None),
 				listmonk_sequence_id=self.listmonk_sequence_id,
 			)
 

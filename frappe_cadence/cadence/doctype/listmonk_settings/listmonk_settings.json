@@ -7,6 +7,7 @@
 	"field_order": [
 		"enabled",
 		"base_url",
+		"username",
 		"access_token",
 		"webhook_secret",
 		"status"
@@ -23,6 +24,12 @@
 			"fieldtype": "Data",
 			"label": "Listmonk Base URL",
 			"mandatory_depends_on": "eval:doc.enabled==1"
+		},
+		{
+			"default": "crm",
+			"fieldname": "username",
+			"fieldtype": "Data",
+			"label": "API Username"
 		},
 		{
 			"fieldname": "access_token",
