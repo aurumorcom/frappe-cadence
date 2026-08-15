@@ -11,6 +11,7 @@
 		"recipient",
 		"sender",
 		"listmonk_contact_id",
+		"listmonk_list_id",
 		"listmonk_sequence_id",
 		"playbook_execution",
 		"column_break_4",
@@ -47,6 +48,13 @@
 			"fieldtype": "Int",
 			"hidden": 1,
 			"label": "Listmonk Contact ID",
+			"read_only": 1
+		},
+		{
+			"fieldname": "listmonk_list_id",
+			"fieldtype": "Int",
+			"hidden": 1,
+			"label": "Listmonk List ID",
 			"read_only": 1
 		},
 		{

@@ -1,4 +1,5 @@
 import frappe
+import requests
 from frappe import _
 from frappe.model.document import Document
 
@@ -15,7 +16,12 @@ class ListmonkSettings(Document):
 			self.db_set("status", "Disabled")
 			return
 
-		token = frappe.conf.get("listmonk_access_token") or self.get_password("access_token")
+		username = getattr(self, "username", None) or frappe.conf.get("listmonk_username") or "crm"
+		token = (
+			frappe.conf.get("listmonk_access_token")
+			or getattr(self, "access_token", None)
+			or self.get_password("access_token")
+		)
 		base_url = (self.base_url or frappe.conf.get("listmonk_base_url") or "").rstrip("/")
 
 		if not base_url or not token:
@@ -44,6 +50,6 @@ class ListmonkSettings(Document):
 
 		frappe.enqueue(
 			"frappe_cadence.integrations.listmonk.jobs.contact.sync_all_crm_leads",
-			queue="medium",
+			queue="long",
 		)
 		return {"status": "success", "message": _("Bootstrap process enqueued successfully.")}

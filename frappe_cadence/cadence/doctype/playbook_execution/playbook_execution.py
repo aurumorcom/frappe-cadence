@@ -10,13 +10,19 @@ class PlaybookExecution(Document):
 
 
 def on_update(doc, method: str | None = None) -> None:
-	mcc_name = doc.get("multi_channel_cadence") or doc.get("reference_name")
+	mcc_name = (
+		getattr(doc, "multi_channel_cadence", None)
+		or (doc.get("multi_channel_cadence") if hasattr(doc, "get") else None)
+		or getattr(doc, "reference_name", None)
+		or (doc.get("reference_name") if hasattr(doc, "get") else None)
+	)
 	if not mcc_name or not frappe.db.exists("Multi Channel Cadence", mcc_name):
 		return
 
 	mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
 
-	status = (doc.status or "").lower()
+	status_val = getattr(doc, "status", "") or (doc.get("status") if hasattr(doc, "get") else "") or ""
+	status = str(status_val).lower()
 	if status in ["running"]:
 		mcc.db_set("status", "Enriching")
 	elif status in ["completed", "success"]:
