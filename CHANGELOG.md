@@ -1,8 +1,22 @@
-## New Features
+## Features
 
-* **Cadence and Listmonk Integration Utilities and Handlers** - Added utility functions, Pydantic schemas for lead evaluation and cadence status updates, and cadence/Listmonk integration job handlers. ([2d9c66f](https://github.com/aurumorcom/frappe-cadence/commit/2d9c66fd), [e60359f](https://github.com/aurumorcom/frappe-cadence/commit/e60359fc), [3d48845](https://github.com/aurumorcom/frappe-cadence/commit/3d488451))
+- **Listmonk List Management Integration**
+  - Description: Add Listmonk list management to cadence operations (`c6ce6f2`, `ebbab0b`, `2293a3e`).
+- **Contact and Webhook Job Modules**
+  - Description: Introduce contact and webhook job modules to support the new integration architecture (`c6ce6f2`, `ebbab0b`, `2293a3e`).
+- **Sequence to List Migration**
+  - Description: Migrate from sequence-based to list-based contact management for enhanced subscriber handling (`c6ce6f2`, `ebbab0b`, `2293a3e`).
 
 ## Improvements
 
-* **Listmonk Architecture Restructuring** - Restructured Listmonk architecture documentation, reorganized hooks and sidebar navigation, refactored Listmonk integration into a dedicated client package, and cleaned up unused custom fields. ([324c87f](https://github.com/aurumorcom/frappe-cadence/commit/324c87f7), [662415b](https://github.com/aurumorcom/frappe-cadence/commit/662415b9), [1364348](https://github.com/aurumorcom/frappe-cadence/commit/1364348f))
-* **Test Coverage Enhancement** - Added extensive unit tests and end-to-end journey tests using lightweight fixtures while removing obsolete external integration tests. ([5b418eb](https://github.com/aurumorcom/frappe-cadence/commit/5b418eb7), [d4962b1](https://github.com/aurumorcom/frappe-cadence/commit/d4962b1e), [d5b30a6](https://github.com/aurumorcom/frappe-cadence/commit/d5b30a61))
+- **Code Formatting and PEP 8 Compliance**
+  - Description: Reformat codebase, test files, and imports for improved readability and PEP 8 compliance (`ebbab0b`, `3f2d625`, `05db092`).
+- **Test Structure Cleanup**
+  - Description: Remove test re-export modules from doctype directories in favor of dedicated test directories (`0c4ffb6`).
+
+## Documentation
+
+- **Probe MCP Tools Documentation**
+  - Description: Add comprehensive documentation for Code Context Engine (Probe) tools (`9adf6fd`).
+- **Listmonk Skill File Tree Documentation**
+  - Description: Document the file tree structure and architecture for the Listmonk skill (`43bc270`).
