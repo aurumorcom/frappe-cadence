@@ -17,27 +17,27 @@ class ListmonkSettings(Document):
 		if self.webhook_secret and set(self.webhook_secret) == {"*"}:
 			self.webhook_secret = None
 
-	def get_access_token(self) -> str:
+	def get_access_token(self) -> str | None:
 		conf_token = frappe.conf.get("listmonk_access_token")
 		if conf_token:
 			return conf_token
 
 		pwd = self.get_password("access_token", raise_exception=False)
-		if pwd and set(pwd) != {"*"}:
+		if pwd:
 			return pwd
 
-		return ""
+		return None
 
-	def get_webhook_secret(self) -> str:
+	def get_webhook_secret(self) -> str | None:
 		conf_secret = frappe.conf.get("listmonk_webhook_secret")
 		if conf_secret:
 			return conf_secret
 
 		pwd = self.get_password("webhook_secret", raise_exception=False)
-		if pwd and set(pwd) != {"*"}:
+		if pwd:
 			return pwd
 
-		return ""
+		return None
 
 	def on_update(self) -> None:
 		if not self.enabled:
