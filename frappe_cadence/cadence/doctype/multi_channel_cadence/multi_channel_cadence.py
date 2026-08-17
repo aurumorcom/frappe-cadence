@@ -3,6 +3,11 @@ from typing import Optional
 import frappe
 from frappe.model.document import Document
 
+from frappe_cadence.jobs.multi_channel_cadence import (
+	add_contact_to_sequence,
+	remove_contact_from_sequence,
+)
+
 
 class MultiChannelCadence(Document):
 	def before_insert(self) -> None:
@@ -35,14 +40,17 @@ class MultiChannelCadence(Document):
 					)
 
 	def on_trash(self) -> None:
-		if self.listmonk_contact_id and (self.listmonk_list_id or self.listmonk_sequence_id):
+		contact_id = getattr(self, "listmonk_contact_id", None)
+		list_id = getattr(self, "listmonk_list_id", None)
+		sequence_id = getattr(self, "listmonk_sequence_id", None)
+		if contact_id and (list_id or sequence_id):
 			frappe.enqueue(
 				"frappe_cadence.jobs.multi_channel_cadence.remove_contact_from_sequence",
 				queue="high",
 				mcc_name=self.name,
-				listmonk_contact_id=self.listmonk_contact_id,
-				listmonk_list_id=getattr(self, "listmonk_list_id", None),
-				listmonk_sequence_id=self.listmonk_sequence_id,
+				listmonk_contact_id=contact_id,
+				listmonk_list_id=list_id,
+				listmonk_sequence_id=sequence_id,
 			)
 
 

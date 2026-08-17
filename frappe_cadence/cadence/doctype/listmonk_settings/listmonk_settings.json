@@ -17,7 +17,7 @@
 			"default": "0",
 			"fieldname": "enabled",
 			"fieldtype": "Check",
-			"label": "Enable Listmonk Integration"
+			"label": "Enabled"
 		},
 		{
 			"fieldname": "base_url",

@@ -58,8 +58,8 @@ def _make_request(
 	username = getattr(settings, "username", None) or frappe.conf.get("listmonk_username") or "crm"
 	token = (
 		frappe.conf.get("listmonk_access_token")
-		or getattr(settings, "access_token", None)
-		or settings.get_password("access_token")
+		or settings.get_password("access_token", raise_exception=False)
+		or ""
 	)
 
 	if not base_url or not token:

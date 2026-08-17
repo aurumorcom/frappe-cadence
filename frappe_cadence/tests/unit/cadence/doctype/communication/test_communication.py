@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
-
 from frappe_cadence.cadence.doctype.communication.communication import on_update
 
 

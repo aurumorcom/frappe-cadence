@@ -4,6 +4,7 @@ from frappe import _
 from frappe.model.document import Document
 
 from frappe_cadence.integrations.listmonk.client import ListmonkClient
+from frappe_cadence.integrations.listmonk.jobs.webhook import setup_webhook
 
 
 class ListmonkSettings(Document):
@@ -11,17 +12,39 @@ class ListmonkSettings(Document):
 		if self.base_url:
 			self.base_url = self.base_url.rstrip("/")
 
+		if self.access_token and set(self.access_token) == {"*"}:
+			self.access_token = None
+		if self.webhook_secret and set(self.webhook_secret) == {"*"}:
+			self.webhook_secret = None
+
+	def get_access_token(self) -> str | None:
+		conf_token = frappe.conf.get("listmonk_access_token")
+		if conf_token:
+			return conf_token
+
+		pwd = self.get_password("access_token", raise_exception=False)
+		if pwd:
+			return pwd
+
+		return None
+
+	def get_webhook_secret(self) -> str | None:
+		conf_secret = frappe.conf.get("listmonk_webhook_secret")
+		if conf_secret:
+			return conf_secret
+
+		pwd = self.get_password("webhook_secret", raise_exception=False)
+		if pwd:
+			return pwd
+
+		return None
+
 	def on_update(self) -> None:
 		if not self.enabled:
 			self.db_set("status", "Disabled")
 			return
 
-		username = getattr(self, "username", None) or frappe.conf.get("listmonk_username") or "crm"
-		token = (
-			frappe.conf.get("listmonk_access_token")
-			or getattr(self, "access_token", None)
-			or self.get_password("access_token")
-		)
+		token = self.get_access_token()
 		base_url = (self.base_url or frappe.conf.get("listmonk_base_url") or "").rstrip("/")
 
 		if not base_url or not token:

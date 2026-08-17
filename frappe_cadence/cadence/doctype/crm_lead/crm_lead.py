@@ -3,6 +3,9 @@ from typing import Optional
 
 import frappe
 
+from frappe_cadence.integrations.listmonk.jobs.contact import delete_contact, upsert_contact
+from frappe_cadence.jobs.cadence import evaluate_cadences_for_lead
+
 
 def on_update(doc, method: str | None = None) -> None:
 	if not doc.name:
