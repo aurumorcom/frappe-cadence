@@ -5,15 +5,20 @@ from typing import Optional
 import frappe
 from frappe import _
 from frappe.model.document import Document
+
 from frappe_cadence.integrations.listmonk import (
 	create_list,
 	create_sequence,
-	delete_list as api_delete_list,
-	delete_sequence as api_delete_sequence,
 	ensure_listmonk_authorized,
 	update_list,
 	update_sequence,
 	update_sequence_status,
+)
+from frappe_cadence.integrations.listmonk import (
+	delete_list as api_delete_list,
+)
+from frappe_cadence.integrations.listmonk import (
+	delete_sequence as api_delete_sequence,
 )
 
 
