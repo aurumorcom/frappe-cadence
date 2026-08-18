@@ -29,13 +29,22 @@ class TestListmonkClient(unittest.TestCase):
 	def setUp(self) -> None:
 		self.client = ListmonkClient(
 			base_url="https://listmonk.test.local",
+			username="crm",
 			token="test_token_123",
 		)
 
 	def test_get_headers(self) -> None:
 		headers = self.client._get_headers()
-		self.assertEqual(headers["Authorization"], "token test_token_123")
+		self.assertEqual(headers["Authorization"], "token crm:test_token_123")
 		self.assertEqual(headers["Content-Type"], "application/json")
+
+	def test_get_headers_already_formatted(self) -> None:
+		client = ListmonkClient(
+			base_url="https://listmonk.test.local",
+			token="token crm:test_token_123",
+		)
+		headers = client._get_headers()
+		self.assertEqual(headers["Authorization"], "token crm:test_token_123")
 
 	@patch("requests.request")
 	def test_create_subscriber(self, mock_req: MagicMock) -> None:
