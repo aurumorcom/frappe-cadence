@@ -64,29 +64,35 @@ class ListmonkClient:
 	def __init__(
 		self,
 		base_url: str | None = None,
+		username: str | None = None,
 		token: str | None = None,
 		timeout: int = 30,
 	) -> None:
 		conf_base = None
+		conf_user = None
 		conf_token = None
 		try:
 			if getattr(frappe, "conf", None):
 				conf_base = frappe.conf.get("listmonk_base_url")
+				conf_user = frappe.conf.get("listmonk_username")
 				conf_token = frappe.conf.get("listmonk_access_token")
 		except Exception:
 			pass
 
 		settings_base = None
+		settings_user = None
 		settings_token = None
 		try:
 			if getattr(frappe, "db", None) and frappe.db.exists("DocType", "Listmonk Settings"):
 				settings = frappe.get_doc("Listmonk Settings")
 				settings_base = getattr(settings, "base_url", None)
+				settings_user = getattr(settings, "username", None)
 				settings_token = settings.get_password("access_token") if settings else None
 		except Exception:
 			pass
 
 		self.base_url = (base_url or conf_base or settings_base or "").rstrip("/")
+		self.username = username or conf_user or settings_user or "crm"
 		self.token = token or conf_token or settings_token or ""
 		self.timeout = timeout
 
@@ -94,10 +100,18 @@ class ListmonkClient:
 		if not self.token:
 			frappe.throw(_("Listmonk access_token is missing"), frappe.ValidationError)
 
-		if self.token.startswith("token ") or self.token.startswith("Bearer "):
+		if self.token.startswith("Bearer "):
 			auth_header = self.token
-		else:
+		elif self.token.startswith("token "):
+			if ":" in self.token:
+				auth_header = self.token
+			else:
+				token_val = self.token[6:].strip()
+				auth_header = f"token {self.username}:{token_val}"
+		elif ":" in self.token:
 			auth_header = f"token {self.token}"
+		else:
+			auth_header = f"token {self.username}:{self.token}"
 
 		return {
 			"Authorization": auth_header,

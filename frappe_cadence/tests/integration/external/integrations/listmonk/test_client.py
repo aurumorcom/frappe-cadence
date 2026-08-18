@@ -9,8 +9,32 @@ from frappe_cadence.integrations.listmonk.schemas.subscriber import SubscriberCr
 class TestListmonkClientExternal(FrappeTestCase):
 	def setUp(self) -> None:
 		self.client = ListmonkClient(
-			base_url="https://listmonk.mock.external",
-			token="mock_external_token",
+			base_url="https://listmonk.capybaara.com",
+			username="crm",
+			token="7VPrQtx6YYJBmUjS0UmqVUnciE7AnIEj1zH2kUoUkgB0Efy8",
+		)
+
+	def test_external_auth_header_format(self) -> None:
+		headers = self.client._get_headers()
+		self.assertEqual(
+			headers["Authorization"],
+			"token crm:7VPrQtx6YYJBmUjS0UmqVUnciE7AnIEj1zH2kUoUkgB0Efy8",
+		)
+
+	@patch("requests.get")
+	def test_external_test_connection(self, mock_get: MagicMock) -> None:
+		mock_resp = MagicMock()
+		mock_resp.status_code = 200
+		mock_get.return_value = mock_resp
+
+		self.assertTrue(self.client.test_connection())
+		mock_get.assert_called_once_with(
+			"https://listmonk.capybaara.com/api/sequences",
+			headers={
+				"Authorization": "token crm:7VPrQtx6YYJBmUjS0UmqVUnciE7AnIEj1zH2kUoUkgB0Efy8",
+				"Content-Type": "application/json",
+			},
+			timeout=10,
 		)
 
 	@patch("requests.request")
