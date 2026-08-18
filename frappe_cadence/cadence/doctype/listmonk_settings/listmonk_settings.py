@@ -17,6 +17,12 @@ class ListmonkSettings(Document):
 		if self.webhook_secret and set(self.webhook_secret) == {"*"}:
 			self.webhook_secret = None
 
+	def get_username(self) -> str:
+		conf_user = frappe.conf.get("listmonk_username")
+		if conf_user:
+			return conf_user
+		return getattr(self, "username", None) or "crm"
+
 	def get_access_token(self) -> str | None:
 		conf_token = frappe.conf.get("listmonk_access_token")
 		if conf_token:
@@ -44,6 +50,7 @@ class ListmonkSettings(Document):
 			self.db_set("status", "Disabled")
 			return
 
+		username = self.get_username()
 		token = self.get_access_token()
 		base_url = (self.base_url or frappe.conf.get("listmonk_base_url") or "").rstrip("/")
 
@@ -51,7 +58,7 @@ class ListmonkSettings(Document):
 			self.db_set("status", "Unauthorized")
 			return
 
-		client = ListmonkClient(base_url=base_url, token=token)
+		client = ListmonkClient(base_url=base_url, username=username, token=token)
 
 		try:
 			if client.test_connection():
