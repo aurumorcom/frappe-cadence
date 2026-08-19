@@ -49,8 +49,10 @@ def is_listmonk_live() -> bool:
 		headers = {"Content-Type": "application/json"}
 		if token.startswith("token ") or token.startswith("Bearer ") or token.startswith("Basic "):
 			headers["Authorization"] = token
+		elif ":" in token:
+			headers["Authorization"] = f"token {token}"
 		else:
-			auth = (username, token)
+			headers["Authorization"] = f"token {username}:{token}"
 		res = requests.get(f"{config['base_url']}/api/sequences", headers=headers, auth=auth, timeout=3)
 		return res.status_code == 200
 	except Exception:
