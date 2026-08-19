@@ -6,13 +6,13 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime
 
+from frappe_cadence.integrations.listmonk.client import ListmonkClient
+
 
 @frappe.whitelist(allow_guest=True)
 def webhook() -> dict:
-	settings = frappe.get_doc("Listmonk Settings")
-	secret = frappe.conf.get("listmonk_webhook_secret") or (
-		settings.get_password("webhook_secret") if settings else ""
-	)
+	client = ListmonkClient()
+	secret = client.get_webhook_secret()
 
 	signature = (
 		frappe.get_request_header("Listmonk-Signature")
