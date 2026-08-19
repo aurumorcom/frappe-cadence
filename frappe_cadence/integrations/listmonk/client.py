@@ -30,10 +30,13 @@ from frappe_cadence.integrations.listmonk.schemas.webhook import (
 def ensure_listmonk_authorized() -> None:
 	settings = frappe.get_doc("Listmonk Settings")
 	if not settings.enabled or settings.status != "Authorized":
-		frappe.wait_for(
-			"on_update",
-			filters={"doctype": "Listmonk Settings", "enabled": 1, "status": "Authorized"},
-		)
+		if getattr(frappe.flags, "current_job_id", None):
+			frappe.wait_for(
+				"on_update",
+				filters={"doctype": "Listmonk Settings", "enabled": 1, "status": "Authorized"},
+			)
+		else:
+			frappe.throw(_("Listmonk is not configured or authorized."), frappe.ValidationError)
 
 
 def _dump_model(model: Any, exclude_unset: bool = False) -> dict[str, Any]:
@@ -66,35 +69,44 @@ class ListmonkClient:
 		base_url: str | None = None,
 		username: str | None = None,
 		token: str | None = None,
+		webhook_secret: str | None = None,
 		timeout: int = 30,
 	) -> None:
 		conf_base = None
 		conf_user = None
 		conf_token = None
+		conf_secret = None
 		try:
 			if getattr(frappe, "conf", None):
 				conf_base = frappe.conf.get("listmonk_base_url")
 				conf_user = frappe.conf.get("listmonk_username")
 				conf_token = frappe.conf.get("listmonk_access_token")
+				conf_secret = frappe.conf.get("listmonk_webhook_secret")
 		except Exception:
 			pass
 
 		settings_base = None
 		settings_user = None
 		settings_token = None
+		settings_secret = None
 		try:
 			if getattr(frappe, "db", None) and frappe.db.exists("DocType", "Listmonk Settings"):
 				settings = frappe.get_doc("Listmonk Settings")
 				settings_base = getattr(settings, "base_url", None)
 				settings_user = getattr(settings, "username", None)
 				settings_token = settings.get_password("access_token") if settings else None
+				settings_secret = settings.get_webhook_secret() if settings else None
 		except Exception:
 			pass
 
 		self.base_url = (base_url or conf_base or settings_base or "").rstrip("/")
 		self.username = username or conf_user or settings_user or "crm"
 		self.token = token or conf_token or settings_token or ""
+		self.webhook_secret = webhook_secret or conf_secret or settings_secret or ""
 		self.timeout = timeout
+
+	def get_webhook_secret(self) -> str:
+		return self.webhook_secret
 
 	def _get_headers(self) -> dict[str, str]:
 		if not self.token:
@@ -238,18 +250,25 @@ class ListmonkClient:
 
 	# Webhook methods
 	def get_webhooks(self) -> list[dict[str, Any]]:
-		res = self._request("GET", "/api/webhooks")
-		if isinstance(res, list):
-			return res
+		try:
+			res = self._request("GET", "/api/webhooks")
+			if isinstance(res, list):
+				return res
+		except Exception as exc:
+			frappe.logger("listmonk").warning(f"Failed to fetch Listmonk webhooks: {exc}")
 		return []
 
 	def create_webhook(self, req: WebhookCreateRequest | dict[str, Any]) -> WebhookResponse:
 		data = _dump_model(req)
+		if not data.get("secret") and self.webhook_secret:
+			data["secret"] = self.webhook_secret
 		res = self._request("POST", "/api/webhooks", payload=data)
 		return _validate_model(WebhookResponse, res)
 
 	def update_webhook(self, webhook_id: int, req: WebhookUpdateRequest | dict[str, Any]) -> WebhookResponse:
 		data = _dump_model(req, exclude_unset=True)
+		if not data.get("secret") and self.webhook_secret:
+			data["secret"] = self.webhook_secret
 		res = self._request("PUT", f"/api/webhooks/{webhook_id}", payload=data)
 		return _validate_model(WebhookResponse, res)
 
