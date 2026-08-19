@@ -21,9 +21,13 @@ from frappe_cadence.integrations.listmonk.schemas.webhook import (
 def setup_webhook() -> None:
 	ensure_listmonk_authorized()
 
-	settings = frappe.get_doc("Listmonk Settings")
-	secret = settings.get_password("webhook_secret") if settings else None
-	site_url = get_url()
+	settings = (
+		frappe.get_doc("Listmonk Settings") if frappe.db.exists("DocType", "Listmonk Settings") else None
+	)
+	secret = frappe.conf.get("listmonk_webhook_secret") or (
+		settings.get_password("webhook_secret") if settings else None
+	)
+	site_url = (frappe.conf.get("site_url") or get_url()).rstrip("/")
 	target_url = f"{site_url}/api/method/frappe_cadence.integrations.listmonk.jobs.webhook.webhook"
 
 	client = ListmonkClient()
@@ -44,25 +48,35 @@ def setup_webhook() -> None:
 		"sequence.step_executed",
 	]
 
-	if matched_webhook:
-		req = WebhookUpdateRequest(
-			name="Frappe Cadence Webhook",
-			url=target_url,
-			secret=secret,
-			events=events,
-			enabled=True,
-		)
-		client.update_webhook(matched_webhook["id"], req)
-	else:
-		create_req = WebhookCreateRequest(
-			name="Frappe Cadence Webhook",
-			url=target_url,
-			headers={},
-			events=events,
-			secret=secret,
-			enabled=True,
-		)
-		client.create_webhook(create_req)
+	res = None
+	try:
+		if matched_webhook:
+			req = WebhookUpdateRequest(
+				name="Frappe Cadence Webhook",
+				url=target_url,
+				secret=secret,
+				events=events,
+				enabled=True,
+			)
+			res = client.update_webhook(matched_webhook["id"], req)
+		else:
+			create_req = WebhookCreateRequest(
+				name="Frappe Cadence Webhook",
+				url=target_url,
+				headers={},
+				events=events,
+				secret=secret,
+				enabled=True,
+			)
+			res = client.create_webhook(create_req)
+	except Exception as exc:
+		frappe.logger("listmonk").error(f"Failed to provision Listmonk webhook: {exc}")
+		return
+
+	if res and getattr(res, "secret", None) and settings and not secret:
+		from frappe.utils.password import set_encrypted_password
+
+		set_encrypted_password("Listmonk Settings", "Listmonk Settings", res.secret, "webhook_secret")
 
 
 @frappe.whitelist(allow_guest=True)
