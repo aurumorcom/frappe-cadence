@@ -21,14 +21,13 @@ from frappe_cadence.integrations.listmonk.schemas.webhook import (
 def setup_webhook() -> None:
 	ensure_listmonk_authorized()
 
+	client = ListmonkClient()
+	secret = client.get_webhook_secret()
 	settings = (
 		frappe.get_doc("Listmonk Settings") if frappe.db.exists("DocType", "Listmonk Settings") else None
 	)
-	secret = frappe.conf.get("listmonk_webhook_secret") or (
-		settings.get_password("webhook_secret") if settings else None
-	)
 	site_url = (frappe.conf.get("site_url") or get_url()).rstrip("/")
-	target_url = f"{site_url}/api/method/frappe_cadence.integrations.listmonk.jobs.webhook.webhook"
+	target_url = f"{site_url}/api/method/frappe_cadence.listmonk.webhook"
 
 	client = ListmonkClient()
 	existing_webhooks = client.get_webhooks()
