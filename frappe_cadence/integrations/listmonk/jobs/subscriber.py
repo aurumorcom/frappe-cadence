@@ -12,7 +12,7 @@ from frappe_cadence.integrations.listmonk.schemas.subscriber import (
 )
 
 
-def upsert_contact(lead_name: str) -> int | None:
+def upsert_subscriber(lead_name: str) -> int | None:
 	ensure_listmonk_authorized()
 
 	if not frappe.db.exists("CRM Lead", lead_name):
@@ -50,7 +50,7 @@ def upsert_contact(lead_name: str) -> int | None:
 	return subscriber_id
 
 
-def delete_contact(listmonk_id: int) -> None:
+def delete_subscriber(listmonk_id: int) -> None:
 	ensure_listmonk_authorized()
 	client = ListmonkClient()
 	client.delete_subscriber(int(listmonk_id))
@@ -60,7 +60,7 @@ def sync_all_crm_leads() -> None:
 	leads = frappe.get_all("CRM Lead", fields=["name"])
 	for lead in leads:
 		frappe.enqueue(
-			"frappe_cadence.integrations.listmonk.jobs.contact.upsert_contact",
+			"frappe_cadence.integrations.listmonk.jobs.subscriber.upsert_subscriber",
 			queue="medium",
 			lead_name=lead["name"],
 		)

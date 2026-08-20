@@ -42,6 +42,8 @@ def setup_webhook() -> None:
 		"campaign.started",
 		"campaign.sent",
 		"subscriber.bounced",
+		"subscriber.created",
+		"subscriber.updated",
 		"contact.created",
 		"contact.updated",
 		"sequence.step_executed",
@@ -133,18 +135,18 @@ def process_webhook_payload(payload: dict[str, Any]) -> dict[str, Any]:
 	raw_status = data.get("status") or event_type
 	target_status = mcc_status_map.get(raw_status) or mcc_status_map.get(event_type)
 
-	contact_id = (
+	subscriber_id = (
 		data.get("subscriber_id")
 		or data.get("contact_id")
 		or data.get("id")
-		or payload.get("contact_id")
 		or payload.get("subscriber_id")
+		or payload.get("contact_id")
 	)
 	sequence_id = data.get("sequence_id") or payload.get("sequence_id")
 
 	filters = {}
-	if contact_id:
-		filters["listmonk_contact_id"] = contact_id
+	if subscriber_id:
+		filters["listmonk_subscriber_id"] = subscriber_id
 	if sequence_id:
 		filters["listmonk_sequence_id"] = sequence_id
 
