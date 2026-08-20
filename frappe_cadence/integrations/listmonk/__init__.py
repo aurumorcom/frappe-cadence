@@ -38,21 +38,21 @@ def ensure_user_bio_provisioned(sender_user: str, cadence_name: str) -> str:
 	return matched_bio or ""
 
 
-def create_contact(contact_data: dict[str, Any]) -> dict[str, Any]:
+def create_subscriber(subscriber_data: dict[str, Any]) -> dict[str, Any]:
 	client = ListmonkClient()
-	res = client.create_subscriber(contact_data)
+	res = client.create_subscriber(subscriber_data)
 	return res.model_dump() if hasattr(res, "model_dump") else res
 
 
-def update_contact(contact_id: int, contact_data: dict[str, Any]) -> dict[str, Any]:
+def update_subscriber(subscriber_id: int, subscriber_data: dict[str, Any]) -> dict[str, Any]:
 	client = ListmonkClient()
-	res = client.update_subscriber(contact_id, contact_data)
+	res = client.update_subscriber(subscriber_id, subscriber_data)
 	return res.model_dump() if hasattr(res, "model_dump") else res
 
 
-def delete_contact(contact_id: int) -> bool:
+def delete_subscriber(subscriber_id: int) -> bool:
 	client = ListmonkClient()
-	return client.delete_subscriber(contact_id)
+	return client.delete_subscriber(subscriber_id)
 
 
 def create_list(list_data: dict[str, Any]) -> dict[str, Any]:
@@ -144,41 +144,41 @@ def delete_webhook(webhook_id: int) -> bool:
 	return client.delete_webhook(webhook_id)
 
 
-def modify_contact_lists(
-	action: str, contact_ids: list[int], list_ids: list[int], status: str = "confirmed"
+def modify_subscriber_lists(
+	action: str, subscriber_ids: list[int], list_ids: list[int], status: str = "confirmed"
 ) -> bool:
 	client = ListmonkClient()
 	return client.modify_subscriber_lists(
-		{"action": action, "ids": contact_ids, "target_list_ids": list_ids, "status": status}
+		{"action": action, "ids": subscriber_ids, "target_list_ids": list_ids, "status": status}
 	)
 
 
-def modify_contact_sequences(
-	action: str, contact_ids: list[int], sequence_ids: list[int], status: str = "confirmed"
+def modify_subscriber_sequences(
+	action: str, subscriber_ids: list[int], sequence_ids: list[int], status: str = "confirmed"
 ) -> bool:
-	return modify_contact_lists(action=action, contact_ids=contact_ids, list_ids=sequence_ids, status=status)
+	return modify_subscriber_lists(action=action, subscriber_ids=subscriber_ids, list_ids=sequence_ids, status=status)
 
 
 __all__ = [
 	"ListmonkClient",
-	"create_contact",
 	"create_list",
 	"create_sequence",
+	"create_subscriber",
 	"create_webhook",
-	"delete_contact",
 	"delete_list",
 	"delete_sequence",
+	"delete_subscriber",
 	"delete_webhook",
 	"ensure_listmonk_authorized",
 	"ensure_user_bio_provisioned",
 	"get_list",
 	"get_sequence",
 	"get_webhooks",
-	"modify_contact_lists",
-	"modify_contact_sequences",
-	"update_contact",
+	"modify_subscriber_lists",
+	"modify_subscriber_sequences",
 	"update_list",
 	"update_sequence",
 	"update_sequence_status",
+	"update_subscriber",
 	"update_webhook",
 ]
