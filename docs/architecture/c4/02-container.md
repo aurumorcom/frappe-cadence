@@ -53,7 +53,7 @@ erDiagram
     }
 
     ListmonkSubscriberAPI {
-        string external_endpoint "api.listmonk.app/api/contacts"
+        string external_endpoint "api.listmonk.app/api/subscribers"
     }
 
     ListmonkSequenceAPI {
