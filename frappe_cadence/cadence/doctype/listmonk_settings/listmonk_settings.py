@@ -12,9 +12,11 @@ class ListmonkSettings(Document):
 		if self.base_url:
 			self.base_url = self.base_url.rstrip("/")
 
-		if self.access_token and set(self.access_token) == {"*"}:
+		access_token = getattr(self, "access_token", None)
+		if access_token and set(access_token) == {"*"}:
 			self.access_token = None
-		if self.webhook_secret and set(self.webhook_secret) == {"*"}:
+		webhook_secret = getattr(self, "webhook_secret", None)
+		if webhook_secret and set(webhook_secret) == {"*"}:
 			self.webhook_secret = None
 
 	def get_username(self) -> str:
@@ -79,7 +81,7 @@ class ListmonkSettings(Document):
 			frappe.throw(_("Not permitted to execute bootstrap"), frappe.PermissionError)
 
 		frappe.enqueue(
-			"frappe_cadence.integrations.listmonk.jobs.contact.sync_all_crm_leads",
+			"frappe_cadence.integrations.listmonk.jobs.subscriber.sync_all_crm_leads",
 			queue="long",
 		)
 		return {"status": "success", "message": _("Bootstrap process enqueued successfully.")}
