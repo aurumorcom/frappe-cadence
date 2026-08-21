@@ -41,7 +41,7 @@ erDiagram
         string cadence_for
         string recipient FK
         string sender FK
-        int listmonk_contact_id
+        int listmonk_subscriber_id
         int listmonk_sequence_id
         string playbook_execution FK
         date start_date

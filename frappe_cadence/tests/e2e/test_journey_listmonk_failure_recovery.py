@@ -4,7 +4,7 @@ import frappe
 import requests
 from frappe.tests.utils import FrappeTestCase
 
-from frappe_cadence.integrations.listmonk.jobs.contact import upsert_contact
+from frappe_cadence.integrations.listmonk.jobs.subscriber import upsert_subscriber
 
 
 class TestJourneyListmonkFailureRecovery(FrappeTestCase):
@@ -18,7 +18,7 @@ class TestJourneyListmonkFailureRecovery(FrappeTestCase):
 			}
 		).insert(ignore_permissions=True)
 
-	@patch("frappe_cadence.integrations.listmonk.jobs.contact.ensure_listmonk_authorized")
+	@patch("frappe_cadence.integrations.listmonk.jobs.subscriber.ensure_listmonk_authorized")
 	@patch("frappe_cadence.integrations.listmonk.client.requests.request")
 	def test_e2e_transient_error_bubbles_for_retry(self, mock_req: MagicMock, mock_auth: MagicMock) -> None:
 		# Simulate HTTP 500 transient failure from Listmonk
@@ -28,7 +28,7 @@ class TestJourneyListmonkFailureRecovery(FrappeTestCase):
 		mock_req.return_value = mock_resp
 
 		with self.assertRaises(requests.exceptions.HTTPError):
-			upsert_contact(self.lead.name)
+			upsert_subscriber(self.lead.name)
 
 		# Verify lead listmonk_id is NOT corrupted or set
 		listmonk_id = frappe.db.get_value("CRM Lead", self.lead.name, "listmonk_id")

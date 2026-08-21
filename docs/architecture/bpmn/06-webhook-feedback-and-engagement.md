@@ -16,7 +16,7 @@ flowchart TD
     ParseEvent -- unsubscribed / opted_out --> SetMCCOptedOut[Update MCC Status to 'Opted Out']
     ParseEvent -- completed --> SetMCCFinished[Update MCC Status to 'Finished']
     
-    SetMCCReplied --> RemoveFromSequence[Remove Contact from Listmonk Sequence List]
+    SetMCCReplied --> RemoveFromSequence[Remove Subscriber from Listmonk Sequence List]
     SetMCCOptedOut --> RemoveFromSequence
     SetMCCFinished --> RemoveFromSequence
     
@@ -33,5 +33,5 @@ flowchart TD
 2. **Verify HMAC-SHA256 Signature**: Checks payload against `Listmonk-Signature` using `hmac.compare_digest()`.
 3. **Parse Event Payload**: Evaluates event strings and maps them to Multi Channel Cadence status targets.
 4. **Transition Status**: Updates [`Multi Channel Cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:7) status in the database.
-5. **Sequence Disassociation**: Automatically unenrolls leads upon reply, opt-out, or completion via [`remove_contact_from_sequence()`](apps/frappe_cadence/frappe_cadence/jobs/multi_channel_cadence.py:99).
+5. **Sequence Disassociation**: Automatically unenrolls leads upon reply, opt-out, or completion via [`remove_subscriber_from_sequence()`](apps/frappe_cadence/frappe_cadence/jobs/multi_channel_cadence.py:99).
 6. **Interaction Audit Logging**: Records engagement timestamps and metadata into [`History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/history/history.py:10).

@@ -22,7 +22,7 @@ def resolve_user_bio(sender_user: str, cadence_name: str | None = None) -> str:
 	return f"Sales Representative ({user_name})"
 
 
-def add_contact_to_sequence(mcc_name: str) -> None:
+def add_subscriber_to_sequence(mcc_name: str) -> None:
 	ensure_listmonk_authorized()
 
 	if not frappe.db.exists("Multi Channel Cadence", mcc_name):
@@ -61,15 +61,15 @@ def add_contact_to_sequence(mcc_name: str) -> None:
 
 	context_dict = {"content": ctx_text}
 
-	listmonk_contact_id = lead.listmonk_id
-	if not listmonk_contact_id:
-		from frappe_cadence.integrations.listmonk.jobs.contact import upsert_contact
+	listmonk_subscriber_id = lead.listmonk_id
+	if not listmonk_subscriber_id:
+		from frappe_cadence.integrations.listmonk.jobs.subscriber import upsert_subscriber
 
-		listmonk_contact_id = upsert_contact(lead.name)
+		listmonk_subscriber_id = upsert_subscriber(lead.name)
 		lead.reload()
 
-	if not listmonk_contact_id:
-		frappe.logger("cadence").error(f"Failed to resolve listmonk_contact_id for lead {lead.name}")
+	if not listmonk_subscriber_id:
+		frappe.logger("cadence").error(f"Failed to resolve listmonk_subscriber_id for lead {lead.name}")
 		return
 
 	client = ListmonkClient()
@@ -88,32 +88,33 @@ def add_contact_to_sequence(mcc_name: str) -> None:
 	}
 
 	req = SubscriberUpdateRequest.model_validate(payload)
-	client.update_subscriber(int(listmonk_contact_id), req)
+	client.update_subscriber(int(listmonk_subscriber_id), req)
 
-	mcc.db_set("listmonk_contact_id", int(listmonk_contact_id))
+	mcc.db_set("listmonk_subscriber_id", int(listmonk_subscriber_id))
 	if listmonk_sequence_id:
 		mcc.db_set("listmonk_sequence_id", int(listmonk_sequence_id))
 	mcc.db_set("status", "Scheduled")
 
 
-def remove_contact_from_sequence(
+def remove_subscriber_from_sequence(
 	mcc_name: str,
-	listmonk_contact_id: int | None = None,
+	listmonk_subscriber_id: int | None = None,
 	listmonk_sequence_id: int | None = None,
 ) -> None:
 	ensure_listmonk_authorized()
+	subscriber_id = listmonk_subscriber_id
 
-	if not listmonk_contact_id or not listmonk_sequence_id:
+	if not subscriber_id or not listmonk_sequence_id:
 		if frappe.db.exists("Multi Channel Cadence", mcc_name):
 			mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
-			listmonk_contact_id = listmonk_contact_id or mcc.listmonk_contact_id
+			subscriber_id = subscriber_id or getattr(mcc, "listmonk_subscriber_id", None)
 			listmonk_sequence_id = listmonk_sequence_id or mcc.listmonk_sequence_id
 
-	if listmonk_contact_id and listmonk_sequence_id:
+	if subscriber_id and listmonk_sequence_id:
 		client = ListmonkClient()
 		req = SubscriberListModifyRequest(
 			action="remove",
-			ids=[int(listmonk_contact_id)],
+			ids=[int(subscriber_id)],
 			target_list_ids=[int(listmonk_sequence_id)],
 		)
 		client.modify_subscriber_lists(req)

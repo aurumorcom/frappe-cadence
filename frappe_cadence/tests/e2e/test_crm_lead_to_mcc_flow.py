@@ -1,10 +1,13 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from frappe_cadence.cadence.doctype.cadence.cadence import add_lead_batch_to_cadence
-from frappe_cadence.cadence.doctype.crm_lead.crm_lead import evaluate_cadences_for_lead, upsert_contact
+from frappe_cadence.cadence.doctype.crm_lead.crm_lead import (
+	evaluate_cadences_for_lead,
+	upsert_subscriber,
+)
 
 
 class TestCRMLeadToMCCFlowE2E(FrappeTestCase):
@@ -19,11 +22,18 @@ class TestCRMLeadToMCCFlowE2E(FrappeTestCase):
 			}
 		).insert(ignore_permissions=True, ignore_links=True)
 
-	@patch("frappe_cadence.cadence.doctype.crm_lead.crm_lead.create_contact", return_value={"id": 444})
-	@patch("frappe_cadence.cadence.doctype.crm_lead.crm_lead.ensure_listmonk_authorized")
-	def test_new_crm_lead_syncs_contact_and_triggers_mcc_creation(
-		self, mock_ensure_auth, mock_create_contact
+	@patch("frappe_cadence.integrations.listmonk.jobs.subscriber.ListmonkClient")
+	@patch("frappe_cadence.integrations.listmonk.jobs.subscriber.ensure_listmonk_authorized")
+	def test_new_crm_lead_syncs_subscriber_and_triggers_mcc_creation(
+		self, mock_ensure_auth, mock_client_cls
 	) -> None:
+		from frappe_cadence.integrations.listmonk.schemas.subscriber import SubscriberResponse
+
+		client_inst = MagicMock()
+		client_inst.create_subscriber.return_value = SubscriberResponse(
+			id=444, email="trigger.lead@example.com", name="E2E Trigger Lead", status="enabled"
+		)
+		mock_client_cls.return_value = client_inst
 		lead = frappe.get_doc(
 			{
 				"doctype": "CRM Lead",
@@ -34,7 +44,7 @@ class TestCRMLeadToMCCFlowE2E(FrappeTestCase):
 			}
 		).insert(ignore_permissions=True, ignore_links=True)
 
-		upsert_contact(lead.name)
+		upsert_subscriber(lead.name)
 		lead.reload()
 		self.assertEqual(lead.listmonk_id, 444)
 

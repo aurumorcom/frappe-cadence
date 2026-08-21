@@ -10,7 +10,7 @@
 		"cadence_for",
 		"recipient",
 		"sender",
-		"listmonk_contact_id",
+		"listmonk_subscriber_id",
 		"listmonk_list_id",
 		"listmonk_sequence_id",
 		"playbook_execution",
@@ -44,10 +44,10 @@
 			"read_only": 1
 		},
 		{
-			"fieldname": "listmonk_contact_id",
+			"fieldname": "listmonk_subscriber_id",
 			"fieldtype": "Int",
 			"hidden": 1,
-			"label": "Listmonk Contact ID",
+			"label": "Listmonk Subscriber ID",
 			"read_only": 1
 		},
 		{

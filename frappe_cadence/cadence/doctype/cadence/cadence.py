@@ -139,12 +139,13 @@ class Cadence(Document):
 		)
 
 	def on_trash(self) -> None:
-		if self.listmonk_id or self.listmonk_list_id:
+		list_id = getattr(self, "listmonk_list_id", None)
+		if self.listmonk_id or list_id:
 			frappe.enqueue(
 				"frappe_cadence.cadence.doctype.cadence.cadence.delete_list_sequence",
 				queue="high",
 				listmonk_id=self.listmonk_id,
-				listmonk_list_id=self.listmonk_list_id,
+				listmonk_list_id=list_id,
 			)
 
 	def ensure_playbook(self) -> None:

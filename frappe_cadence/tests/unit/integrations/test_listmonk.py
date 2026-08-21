@@ -4,22 +4,22 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from frappe_cadence.integrations.listmonk import (
-	create_contact,
 	create_list,
 	create_sequence,
-	delete_contact,
+	create_subscriber,
 	delete_list,
 	delete_sequence,
+	delete_subscriber,
 	ensure_listmonk_authorized,
 	ensure_user_bio_provisioned,
 	get_list,
 	get_sequence,
-	modify_contact_lists,
-	modify_contact_sequences,
-	update_contact,
+	modify_subscriber_lists,
+	modify_subscriber_sequences,
 	update_list,
 	update_sequence,
 	update_sequence_status,
+	update_subscriber,
 )
 
 
@@ -49,32 +49,41 @@ class TestListmonkIntegrationUnit(FrappeTestCase):
 
 		mock_wait_for.assert_called_once()
 
-	@patch("frappe_cadence.integrations.listmonk._make_request")
+	@patch("frappe_cadence.integrations.listmonk.client.ListmonkClient._request")
 	def test_client_methods(self, mock_request) -> None:
-		mock_request.return_value = {"id": 10}
+		mock_request.return_value = {
+			"id": 10,
+			"email": "test@example.com",
+			"name": "Test",
+			"status": "enabled",
+			"type": "public",
+			"optin": "single",
+			"lists": [],
+			"attribs": {},
+		}
 
-		res = create_contact({"email": "test@example.com"})
-		mock_request.assert_called_with("POST", "/api/contacts", payload={"email": "test@example.com"})
-		self.assertEqual(res, {"id": 10})
+		res = create_subscriber({"email": "test@example.com"})
+		mock_request.assert_called_with("POST", "/api/subscribers", payload={"email": "test@example.com"})
+		self.assertEqual(res, {"id": 10, "email": "test@example.com", "name": "Test", "status": "enabled", "lists": [], "attribs": {}})
 
-		update_contact(10, {"name": "New Name"})
-		mock_request.assert_called_with("PUT", "/api/contacts/10", payload={"name": "New Name"})
+		update_subscriber(10, {"name": "New Name"})
+		mock_request.assert_called_with("PUT", "/api/subscribers/10", payload={"name": "New Name"})
 
-		delete_contact(10)
-		mock_request.assert_called_with("DELETE", "/api/contacts/10")
+		delete_subscriber(10)
+		mock_request.assert_called_with("DELETE", "/api/subscribers/10")
 
 		create_list({"name": "List 1"})
 		mock_request.assert_called_with(
 			"POST",
 			"/api/lists",
-			payload={"type": "public", "optin": "single", "status": "active", "name": "List 1"},
+			payload={"type": "public", "optin": "single", "name": "List 1"},
 		)
 
 		update_list(10, {"name": "List Updated"})
 		mock_request.assert_called_with(
 			"PUT",
 			"/api/lists/10",
-			payload={"type": "public", "optin": "single", "status": "active", "name": "List Updated"},
+			payload={"type": "public", "optin": "single", "name": "List Updated"},
 		)
 
 		delete_list(10)
@@ -115,21 +124,21 @@ class TestListmonkIntegrationUnit(FrappeTestCase):
 		mock_request.assert_called_with("PUT", "/api/sequences/5/status", payload={"status": "paused"})
 
 		delete_sequence(5)
-		mock_request.assert_called_with("DELETE", "/api/sequences/5")
+		mock_request.assert_called_with("DELETE", "/api/lists/5")
 
 		get_sequence(5)
 		mock_request.assert_called_with("GET", "/api/sequences/5")
 
-		modify_contact_lists(action="add", contact_ids=[1, 2], list_ids=[10], status="confirmed")
+		modify_subscriber_lists(action="add", subscriber_ids=[1, 2], list_ids=[10], status="confirmed")
 		mock_request.assert_called_with(
 			"PUT",
-			"/api/contacts/lists",
+			"/api/subscribers/lists",
 			payload={"action": "add", "ids": [1, 2], "target_list_ids": [10], "status": "confirmed"},
 		)
 
-		modify_contact_sequences(action="remove", contact_ids=[1, 2], sequence_ids=[10])
+		modify_subscriber_sequences(action="remove", subscriber_ids=[1, 2], sequence_ids=[10])
 		mock_request.assert_called_with(
 			"PUT",
-			"/api/contacts/lists",
+			"/api/subscribers/lists",
 			payload={"action": "remove", "ids": [1, 2], "target_list_ids": [10], "status": "confirmed"},
 		)

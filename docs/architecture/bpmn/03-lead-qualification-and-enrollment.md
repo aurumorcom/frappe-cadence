@@ -10,7 +10,7 @@ flowchart TD
     TriggerCadenceHook --> ProvisionSequence[Provision Listmonk Sequence List]
     ProvisionSequence --> EvalCadenceLeads[Evaluate Cadence for Matching Leads]
     
-    TriggerLeadHook --> SyncLeadToContact[Upsert CRM Lead into Listmonk Contacts]
+    TriggerLeadHook --> SyncLeadToSubscriber[Upsert CRM Lead into Listmonk Subscribers]
     TriggerLeadHook --> EvalLeadCadences[Evaluate CRM Lead against Cadences]
     
     EvalCadenceLeads --> ASTParse{Lead Matches assign_condition?}

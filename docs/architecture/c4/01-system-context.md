@@ -49,7 +49,7 @@ erDiagram
         string recipient FK
         string sender FK
         string status
-        int listmonk_contact_id
+        int listmonk_subscriber_id
         int listmonk_sequence_id
         string playbook_execution FK
     }
@@ -69,7 +69,7 @@ erDiagram
     }
 
     ListmonkSubscriberAPI {
-        string endpoint "/api/contacts"
+        string endpoint "/api/subscribers"
         string protocol "HTTPS_JSON"
     }
 

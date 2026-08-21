@@ -8,7 +8,7 @@ from frappe_cadence.cadence.doctype.user_bio.user_bio import UserBio, get_user_b
 
 class TestUserBioUnit(unittest.TestCase):
 	def test_user_bio_permission_check(self) -> None:
-		bio = UserBio({"reference_user": "user@test.local"})
+		bio = UserBio({"doctype": "User Bio", "reference_user": "user@test.local"})
 		with patch("frappe.session", frappe._dict(user="user@test.local")):
 			with patch("frappe.get_roles", return_value=["System Manager"]):
 				self.assertTrue(bio.has_permission("read"))

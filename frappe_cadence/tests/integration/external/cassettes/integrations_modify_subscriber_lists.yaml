@@ -15,7 +15,7 @@ interactions:
       User-Agent:
       - python-requests/2.34.2
     method: POST
-    uri: https://listmonk-dev.aurumor.com/api/contacts
+    uri: https://listmonk-dev.aurumor.com/api/subscribers
   response:
     body:
       string: '{"data":{"id":11,"created_at":"2026-08-15T14:20:33.476189Z","updated_at":"2026-08-15T14:20:33.476189Z","uuid":"af5e4e96-9e93-4e35-8c66-f6d233210547","email":"seq_test_25a279@example.com","name":"Seq
@@ -39,8 +39,6 @@ interactions:
       - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=isD01bDCdA5ZgpzgUlskHa%2FcYeOUG74Pl%2B2Vhji%2BwjOo8xy4lAyx7KW4LxfAhueYHOOIKup7ko7EupDf4rFffIzr4lHRJLGRDh%2BYyt5KCzDSShf7SskUliPd4k4Un2CIF0t9DmCXlrb656Q%3D"}]}'
       Server:
       - cloudflare
-      Transfer-Encoding:
-      - chunked
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
@@ -89,8 +87,6 @@ interactions:
       - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=mJBbkEsikWVG9LON7yZUPEAnPtFdPms0tT2qv16%2F624ORZie0iyNm%2FnPaKKmo8ChJ2RR0oo5stFOjkQxbMHldZX29wWAcv3Cww5TYo9J5%2FKeWY%2BpiyavlbZUc8W1D9PwOyV5OIyX1%2FzEJQw%3D"}]}'
       Server:
       - cloudflare
-      Transfer-Encoding:
-      - chunked
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
@@ -140,8 +136,6 @@ interactions:
       - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=OknAE0Wc5ooZrTLq1E9erd7K63vJO9exxGr%2B5WRWKSr2BzRtrO4%2B7Y3BnhP5F0%2FWP%2BEvO8IXcdLqR5JGQ2W%2FPY%2FKtPhKdOAPnuqZBdygMVzke5BwrF%2BebrGfwj3no6YAX14Vbi2fuQfITJw%3D"}]}'
       Server:
       - cloudflare
-      Transfer-Encoding:
-      - chunked
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
@@ -165,7 +159,7 @@ interactions:
       User-Agent:
       - python-requests/2.34.2
     method: PUT
-    uri: https://listmonk-dev.aurumor.com/api/contacts/lists
+    uri: https://listmonk-dev.aurumor.com/api/subscribers/lists
   response:
     body:
       string: '{"data":true}
@@ -211,7 +205,7 @@ interactions:
       User-Agent:
       - python-requests/2.34.2
     method: PUT
-    uri: https://listmonk-dev.aurumor.com/api/contacts/lists
+    uri: https://listmonk-dev.aurumor.com/api/subscribers/lists
   response:
     body:
       string: '{"data":true}
@@ -257,7 +251,7 @@ interactions:
       User-Agent:
       - python-requests/2.34.2
     method: DELETE
-    uri: https://listmonk-dev.aurumor.com/api/contacts/11
+    uri: https://listmonk-dev.aurumor.com/api/subscribers/11
   response:
     body:
       string: '{"data":true}
@@ -370,6 +364,52 @@ interactions:
       - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
       Report-To:
       - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=ZYzh%2Bc4EHgTWuNA0sok7jfpdYu5KFnAR4yGm4qRbX63q93SIThqYFcLJnJkc8eBuwj1XJMcOiMUg6bEtOd7MWN16%2F2LJFklQJoUZN51zY8vPcpwKIphUTYHHFydxt6YBKVcAksbsww3AohU%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/lists/21
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2e44e715c947d83-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Aug 2026 20:56:45 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=u554lIPYt93JrigKYAplKe7cD05TuRR87mjq1jID5pydtHDmXAgWTnWSnQ5nif6pDF24E9QlE7KamZKBru%2FGzlIHCCE%2F0SCTGiSzoLLIZ1qiWJHyogsh1%2Fu5T66FJjln%2FV00JQQV14fs0hM%3D"}]}'
       Server:
       - cloudflare
       alt-svc:

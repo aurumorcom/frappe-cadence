@@ -97,16 +97,16 @@ def _make_request(
 	return True
 
 
-def create_contact(contact_data: dict[str, Any]) -> dict[str, Any]:
-	return _make_request("POST", "/api/contacts", payload=contact_data)
+def create_subscriber(subscriber_data: dict[str, Any]) -> dict[str, Any]:
+	return _make_request("POST", "/api/subscribers", payload=subscriber_data)
 
 
-def update_contact(contact_id: int, contact_data: dict[str, Any]) -> dict[str, Any]:
-	return _make_request("PUT", f"/api/contacts/{contact_id}", payload=contact_data)
+def update_subscriber(subscriber_id: int, subscriber_data: dict[str, Any]) -> dict[str, Any]:
+	return _make_request("PUT", f"/api/subscribers/{subscriber_id}", payload=subscriber_data)
 
 
-def delete_contact(contact_id: int) -> bool:
-	res = _make_request("DELETE", f"/api/contacts/{contact_id}")
+def delete_subscriber(subscriber_id: int) -> bool:
+	res = _make_request("DELETE", f"/api/subscribers/{subscriber_id}")
 	return bool(res)
 
 
@@ -205,31 +205,31 @@ def delete_webhook(webhook_id: int) -> bool:
 	return bool(res)
 
 
-def modify_contact_lists(
+def modify_subscriber_lists(
 	action: str,
-	contact_ids: list[int],
+	subscriber_ids: list[int],
 	list_ids: list[int],
 	status: str = "confirmed",
 ) -> bool:
 	payload = {
 		"action": action,
-		"ids": contact_ids,
+		"ids": subscriber_ids,
 		"target_list_ids": list_ids,
 		"status": status,
 	}
-	res = _make_request("PUT", "/api/contacts/lists", payload=payload)
+	res = _make_request("PUT", "/api/subscribers/lists", payload=payload)
 	return bool(res)
 
 
-def modify_contact_sequences(
+def modify_subscriber_sequences(
 	action: str,
-	contact_ids: list[int],
+	subscriber_ids: list[int],
 	sequence_ids: list[int],
 	status: str = "confirmed",
 ) -> bool:
-	return modify_contact_lists(
+	return modify_subscriber_lists(
 		action=action,
-		contact_ids=contact_ids,
+		subscriber_ids=subscriber_ids,
 		list_ids=sequence_ids,
 		status=status,
 	)

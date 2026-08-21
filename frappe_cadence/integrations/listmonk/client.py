@@ -36,7 +36,10 @@ def ensure_listmonk_authorized() -> None:
 				filters={"doctype": "Listmonk Settings", "enabled": 1, "status": "Authorized"},
 			)
 		else:
-			frappe.throw(_("Listmonk is not configured or authorized."), frappe.ValidationError)
+			frappe.wait_for(
+				event_key="Listmonk Settings:on_update:Listmonk Settings",
+				condition="argument.get('enabled') == 1 and argument.get('status') == 'Authorized'",
+			)
 
 
 def _dump_model(model: Any, exclude_unset: bool = False) -> dict[str, Any]:
@@ -177,14 +180,14 @@ class ListmonkClient:
 	# Subscriber methods
 	def create_subscriber(self, req: SubscriberCreateRequest | dict[str, Any]) -> SubscriberResponse:
 		data = _dump_model(req)
-		res = self._request("POST", "/api/contacts", payload=data)
+		res = self._request("POST", "/api/subscribers", payload=data)
 		return _validate_model(SubscriberResponse, res)
 
 	def update_subscriber(
 		self, subscriber_id: int, req: SubscriberUpdateRequest | dict[str, Any]
 	) -> SubscriberResponse:
 		data = _dump_model(req, exclude_unset=True)
-		res = self._request("PUT", f"/api/contacts/{subscriber_id}", payload=data)
+		res = self._request("PUT", f"/api/subscribers/{subscriber_id}", payload=data)
 		return _validate_model(SubscriberResponse, res)
 
 	def upsert_subscriber(
@@ -200,7 +203,7 @@ class ListmonkClient:
 		return self.create_subscriber(req)
 
 	def delete_subscriber(self, subscriber_id: int) -> bool:
-		res = self._request("DELETE", f"/api/contacts/{subscriber_id}")
+		res = self._request("DELETE", f"/api/subscribers/{subscriber_id}")
 		return bool(res)
 
 	def modify_subscriber_lists(self, req: SubscriberListModifyRequest | dict[str, Any]) -> bool:
@@ -243,6 +246,10 @@ class ListmonkClient:
 			"status": status,
 		}
 		return self._request("PUT", f"/api/lists/{list_id}", payload=payload)
+
+	def update_sequence_status(self, sequence_id: int, status: str) -> dict[str, Any]:
+		payload = {"status": status}
+		return self._request("PUT", f"/api/sequences/{sequence_id}/status", payload=payload)
 
 	def delete_list(self, list_id: int) -> bool:
 		res = self._request("DELETE", f"/api/lists/{list_id}")

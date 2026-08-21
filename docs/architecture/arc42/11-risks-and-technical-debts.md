@@ -11,5 +11,5 @@
 ## Technical Debts
 
 1. **Schema Coupling**: The app expects certain custom fields on `CRM Lead` (e.g. `listmonk_id`, `enrichment_status`) that must be synced via fixtures in [`custom_field.json`](apps/frappe_cadence/frappe_cadence/fixtures/custom_field.json:1).
-2. **Listmonk Contact Deletion Synchronization**: When a lead is deleted in Frappe, [`delete_contact()`](apps/frappe_cadence/frappe_cadence/integrations/listmonk/jobs/contact.py:53) removes the subscriber in Listmonk; network failures during delete hooks need reconciliation scripts.
+2. **Listmonk Contact Deletion Synchronization**: When a lead is deleted in Frappe, [`delete_subscriber()`](apps/frappe_cadence/frappe_cadence/integrations/listmonk/jobs/subscriber.py:53) removes the subscriber in Listmonk; network failures during delete hooks need reconciliation scripts.
 3. **Synchronous Webhook Ingestion**: Webhook handler directly processes status changes during the HTTP request lifecycle; under extreme burst volume, incoming webhooks should be buffered directly to Redis before DB write.
