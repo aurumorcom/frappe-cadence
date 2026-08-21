@@ -31,7 +31,7 @@ class TestWebhookInternalIntegration(FrappeTestCase):
 				"cadence_for": "CRM Lead",
 				"recipient": self.lead.name,
 				"status": "Scheduled",
-				"listmonk_contact_id": 8888,
+				"listmonk_subscriber_id": 8888,
 				"listmonk_sequence_id": 7777,
 			}
 		).insert(ignore_permissions=True)
