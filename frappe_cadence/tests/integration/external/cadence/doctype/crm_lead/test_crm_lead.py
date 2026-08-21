@@ -1,7 +1,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from frappe_cadence.cadence.doctype.crm_lead.crm_lead import delete_contact, upsert_contact
+from frappe_cadence.cadence.doctype.crm_lead.crm_lead import delete_subscriber, upsert_subscriber
 from frappe_cadence.tests.integration.external.conftest import (
 	cadence_vcr,
 	get_test_listmonk_config,
@@ -37,10 +37,10 @@ class TestCRMLeadExternal(FrappeTestCase):
 			}
 		).insert(ignore_permissions=True, ignore_links=True)
 
-		upsert_contact(lead.name)
+		upsert_subscriber(lead.name)
 		lead.reload()
 
 		listmonk_id = lead.listmonk_id
 		self.assertIsNotNone(listmonk_id)
 
-		delete_contact(listmonk_id)
+		delete_subscriber(listmonk_id)

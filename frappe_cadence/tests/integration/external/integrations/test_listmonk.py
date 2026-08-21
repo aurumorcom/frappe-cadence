@@ -4,20 +4,20 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from frappe_cadence.integrations.listmonk import (
-	create_contact,
 	create_list,
 	create_sequence,
+	create_subscriber,
 	create_webhook,
-	delete_contact,
 	delete_list,
 	delete_sequence,
+	delete_subscriber,
 	delete_webhook,
 	ensure_listmonk_authorized,
 	get_webhooks,
-	modify_contact_lists,
-	update_contact,
+	modify_subscriber_lists,
 	update_sequence,
 	update_sequence_status,
+	update_subscriber,
 	update_webhook,
 )
 from frappe_cadence.tests.integration.external.conftest import (
@@ -51,19 +51,19 @@ class TestListmonkIntegrations(FrappeTestCase):
 	def test_01_ensure_listmonk_authorized(self) -> None:
 		ensure_listmonk_authorized()
 
-	@cadence_vcr.use_cassette("integrations_contacts_crud.yaml")
-	def test_02_contacts_crud_lifecycle(self) -> None:
+	@cadence_vcr.use_cassette("integrations_subscribers_crud.yaml")
+	def test_02_subscribers_crud_lifecycle(self) -> None:
 		# Create
-		contact_payload = {
+		subscriber_payload = {
 			"email": "external_test_subscriber@example.com",
 			"name": "External Test Subscriber",
 			"status": "enabled",
 			"attribs": {"company": "Acme Corp"},
 		}
-		res_create = create_contact(contact_payload)
+		res_create = create_subscriber(subscriber_payload)
 		self.assertTrue(isinstance(res_create, dict))
-		contact_id = res_create.get("id")
-		self.assertIsNotNone(contact_id)
+		subscriber_id = res_create.get("id")
+		self.assertIsNotNone(subscriber_id)
 
 		# Update
 		update_payload = {
@@ -72,11 +72,11 @@ class TestListmonkIntegrations(FrappeTestCase):
 			"status": "enabled",
 			"attribs": {"company": "Acme Corp Updated"},
 		}
-		res_update = update_contact(int(contact_id), update_payload)
+		res_update = update_subscriber(int(subscriber_id), update_payload)
 		self.assertTrue(isinstance(res_update, dict))
 
 		# Delete
-		res_delete = delete_contact(int(contact_id))
+		res_delete = delete_subscriber(int(subscriber_id))
 		self.assertTrue(res_delete)
 
 	@cadence_vcr.use_cassette("integrations_sequences_crud.yaml")
@@ -114,7 +114,7 @@ class TestListmonkIntegrations(FrappeTestCase):
 			"name": "External Integration Webhook Test",
 			"url": "http://localhost:8000/api/method/frappe_cadence.listmonk.webhook",
 			"secret": "test_secret_key_12345",
-			"events": ["contact.created"],
+			"events": ["subscriber.created"],
 			"enabled": True,
 		}
 		res_create = create_webhook(webhook_payload)
@@ -131,7 +131,7 @@ class TestListmonkIntegrations(FrappeTestCase):
 			"name": "Updated Webhook Name",
 			"url": "http://localhost:8000/api/method/frappe_cadence.listmonk.webhook",
 			"secret": "test_secret_key_12345",
-			"events": ["contact.created", "contact.updated"],
+			"events": ["subscriber.created", "subscriber.updated"],
 			"enabled": True,
 		}
 		res_update = update_webhook(int(webhook_id), webhook_update)
@@ -141,11 +141,11 @@ class TestListmonkIntegrations(FrappeTestCase):
 		res_delete = delete_webhook(int(webhook_id))
 		self.assertTrue(res_delete)
 
-	@cadence_vcr.use_cassette("integrations_modify_contact_lists.yaml")
-	def test_05_modify_contact_sequences(self) -> None:
-		# Setup contact, list, and sequence
+	@cadence_vcr.use_cassette("integrations_modify_subscriber_lists.yaml")
+	def test_05_modify_subscriber_sequences(self) -> None:
+		# Setup subscriber, list, and sequence
 		unique_email = f"seq_test_{frappe.generate_hash(length=6)}@example.com"
-		c = create_contact({"email": unique_email, "name": "Seq Sub", "status": "enabled"})
+		c = create_subscriber({"email": unique_email, "name": "Seq Sub", "status": "enabled"})
 		l = create_list({"name": "Enrollment Test List"})
 		cid, lid = c.get("id"), l.get("id")
 		s = create_sequence({"name": "Enrollment Test Sequence", "lists": [int(lid)]})
@@ -153,13 +153,13 @@ class TestListmonkIntegrations(FrappeTestCase):
 
 		try:
 			# Add to list
-			res_add = modify_contact_lists("add", [int(cid)], [int(lid)], status="confirmed")
+			res_add = modify_subscriber_lists("add", [int(cid)], [int(lid)], status="confirmed")
 			self.assertTrue(res_add)
 
 			# Remove from list
-			res_remove = modify_contact_lists("remove", [int(cid)], [int(lid)])
+			res_remove = modify_subscriber_lists("remove", [int(cid)], [int(lid)])
 			self.assertTrue(res_remove)
 		finally:
-			delete_contact(int(cid))
+			delete_subscriber(int(cid))
 			delete_sequence(int(sid))
 			delete_list(int(lid))

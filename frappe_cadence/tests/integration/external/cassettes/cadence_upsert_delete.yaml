@@ -42,8 +42,6 @@ interactions:
       - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=4sRD2FZMjAHrvHPmjOmVhcuYR%2FHUHdRV1cgk2FBz2%2BxIXvrQRyO9iVAPDJZtgq0gE0c7ndtBouTIAlbBcAARY1yGoRujnnT7mSHwKzOccAYPBt%2BbB2BDAN88o%2BzZAYAXP93AaaU2j7YZmgI%3D"}]}'
       Server:
       - cloudflare
-      Transfer-Encoding:
-      - chunked
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
@@ -95,8 +93,6 @@ interactions:
       - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=VoOZ4Y0vWns%2Bd7V4Y09afqH5VAGr6bG%2Fb4GUGnvBLtR3OEkfaU0TczhwJPXB8vV6dcD6yBFO95SSUuXZjq44KhLIu4F84TVwIyktK404HIkjx8MsMyzX1oaQVG9%2F9mAZinIWRcr%2BlMiadB4%3D"}]}'
       Server:
       - cloudflare
-      Transfer-Encoding:
-      - chunked
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
@@ -146,8 +142,6 @@ interactions:
       - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=L5AKqMK57ysm6xNCBWRnRK2z9b%2FHsjXKgRGkzLmcmZKMGqhsZ3fgd3Vi0mF7R51jtjofuBuiLPsN0ULWRoLEm6F5%2F2JjMXBDdtRKiStv1HUFJOZ8QhELWcBzIYfV0pfjEBpKcCv93iya0LA%3D"}]}'
       Server:
       - cloudflare
-      Transfer-Encoding:
-      - chunked
       alt-svc:
       - h3=":443"; ma=86400
       cf-cache-status:
@@ -238,6 +232,99 @@ interactions:
       - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
       Report-To:
       - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=GxlpitFac%2FuAJ476wRjeSrOJlyKYpZvxubGuTNYtU5Dnhbt2iL4lTdcGZiVloT4KMCY3eN24bmne9MjIjd8mG0O10cA7VkLELrlgw6XOaXTrcwk2diAmgIZ%2FOsepbds79OcJ5kfPUudMefs%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"name": "Sequence 17", "type": "public", "optin": "single", "status":
+      "active"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '80'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: PUT
+    uri: https://listmonk-dev.aurumor.com/api/sequences/17/status
+  response:
+    body:
+      string: '{"data": true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2e4504bb8ee3d48-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Aug 2026 20:58:00 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=IAxmNxrKy4tmfPVkYm3u%2BYSsErtQXquMjn1arXX8Ybt%2BSKkqKN%2F%2BK57IAhwJfhZp3Tts04P2mHcc%2FYRrDmmdlEJvF%2FSrTB7UvW6FwW0Dn2EbsZSVxoYPcCQ45h9xPa0yOduy9fpTXEoVg0I%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/lists/17
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2e54f8fbd6d7766-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 20 Aug 2026 23:52:16 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=jReySED5p3Wf8nVehss0ZWQLv89sBldUlumtG4GebTMLoouteZzmODdWoBrol3THzGbBuf4x9UXitZ7cZR4AGWutdtumUgFlZIM058Qry71JMJMZPlhSSxQHI5Dsyl%2F4%2FeA9HXbhqP5Bsww%3D"}]}'
       Server:
       - cloudflare
       alt-svc:

@@ -39,7 +39,7 @@ interactions:
       User-Agent:
       - python-requests/2.34.2
     method: POST
-    uri: https://listmonk-dev.aurumor.com/api/contacts
+    uri: https://listmonk-dev.aurumor.com/api/subscribers
   response:
     body:
       string: '{"data":{"id":7,"created_at":"2026-08-15T12:19:37.422952Z","updated_at":"2026-08-15T12:19:37.422952Z","uuid":"5171ddd4-2395-4d23-9aa5-1c1667a6f78a","email":"crm_lead_a28d4d@example.com","name":"External
@@ -96,7 +96,7 @@ interactions:
       User-Agent:
       - python-requests/2.34.2
     method: DELETE
-    uri: https://listmonk-dev.aurumor.com/api/contacts/7
+    uri: https://listmonk-dev.aurumor.com/api/subscribers/7
   response:
     body:
       string: '{"data":true}
