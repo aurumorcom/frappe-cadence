@@ -108,7 +108,7 @@ def update_sequence(sequence_id: int, sequence_data: dict[str, Any]) -> dict[str
 
 def update_sequence_status(sequence_id: int, status: str) -> dict[str, Any]:
 	client = ListmonkClient()
-	return client.update_list_status(sequence_id, status)
+	return client.update_sequence_status(sequence_id, status)
 
 
 def delete_sequence(sequence_id: int) -> bool:

@@ -247,6 +247,10 @@ class ListmonkClient:
 		}
 		return self._request("PUT", f"/api/lists/{list_id}", payload=payload)
 
+	def update_sequence_status(self, sequence_id: int, status: str) -> dict[str, Any]:
+		payload = {"status": status}
+		return self._request("PUT", f"/api/sequences/{sequence_id}/status", payload=payload)
+
 	def delete_list(self, list_id: int) -> bool:
 		res = self._request("DELETE", f"/api/lists/{list_id}")
 		return bool(res)
