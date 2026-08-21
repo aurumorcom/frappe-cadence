@@ -23,31 +23,34 @@ controller_events = {
 		"rate_limit_per_minute": 30,
 		"retries": 3,
 	},
-	"frappe_cadence.integrations.listmonk.jobs.contact.sync_all_crm_leads": {
+	"frappe_cadence.integrations.listmonk.jobs.subscriber.sync_all_crm_leads": {
 		"rate_limit_per_minute": 10,
 		"retries": 1,
 	},
-	"frappe_cadence.integrations.listmonk.jobs.contact.upsert_contact": {
+	"frappe_cadence.integrations.listmonk.jobs.subscriber.upsert_subscriber": {
 		"rate_limit_per_minute": 120,
 		"retries": 3,
 	},
-	"frappe_cadence.integrations.listmonk.jobs.contact.delete_contact": {
+	"frappe_cadence.integrations.listmonk.jobs.subscriber.delete_subscriber": {
 		"rate_limit_per_minute": 60,
 		"retries": 3,
 	},
 	# Core Cadence Jobs
 	"frappe_cadence.jobs.cadence.upsert_sequence": {"rate_limit_per_minute": 60, "retries": 3},
+	"frappe_cadence.cadence.doctype.cadence.cadence.upsert_list_sequence": {"rate_limit_per_minute": 60, "retries": 3},
 	"frappe_cadence.jobs.cadence.update_sequence_status": {"rate_limit_per_minute": 60, "retries": 3},
 	"frappe_cadence.jobs.cadence.delete_sequence": {"rate_limit_per_minute": 60, "retries": 3},
+	"frappe_cadence.cadence.doctype.cadence.cadence.delete_list_sequence": {"rate_limit_per_minute": 60, "retries": 3},
 	"frappe_cadence.jobs.cadence.evaluate_leads_for_cadence": {"rate_limit_per_minute": 30, "retries": 1},
 	"frappe_cadence.jobs.cadence.evaluate_cadences_for_lead": {"rate_limit_per_minute": 60, "retries": 1},
 	"frappe_cadence.jobs.cadence.add_lead_batch_to_cadence": {"rate_limit_per_minute": 60, "retries": 3},
+	"frappe_cadence.cadence.doctype.cadence.cadence.add_lead_batch_to_cadence": {"rate_limit_per_minute": 60, "retries": 3},
 	# Multi Channel Cadence Jobs
-	"frappe_cadence.jobs.multi_channel_cadence.add_contact_to_sequence": {
+	"frappe_cadence.jobs.multi_channel_cadence.add_subscriber_to_sequence": {
 		"rate_limit_per_minute": 60,
 		"retries": 3,
 	},
-	"frappe_cadence.jobs.multi_channel_cadence.remove_contact_from_sequence": {
+	"frappe_cadence.jobs.multi_channel_cadence.remove_subscriber_from_sequence": {
 		"rate_limit_per_minute": 60,
 		"retries": 3,
 	},
