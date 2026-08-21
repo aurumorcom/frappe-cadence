@@ -1,20 +1,20 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from frappe_cadence.integrations.listmonk.jobs.contact import (
-	delete_contact,
+from frappe_cadence.integrations.listmonk.jobs.subscriber import (
+	delete_subscriber,
 	sync_all_crm_leads,
-	upsert_contact,
+	upsert_subscriber,
 )
 from frappe_cadence.integrations.listmonk.schemas.subscriber import SubscriberResponse
 
 
-class TestListmonkContactJobs(unittest.TestCase):
-	@patch("frappe_cadence.integrations.listmonk.jobs.contact.ensure_listmonk_authorized")
-	@patch("frappe_cadence.integrations.listmonk.jobs.contact.ListmonkClient")
+class TestListmonkSubscriberJobs(unittest.TestCase):
+	@patch("frappe_cadence.integrations.listmonk.jobs.subscriber.ensure_listmonk_authorized")
+	@patch("frappe_cadence.integrations.listmonk.jobs.subscriber.ListmonkClient")
 	@patch("frappe.db.exists")
 	@patch("frappe.get_doc")
-	def test_upsert_contact_new(
+	def test_upsert_subscriber_new(
 		self,
 		mock_get_doc: MagicMock,
 		mock_exists: MagicMock,
@@ -41,17 +41,17 @@ class TestListmonkContactJobs(unittest.TestCase):
 		)
 		mock_client_cls.return_value = client_inst
 
-		sub_id = upsert_contact("LEAD-001")
+		sub_id = upsert_subscriber("LEAD-001")
 		self.assertEqual(sub_id, 55)
 		lead_mock.db_set.assert_called_once_with("listmonk_id", 55)
 
-	@patch("frappe_cadence.integrations.listmonk.jobs.contact.ensure_listmonk_authorized")
-	@patch("frappe_cadence.integrations.listmonk.jobs.contact.ListmonkClient")
-	def test_delete_contact(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
+	@patch("frappe_cadence.integrations.listmonk.jobs.subscriber.ensure_listmonk_authorized")
+	@patch("frappe_cadence.integrations.listmonk.jobs.subscriber.ListmonkClient")
+	def test_delete_subscriber(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
 		client_inst = MagicMock()
 		mock_client_cls.return_value = client_inst
 
-		delete_contact(123)
+		delete_subscriber(123)
 		client_inst.delete_subscriber.assert_called_once_with(123)
 
 	@patch("frappe.enqueue")

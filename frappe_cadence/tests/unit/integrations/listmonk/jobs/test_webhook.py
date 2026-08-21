@@ -26,6 +26,7 @@ class TestListmonkWebhookJobs(unittest.TestCase):
 		mock_get_doc.return_value = settings_mock
 
 		client_inst = MagicMock()
+		client_inst.get_webhook_secret.return_value = "secret_123"
 		client_inst.get_webhooks.return_value = []
 		client_inst.create_webhook.return_value = WebhookResponse(
 			id=1,

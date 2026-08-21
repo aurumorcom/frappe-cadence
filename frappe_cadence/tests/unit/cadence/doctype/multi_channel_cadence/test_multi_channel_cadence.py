@@ -19,7 +19,7 @@ class TestMultiChannelCadenceUnit(unittest.TestCase):
 	def test_on_trash_enqueues_remove(self, mock_enqueue: MagicMock) -> None:
 		doc = MultiChannelCadence.__new__(MultiChannelCadence)
 		doc.name = "MCC-001"
-		doc.listmonk_contact_id = 10
+		doc.listmonk_subscriber_id = 10
 		doc.listmonk_sequence_id = 5
 
 		on_trash(doc)
