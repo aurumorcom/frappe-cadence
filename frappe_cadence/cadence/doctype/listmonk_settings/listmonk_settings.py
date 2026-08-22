@@ -69,6 +69,10 @@ class ListmonkSettings(Document):
 					"frappe_cadence.integrations.listmonk.jobs.webhook.setup_webhook",
 					queue="high",
 				)
+				frappe.enqueue(
+					"frappe_cadence.integrations.listmonk.jobs.user.get_users",
+					queue="medium",
+				)
 			else:
 				self.db_set("status", "Unauthorized")
 		except Exception as exc:
