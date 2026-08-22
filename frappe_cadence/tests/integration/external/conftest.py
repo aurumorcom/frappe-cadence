@@ -53,7 +53,7 @@ def is_listmonk_live() -> bool:
 			headers["Authorization"] = f"token {token}"
 		else:
 			headers["Authorization"] = f"token {username}:{token}"
-		res = requests.get(f"{config['base_url']}/api/sequences", headers=headers, auth=auth, timeout=3)
+		res = requests.get(f"{config['base_url']}/api/campaigns", headers=headers, auth=auth, timeout=3)
 		return res.status_code == 200
 	except Exception:
 		return False

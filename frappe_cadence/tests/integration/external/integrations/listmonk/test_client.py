@@ -29,7 +29,7 @@ class TestListmonkClientExternal(FrappeTestCase):
 
 		self.assertTrue(self.client.test_connection())
 		mock_get.assert_called_once_with(
-			"https://listmonk.capybaara.com/api/sequences",
+			"https://listmonk.capybaara.com/api/campaigns",
 			headers={
 				"Authorization": "token crm:7VPrQtx6YYJBmUjS0UmqVUnciE7AnIEj1zH2kUoUkgB0Efy8",
 				"Content-Type": "application/json",

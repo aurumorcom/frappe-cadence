@@ -1,0 +1,113 @@
+interactions:
+- request:
+    body: '{"type": "sequence", "status": "active", "description": "Created during external integration
+      testing", "lists": [], "name": "External Test Campaign"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '167'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/campaigns
+  response:
+    body:
+      string: '{"data":{"id":20,"created_at":"2026-08-15T14:20:32.958555Z","updated_at":"2026-08-15T14:20:32.958555Z","uuid":"6a943d26-58c5-4aee-9a40-df21957a98b7","name":"External
+        Test Campaign","description":"Created during external integration testing","status":"active","type":"sequence","lists":[]}}
+
+        '
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"type": "sequence", "status": "active", "description": "Updated campaign description", "lists":
+      [], "name": "Renamed External Test Campaign"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '160'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: PUT
+    uri: https://listmonk-dev.aurumor.com/api/campaigns/20
+  response:
+    body:
+      string: '{"data":{"id":20,"created_at":"2026-08-15T14:20:32.958555Z","updated_at":"2026-08-15T14:20:33.001464Z","uuid":"6a943d26-58c5-4aee-9a40-df21957a98b7","name":"Renamed
+        External Test Campaign","description":"Updated campaign description","status":"active","type":"sequence","lists":[]}}
+
+        '
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"status": "active"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '20'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: PUT
+    uri: https://listmonk-dev.aurumor.com/api/campaigns/20/status
+  response:
+    body:
+      string: '{"data":{"id":20,"status":"active"}}
+
+        '
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/campaigns/20
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      Content-Type:
+      - application/json
+    status:
+      code: 200
+      message: OK
