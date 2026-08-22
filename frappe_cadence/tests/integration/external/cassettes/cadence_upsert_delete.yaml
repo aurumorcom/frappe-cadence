@@ -334,4 +334,103 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"type": "sequence", "status": "active", "description": "Campaign description
+      for external test", "lists": [14], "content_type": "richtext", "subject": "External
+      Integration Test Cadence", "body": "", "name": "External Integration Test Cadence"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '245'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/campaigns
+  response:
+    body:
+      string: '{"data":{"id":1,"created_at":"2026-08-22T22:47:35.64069Z","updated_at":"2026-08-22T22:47:35.64069Z","views":0,"clicks":0,"bounces":0,"lists":[],"media":[],"started_at":null,"to_send":0,"sent":0,"uuid":"9cb4cd23-730c-4075-99df-82f80bcfa735","type":"sequence","name":"External
+        Integration Test Cadence","subject":"External Integration Test Cadence","from_email":"listmonk
+        \u003cnoreply@listmonk.yoursite.com\u003e","body":"","body_source":null,"altbody":null,"send_at":null,"status":"draft","content_type":"richtext","tags":[],"headers":[],"attribs":{},"template_id":null,"messenger":"email","archive":false,"archive_slug":null,"archive_template_id":null,"archive_meta":{},"schedule_id":null,"send_window":{},"email_ids":[],"waha_sessions":[]}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2f56b8fa8d547e3-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 22 Aug 2026 22:47:35 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=ux7%2FigjK5Vy9D%2BMMyP3PsLd7yITLQDXvqDpdFwLv%2BH3%2Fh22b3JKxLiZV4pV7UB1T8X49bUByaca5P%2BFb0Mw0yJi3e3%2BI4jX8N8WPox8N5k9fUVipk7rE2TayPVubNz2eXeoGCsOYEGpTaaE%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"status": "active"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '20'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: PUT
+    uri: https://listmonk-dev.aurumor.com/api/campaigns/1/status
+  response:
+    body:
+      string: '{"message":"Error updating Campaign: pq: invalid input value for enum
+        campaign_status: \"active\""}
+
+        '
+    headers:
+      CF-RAY:
+      - a2f56b8ffdc10028-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '100'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 22 Aug 2026 22:47:35 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=dJRsYbAfz%2FdWqj%2BWPKj2L9QyQ0Mb%2BXU3SdMjmHRG3jxDOutIPfU0vT0ak7cEp4t5JLc3ju3Zd1aQnXHgd%2BGu5KRHP3L%2B%2B1pH%2FnvWjNXYhtQvwTA9qMNF8SDL1vRBnEycBylGSEonFJtm4l0%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 500
+      message: Internal Server Error
 version: 1
