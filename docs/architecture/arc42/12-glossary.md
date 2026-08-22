@@ -7,8 +7,8 @@
 | **AST (Abstract Syntax Tree)** | A tree representation of Python source code parsed via `ast.parse()`, used in Cadence to safely compile dynamic condition strings without `eval()`. |
 | **Cadence** | A defined sequence and rule set for multi-step automated sales outreach campaigns. |
 | **CRM Lead** | A prospect entity in Frappe CRM containing demographic, communication, and enrichment details. |
-| **Context** | A document storing AI-researched dossiers, background intelligence, and point-in-time company data attached to a lead. |
-| **Context History** | Child table recording versioned snapshots of Context records over time. |
+| **Deep Research** | A document storing AI-researched dossiers, background intelligence, and point-in-time company data attached to a lead. |
+| **Deep Research History** | Child table recording versioned snapshots of Deep Research records over time. |
 | **FastStream Worker** | Background asynchronous worker managed by `frappe_controller` executing decoupled tasks. |
 | **History** | Persistent audit log containing web crawling archives, extracted markdown, and screenshot images. |
 | **History Group** | An aggregate grouping container organizing multiple History records under a target URL. |

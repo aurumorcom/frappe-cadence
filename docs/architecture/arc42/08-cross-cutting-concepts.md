@@ -7,7 +7,7 @@
 
 ## Persistency & Data Access
 - **Transactional State Management**: State transitions on [`Multi Channel Cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:7) utilize Frappe's document lifecycle hooks (`before_insert`, `on_update`, `on_trash`).
-- **Audit Trails**: Changes to research notes in [`Context`](apps/frappe_cadence/frappe_cadence/cadence/doctype/context/context.py:6) automatically snapshot historical records into [`Context History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/context/context.json:37) with user attribution and timestamping.
+- **Audit Trails**: Changes to research notes in [`Deep Research`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research/deep_research.py:6) automatically snapshot historical records into [`Deep Research History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research_history/deep_research_history.json:37) with user attribution and timestamping.
 - **Asset Persistence**: The [`History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/history/history.py:10) controller automatically downloads remote screenshot URLs and stores them as managed private/public Frappe `File` records.
 
 ## Asynchronous Processing & Orchestration

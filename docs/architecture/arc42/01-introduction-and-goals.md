@@ -17,7 +17,7 @@
 | 1 | Idempotency & Safety | Zero duplicate enrollments of a [`CRM Lead`](apps/frappe_cadence/frappe_cadence/cadence/doctype/crm_lead/crm_lead.py:6) into the same [`Cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence/cadence.py:10). |
 | 2 | High Asynchronous Throughput | Background batch processing via [`frappe_controller`](apps/frappe_cadence/frappe_cadence/hooks.py:8) handling >5,000 leads evaluated per minute. |
 | 3 | Resilience & Fault Tolerance | External Listmonk HTTP timeouts auto-retried with exponential backoff without losing sequence state. |
-| 4 | Auditability & History | Immutable snapshot versioning in [`Context History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/context/context.json:37) and interaction logging in [`History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/history/history.py:10). |
+| 4 | Auditability & History | Immutable snapshot versioning in [`Deep Research History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research_history/deep_research_history.json:37) and interaction logging in [`History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/history/history.py:10). |
 
 ## Stakeholders
 

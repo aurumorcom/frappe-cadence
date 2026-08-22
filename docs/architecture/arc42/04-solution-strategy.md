@@ -17,5 +17,5 @@
 - **Rationale**: Eliminates the need to maintain complex email queue schedulers, deliverability engines, and link-tracking infrastructure within Frappe.
 
 ### 4. Dynamic Sender Persona & Context Hierarchy
-- **Decision**: Resolve sender biographies and research context hierarchically per cadence or fallback to default profiles via [`User Bio`](apps/frappe_cadence/frappe_cadence/cadence/doctype/user_bio/user_bio.py:8) and [`Context`](apps/frappe_cadence/frappe_cadence/cadence/doctype/context/context.py:6).
+- **Decision**: Resolve sender biographies and research context hierarchically per cadence or fallback to default profiles via [`User Bio`](apps/frappe_cadence/frappe_cadence/cadence/doctype/user_bio/user_bio.py:8) and [`Deep Research`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research/deep_research.py:6).
 - **Rationale**: Allows sales representatives to tailor their tone, credentials, and message content per campaign while maintaining global defaults.
