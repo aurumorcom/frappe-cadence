@@ -55,11 +55,11 @@ def add_subscriber_to_campaign(mcc_name: str) -> None:
 		"bio": bio_content,
 	}
 
-	ctx_text = frappe.db.get_value("Context", {"reference_doc": mcc.name}, "content")
-	if not ctx_text:
-		ctx_text = frappe.db.get_value("Context", {"reference_doc": mcc.recipient}, "content") or ""
+	deep_research_text = frappe.db.get_value("Deep Research", {"reference_doc": mcc.name}, "content")
+	if not deep_research_text:
+		deep_research_text = frappe.db.get_value("Deep Research", {"reference_doc": mcc.recipient}, "content") or ""
 
-	context_dict = {"content": ctx_text}
+	deep_research_dict = {"content": deep_research_text}
 
 	listmonk_subscriber_id = lead.listmonk_id
 	if not listmonk_subscriber_id:
@@ -81,7 +81,7 @@ def add_subscriber_to_campaign(mcc_name: str) -> None:
 		"lists": [int(list_id)] if list_id else [],
 		"attribs": {
 			"user": user_dict,
-			"context": context_dict,
+			"deep_research": deep_research_dict,
 			"lead_id": lead.name,
 			"company_name": lead.get("company_name") or "",
 			"lead_status": lead.get("status") or "",
