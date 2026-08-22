@@ -2,8 +2,8 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from frappe_cadence.jobs.multi_channel_cadence import (
-	add_subscriber_to_sequence,
-	remove_subscriber_from_sequence,
+	add_subscriber_to_campaign,
+	remove_subscriber_from_campaign,
 	stop_mcc,
 )
 
@@ -14,7 +14,7 @@ class TestMultiChannelCadenceJobs(unittest.TestCase):
 	@patch("frappe_cadence.jobs.multi_channel_cadence.ListmonkClient")
 	@patch("frappe.db.exists")
 	@patch("frappe.get_doc")
-	def test_add_subscriber_to_sequence(
+	def test_add_subscriber_to_campaign(
 		self,
 		mock_get_doc: MagicMock,
 		mock_exists: MagicMock,
@@ -53,17 +53,17 @@ class TestMultiChannelCadenceJobs(unittest.TestCase):
 		client_inst = MagicMock()
 		mock_client_cls.return_value = client_inst
 
-		add_subscriber_to_sequence("MCC-001")
+		add_subscriber_to_campaign("MCC-001")
 		client_inst.update_subscriber.assert_called_once()
 		mcc_mock.db_set.assert_any_call("status", "Scheduled")
 
 	@patch("frappe_cadence.jobs.multi_channel_cadence.ensure_listmonk_authorized")
 	@patch("frappe_cadence.jobs.multi_channel_cadence.ListmonkClient")
-	def test_remove_subscriber_from_sequence(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
+	def test_remove_subscriber_from_campaign(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
 		client_inst = MagicMock()
 		mock_client_cls.return_value = client_inst
 
-		remove_subscriber_from_sequence("MCC-001", listmonk_subscriber_id=10, listmonk_sequence_id=5)
+		remove_subscriber_from_campaign("MCC-001", listmonk_subscriber_id=10, listmonk_campaign_id=5)
 		client_inst.modify_subscriber_lists.assert_called_once()
 
 	@patch("frappe.get_doc")

@@ -57,10 +57,10 @@ class TestListmonkWebhookJobs(unittest.TestCase):
 		)
 
 		payload = {
-			"event": "sequence.step_executed",
+			"event": "campaign.step_executed",
 			"data": {
 				"subscriber_id": 10,
-				"sequence_id": 2,
+				"campaign_id": 2,
 				"status": "step_executed",
 				"email": "recipient@test.local",
 			},

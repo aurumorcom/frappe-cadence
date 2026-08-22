@@ -20,7 +20,7 @@ class TestMultiChannelCadenceUnit(unittest.TestCase):
 		doc = MultiChannelCadence.__new__(MultiChannelCadence)
 		doc.name = "MCC-001"
 		doc.listmonk_subscriber_id = 10
-		doc.listmonk_sequence_id = 5
+		doc.listmonk_campaign_id = 5
 
 		on_trash(doc)
 		mock_enqueue.assert_called_once()
