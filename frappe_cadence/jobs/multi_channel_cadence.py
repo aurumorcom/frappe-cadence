@@ -1,8 +1,10 @@
+import json
 from typing import Any, Optional
 
 import frappe
 
 from frappe_cadence.cadence.doctype.user_bio.user_bio import get_user_bio
+from frappe_cadence.integrations.listmonk import ensure_user_listmonk_id_provisioned
 from frappe_cadence.integrations.listmonk.client import (
 	ListmonkClient,
 	ensure_listmonk_authorized,
@@ -45,15 +47,23 @@ def add_subscriber_to_campaign(mcc_name: str) -> None:
 		cadence.reload()
 
 	sender_user = mcc.sender or mcc.owner or frappe.session.user
+	user_listmonk_id = ensure_user_listmonk_id_provisioned(sender_user)
 	bio_content = resolve_user_bio(sender_user, mcc.cadence_name)
 
 	user_doc = frappe.get_doc("User", sender_user) if frappe.db.exists("User", sender_user) else None
-	user_dict = {
-		"id": user_doc.name if user_doc else sender_user,
-		"name": user_doc.full_name if user_doc else sender_user,
-		"email_id": user_doc.email if user_doc else "",
-		"bio": bio_content,
-	}
+	if user_doc:
+		doc_dict = user_doc.as_dict()
+		if isinstance(doc_dict, dict):
+			user_dict = json.loads(frappe.as_json(doc_dict))
+			if not isinstance(user_dict, dict):
+				user_dict = {"name": sender_user, "email": getattr(user_doc, "email", sender_user)}
+		else:
+			user_dict = {"name": sender_user, "email": getattr(user_doc, "email", sender_user)}
+	else:
+		user_dict = {"name": sender_user}
+
+	user_dict["id"] = user_listmonk_id
+	user_dict["bio"] = bio_content
 
 	deep_research_text = frappe.db.get_value("Deep Research", {"reference_doc": mcc.name}, "content")
 	if not deep_research_text:
