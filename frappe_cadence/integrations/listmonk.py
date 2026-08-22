@@ -3,6 +3,7 @@ from typing import Any, Optional
 import frappe
 import requests
 from frappe import _
+from frappe.utils import cint
 
 
 def ensure_listmonk_authorized() -> None:
@@ -45,6 +46,25 @@ def ensure_user_bio_provisioned(sender_user: str, cadence_name: str) -> str:
 		return ensure_user_bio_provisioned(sender_user, cadence_name)
 
 	return matched_bio or ""
+
+
+def ensure_user_listmonk_id_provisioned(sender_user: str) -> int:
+	if not frappe.db.exists("User", sender_user):
+		frappe.throw(_("User {0} does not exist").format(sender_user), frappe.DoesNotExistError)
+
+	user_doc = frappe.get_doc("User", sender_user)
+	listmonk_id = user_doc.get("listmonk_id")
+
+	if not listmonk_id or cint(listmonk_id) <= 0:
+		if getattr(frappe.flags, "current_job_id", None):
+			frappe.wait_for(
+				event_key=f"User:on_update:{sender_user}",
+				condition="argument.get('listmonk_id') is not None and argument.get('listmonk_id') > 0",
+			)
+			user_doc.reload()
+			listmonk_id = user_doc.get("listmonk_id")
+
+	return cint(listmonk_id)
 
 
 def _make_request(

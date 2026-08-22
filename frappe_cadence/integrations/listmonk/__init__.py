@@ -1,8 +1,28 @@
 from typing import Any
 
 import frappe
+from frappe import _
 
 from frappe_cadence.integrations.listmonk.client import ListmonkClient, ensure_listmonk_authorized
+
+
+def ensure_user_listmonk_id_provisioned(sender_user: str) -> int:
+	if not frappe.db.exists("User", sender_user):
+		frappe.throw(_("User {0} does not exist").format(sender_user), frappe.DoesNotExistError)
+
+	user_doc = frappe.get_doc("User", sender_user)
+	listmonk_id = user_doc.get("listmonk_id")
+
+	if not listmonk_id or frappe.utils.cint(listmonk_id) <= 0:
+		if getattr(frappe.flags, "current_job_id", None):
+			frappe.wait_for(
+				event_key=f"User:on_update:{sender_user}",
+				condition="argument.get('listmonk_id') is not None and argument.get('listmonk_id') > 0",
+			)
+			user_doc.reload()
+			listmonk_id = user_doc.get("listmonk_id")
+
+	return frappe.utils.cint(listmonk_id)
 
 
 def ensure_user_bio_provisioned(sender_user: str, cadence_name: str) -> str:
@@ -171,6 +191,7 @@ __all__ = [
 	"delete_webhook",
 	"ensure_listmonk_authorized",
 	"ensure_user_bio_provisioned",
+	"ensure_user_listmonk_id_provisioned",
 	"get_campaign",
 	"get_list",
 	"get_webhooks",
