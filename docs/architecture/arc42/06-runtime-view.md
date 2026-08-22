@@ -46,7 +46,7 @@ Link to BPMN Workflow: [`04. Playbook Enrichment Workflow`](apps/frappe_cadence/
 ### Trigger & Steps
 1. [`MultiChannelCadence.on_update()`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:12) detects a new `Draft` record and checks if `reference_playbook` is configured.
 2. A [`Playbook Execution`](apps/frappe_cadence/frappe_cadence/cadence/doctype/playbook_execution/playbook_execution.py:7) document is inserted with status `Queued`.
-3. As the playbook runs, it gathers company dossier research into [`Context`](apps/frappe_cadence/frappe_cadence/cadence/doctype/context/context.py:6) and marks execution `completed`.
+3. As the playbook runs, it gathers company dossier research into [`Deep Research`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research/deep_research.py:6) and marks execution `completed`.
 4. The completion hook updates [`Multi Channel Cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:7) to `Provisioning` and triggers [`add_subscriber_to_sequence()`](apps/frappe_cadence/frappe_cadence/jobs/multi_channel_cadence.py:25).
 5. [`add_subscriber_to_sequence()`](apps/frappe_cadence/frappe_cadence/jobs/multi_channel_cadence.py:25) fetches sender [`User Bio`](apps/frappe_cadence/frappe_cadence/cadence/doctype/user_bio/user_bio.py:8) and research context, formats template attributes, attaches the subscriber to the Listmonk campaign sequence, and sets status to `Scheduled`.
 

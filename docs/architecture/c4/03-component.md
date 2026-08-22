@@ -10,8 +10,8 @@ erDiagram
     Cadence ||--o{ MultiChannelCadence : "generates"
     Cadence ||--o{ UserBio : "overrides_bio"
     CRMLead ||--o{ MultiChannelCadence : "enrolled_as_recipient"
-    MultiChannelCadence ||--o| Context : "context_attached"
-    Context ||--o{ ContextHistory : "tracks_revisions"
+    MultiChannelCadence ||--o| DeepResearch : "context_attached"
+    DeepResearch ||--o{ DeepResearchHistory : "tracks_revisions"
     MultiChannelCadence ||--o| PlaybookExecution : "triggers"
     HistoryGroup ||--o{ HistoryGroupHistory : "contains_items"
     HistoryGroupHistory }|--|| History : "references_record"
@@ -69,14 +69,14 @@ erDiagram
         string content
     }
 
-    Context {
+    DeepResearch {
         string name PK
         string reference_doctype
         string reference_doc
         string content
     }
 
-    ContextHistory {
+    DeepResearchHistory {
         string name PK
         string parent FK
         datetime timestamp
@@ -136,8 +136,8 @@ erDiagram
 - **MultiChannelCadence**: State-machine managing document tracking each prospect's lifecycle from `Draft` through `Enriching`, `Provisioning`, `Scheduled`, `In Progress`, and terminal states (`Replied`, `Finished`, `Opted Out`, `Failed`).
 - **CRMLead**: Lead record representing the prospect, carrying demographic data, enrichment flags, and Listmonk subscriber ID pointers.
 - **UserBio**: Personalization profile providing sender identity bios customized per sales rep and specific outreach cadence.
-- **Context**: Structured dossier and research notes collected during playbook enrichment, with immutable revision history.
-- **ContextHistory**: Child table recording point-in-time snapshots of research content whenever updated.
+- **DeepResearch**: Structured dossier and research notes collected during playbook enrichment, with immutable revision history.
+- **DeepResearchHistory**: Child table recording point-in-time snapshots of research content whenever updated.
 - **History**: Granular log of crawled web pages, markdown content, and screenshot attachments associated with CRM documents.
 - **HistoryGroup**: Aggregate container bundling multiple history items for a target URL.
 - **HistoryGroupHistory**: Child table joining history items into a HistoryGroup.

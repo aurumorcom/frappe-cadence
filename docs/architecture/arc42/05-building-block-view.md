@@ -29,7 +29,7 @@ Link to C3 Component Model: [`C3 Component Diagram`](apps/frappe_cadence/docs/ar
 1. **Cadence Controller (`DocType::Cadence`)**: Manages cadence lifecycle, AST expression parsing, and sequence provisioning via [`Cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence/cadence.py:10).
 2. **MultiChannelCadence Controller (`DocType::MultiChannelCadence`)**: Orchestrates individual prospect outreach instances from `Draft` through `Scheduled` to terminal states via [`MultiChannelCadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/multi_channel_cadence/multi_channel_cadence.py:7).
 3. **Listmonk Settings (`DocType::ListmonkSettings`)**: Single DocType configuring base URLs, API tokens, webhook secrets, and bootstrap commands via [`ListmonkSettings`](apps/frappe_cadence/frappe_cadence/cadence/doctype/listmonk_settings/listmonk_settings.py:8).
-4. **Context & History Controllers (`DocType::Context`, `DocType::History`)**: Manages AI research notes, screenshots, web archives, and revision logs via [`Context`](apps/frappe_cadence/frappe_cadence/cadence/doctype/context/context.py:6) and [`History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/history/history.py:10).
+4. **Deep Research & History Controllers (`DocType::DeepResearch`, `DocType::History`)**: Manages AI research notes, screenshots, web archives, and revision logs via [`DeepResearch`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research/deep_research.py:6) and [`History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/history/history.py:10).
 
 ## Level 3
 Deep decomposition of sub-components:
