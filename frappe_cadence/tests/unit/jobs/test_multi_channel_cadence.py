@@ -9,6 +9,7 @@ from frappe_cadence.jobs.multi_channel_cadence import (
 
 
 class TestMultiChannelCadenceJobs(unittest.TestCase):
+	@patch("frappe_cadence.jobs.multi_channel_cadence.ensure_user_listmonk_id_provisioned", return_value=77)
 	@patch("frappe_cadence.jobs.multi_channel_cadence.ensure_listmonk_authorized")
 	@patch("frappe_cadence.jobs.multi_channel_cadence.resolve_user_bio")
 	@patch("frappe_cadence.jobs.multi_channel_cadence.ListmonkClient")
@@ -21,6 +22,7 @@ class TestMultiChannelCadenceJobs(unittest.TestCase):
 		mock_client_cls: MagicMock,
 		mock_bio: MagicMock,
 		mock_auth: MagicMock,
+		mock_ensure_user_lm_id: MagicMock,
 	) -> None:
 		mock_exists.return_value = True
 		mock_bio.return_value = "Sales Bio"

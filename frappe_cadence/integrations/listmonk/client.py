@@ -217,6 +217,18 @@ class ListmonkClient:
 		res = self._request("PUT", "/api/subscribers/lists", payload=payload)
 		return bool(res)
 
+	# Listmonk User management methods (/api/users)
+	def get_listmonk_users(self) -> list[dict[str, Any]]:
+		try:
+			res = self._request("GET", "/api/users")
+			if isinstance(res, list):
+				return res
+			if isinstance(res, dict) and "results" in res:
+				return res["results"]
+		except Exception as exc:
+			frappe.logger("listmonk").warning(f"Failed to fetch Listmonk users: {exc}")
+		return []
+
 	# List / Sequence methods
 	def create_list(self, req: ListCreateRequest | dict[str, Any]) -> ListResponse:
 		data = _dump_model(req)

@@ -419,4 +419,102 @@ interactions:
     status:
       code: 200
       message: OK
+- request:
+    body: '{"type": "sequence", "status": "active", "description": "", "lists": [15],
+      "content_type": "richtext", "subject": "Enrollment Test Campaign", "body": "",
+      "name": "Enrollment Test Campaign"}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '189'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: POST
+    uri: https://listmonk-dev.aurumor.com/api/campaigns
+  response:
+    body:
+      string: '{"data":{"id":2,"created_at":"2026-08-22T22:47:36.462203Z","updated_at":"2026-08-22T22:47:36.462203Z","views":0,"clicks":0,"bounces":0,"lists":[],"media":[],"started_at":null,"to_send":0,"sent":0,"uuid":"94cfd055-02e6-4003-b0ec-4d0930b9ba12","type":"sequence","name":"Enrollment
+        Test Campaign","subject":"Enrollment Test Campaign","from_email":"listmonk
+        \u003cnoreply@listmonk.yoursite.com\u003e","body":"","body_source":null,"altbody":null,"send_at":null,"status":"draft","content_type":"richtext","tags":[],"headers":[],"attribs":{},"template_id":null,"messenger":"email","archive":false,"archive_slug":null,"archive_template_id":null,"archive_meta":{},"schedule_id":null,"send_window":{},"email_ids":[],"waha_sessions":[]}}
+
+        '
+    headers:
+      CF-RAY:
+      - a2f56b94db5a470d-BOM
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - zstd
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 22 Aug 2026 22:47:36 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=Vhy0Xp%2Fe2mia5Ec7feeIJhbq1jLe3DeP%2BRHcW7XcscrqtPyg7MtjXiWYvuuhxQZK1%2B3zRUkTmTzNYky0OtoHRmmdzo1ZarF6ha1ME6jw3cYHR%2FO4x4IplnfHhhDqLuUT%2FEQZLK9JHlvBWXo%3D"}]}'
+      Server:
+      - cloudflare
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate, br, zstd
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '0'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - python-requests/2.34.2
+    method: DELETE
+    uri: https://listmonk-dev.aurumor.com/api/campaigns/2
+  response:
+    body:
+      string: '{"data":true}
+
+        '
+    headers:
+      CF-RAY:
+      - a2f56b9579d185ff-BOM
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '14'
+      Content-Type:
+      - application/json
+      Date:
+      - Sat, 22 Aug 2026 22:47:36 GMT
+      Nel:
+      - '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+      Report-To:
+      - '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=21E7LFvnyRG70MNTVVPn4u66PXm275wxw4NtYJD6gCOz46J3jb0Uze%2Fa2bem5m7kAXmMiJ85loJAYh4zp%2B9ibI5MUIlT19XQgx404%2F3hj36Pz0SI35aUpFpaRtQnVBGcsVvsW7N8OX7v1Pg%3D"}]}'
+      Server:
+      - cloudflare
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+    status:
+      code: 200
+      message: OK
 version: 1

@@ -35,6 +35,10 @@ controller_events = {
 		"rate_limit_per_minute": 60,
 		"retries": 3,
 	},
+	"frappe_cadence.integrations.listmonk.jobs.user.get_users": {
+		"rate_limit_per_minute": 30,
+		"retries": 3,
+	},
 	# Core Cadence Jobs
 	"frappe_cadence.jobs.cadence.upsert_campaign": {"rate_limit_per_minute": 60, "retries": 3},
 	"frappe_cadence.cadence.doctype.cadence.cadence.upsert_list_campaign": {"rate_limit_per_minute": 60, "retries": 3},
@@ -57,6 +61,9 @@ controller_events = {
 }
 
 doc_events = {
+	"User": {
+		"on_update": "frappe_cadence.cadence.doctype.user.user.on_update",
+	},
 	"CRM Lead": {
 		"on_update": "frappe_cadence.cadence.doctype.crm_lead.crm_lead.on_update",
 		"on_trash": "frappe_cadence.cadence.doctype.crm_lead.crm_lead.on_trash",
