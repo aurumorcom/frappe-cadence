@@ -1,5 +1,5 @@
 from frappe.model.document import Document
 
 
-class ContextHistory(Document):
+class DeepResearchHistory(Document):
 	pass

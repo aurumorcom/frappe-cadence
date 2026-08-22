@@ -3,7 +3,7 @@ from frappe.model.document import Document
 from frappe.utils import now_datetime
 
 
-class Context(Document):
+class DeepResearch(Document):
 	def before_save(self) -> None:
 		if not self.is_new() and self.has_value_changed("content"):
 			old_doc = self.get_doc_before_save()

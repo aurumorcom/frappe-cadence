@@ -34,7 +34,7 @@
 			"fieldname": "history",
 			"fieldtype": "Table",
 			"label": "Revision History",
-			"options": "Context History"
+			"options": "Deep Research History"
 		}
 	],
 	"index_web_pages_for_search": 1,
@@ -42,7 +42,7 @@
 	"modified": "2024-03-27 12:00:00.000000",
 	"modified_by": "Administrator",
 	"module": "Cadence",
-	"name": "Context",
+	"name": "Deep Research",
 	"naming_rule": "Random",
 	"owner": "Administrator",
 	"permissions": [
