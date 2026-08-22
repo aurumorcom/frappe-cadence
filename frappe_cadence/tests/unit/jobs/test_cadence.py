@@ -4,12 +4,12 @@ from unittest.mock import MagicMock, patch
 from frappe_cadence.integrations.listmonk.schemas.list import ListResponse
 from frappe_cadence.jobs.cadence import (
 	add_lead_batch_to_cadence,
-	delete_sequence,
+	delete_campaign,
 	determine_sender,
 	evaluate_cadences_for_lead,
 	evaluate_leads_for_cadence,
-	update_sequence_status,
-	upsert_sequence,
+	update_campaign_status,
+	upsert_campaign,
 )
 
 
@@ -18,7 +18,7 @@ class TestCadenceJobs(unittest.TestCase):
 	@patch("frappe_cadence.jobs.cadence.ListmonkClient")
 	@patch("frappe.db.exists")
 	@patch("frappe.get_doc")
-	def test_upsert_sequence(
+	def test_upsert_campaign(
 		self,
 		mock_get_doc: MagicMock,
 		mock_exists: MagicMock,
@@ -39,27 +39,27 @@ class TestCadenceJobs(unittest.TestCase):
 		)
 		mock_client_cls.return_value = client_inst
 
-		list_id = upsert_sequence("CAD-001")
+		list_id = upsert_campaign("CAD-001")
 		self.assertEqual(list_id, 20)
 		cadence_mock.db_set.assert_called_once_with("listmonk_id", 20)
 		client_inst.update_list_status.assert_called_once_with(20, "active")
 
 	@patch("frappe_cadence.jobs.cadence.ensure_listmonk_authorized")
 	@patch("frappe_cadence.jobs.cadence.ListmonkClient")
-	def test_delete_sequence(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
+	def test_delete_campaign(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
 		client_inst = MagicMock()
 		mock_client_cls.return_value = client_inst
 
-		delete_sequence(20)
+		delete_campaign(20)
 		client_inst.delete_list.assert_called_once_with(20)
 
 	@patch("frappe_cadence.jobs.cadence.ensure_listmonk_authorized")
 	@patch("frappe_cadence.jobs.cadence.ListmonkClient")
-	def test_update_sequence_status(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
+	def test_update_campaign_status(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
 		client_inst = MagicMock()
 		mock_client_cls.return_value = client_inst
 
-		update_sequence_status(20, "paused")
+		update_campaign_status(20, "paused")
 		client_inst.update_list_status.assert_called_once_with(20, "paused")
 
 	@patch("frappe.enqueue")

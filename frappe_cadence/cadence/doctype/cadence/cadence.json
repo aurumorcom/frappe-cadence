@@ -81,7 +81,7 @@
 			"fieldname": "listmonk_id",
 			"fieldtype": "Int",
 			"hidden": 1,
-			"label": "Listmonk Sequence ID",
+			"label": "Listmonk Campaign ID",
 			"read_only": 1
 		},
 		{

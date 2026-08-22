@@ -13,7 +13,7 @@ from frappe_cadence.integrations.listmonk.schemas.list import (
 )
 
 
-def upsert_sequence(cadence_name: str) -> int | None:
+def upsert_campaign(cadence_name: str) -> int | None:
 	ensure_listmonk_authorized()
 
 	if not frappe.db.exists("Cadence", cadence_name):
@@ -45,7 +45,7 @@ def upsert_sequence(cadence_name: str) -> int | None:
 	return listmonk_id
 
 
-def update_sequence_status(cadence_name_or_id: str | int, status: str) -> None:
+def update_campaign_status(cadence_name_or_id: str | int, status: str) -> None:
 	ensure_listmonk_authorized()
 	client = ListmonkClient()
 	if isinstance(cadence_name_or_id, int) or (
@@ -58,7 +58,7 @@ def update_sequence_status(cadence_name_or_id: str | int, status: str) -> None:
 			client.update_list_status(int(listmonk_id), status)
 
 
-def delete_sequence(listmonk_id: int) -> None:
+def delete_campaign(listmonk_id: int) -> None:
 	ensure_listmonk_authorized()
 	client = ListmonkClient()
 	client.delete_list(int(listmonk_id))

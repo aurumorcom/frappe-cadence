@@ -28,7 +28,7 @@ def on_update(doc, method: str | None = None) -> None:
 	elif status in ["completed", "success"]:
 		mcc.db_set("status", "Provisioning")
 		frappe.enqueue(
-			"frappe_cadence.jobs.multi_channel_cadence.add_subscriber_to_sequence",
+			"frappe_cadence.jobs.multi_channel_cadence.add_subscriber_to_campaign",
 			queue="high",
 			mcc_name=mcc.name,
 		)

@@ -5,7 +5,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from frappe_cadence.cadence.doctype.playbook_execution.playbook_execution import on_update
 from frappe_cadence.integrations.listmonk.schemas.subscriber import SubscriberResponse
-from frappe_cadence.jobs.multi_channel_cadence import add_subscriber_to_sequence
+from frappe_cadence.jobs.multi_channel_cadence import add_subscriber_to_campaign
 
 
 class TestJourneyPlaybookEnrollment(FrappeTestCase):
@@ -69,5 +69,5 @@ class TestJourneyPlaybookEnrollment(FrappeTestCase):
 
 		# Provisioning step runs
 		self.lead.db_set("listmonk_id", 303)
-		add_subscriber_to_sequence(self.mcc.name)
+		add_subscriber_to_campaign(self.mcc.name)
 		self.assertEqual(frappe.db.get_value("Multi Channel Cadence", self.mcc.name, "status"), "Scheduled")

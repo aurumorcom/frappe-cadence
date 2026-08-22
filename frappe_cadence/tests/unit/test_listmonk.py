@@ -36,8 +36,8 @@ class TestWebhookEndpointUnit(FrappeTestCase):
 		secret = frappe.conf.get("listmonk_webhook_secret") or "whsec_123"
 		body_bytes = json.dumps(
 			{
-				"event": "sequence.step_executed",
-				"data": {"subscriber_id": 10, "sequence_id": 20, "subject": "Hi", "body": "Hello"},
+				"event": "campaign.step_executed",
+				"data": {"subscriber_id": 10, "campaign_id": 20, "subject": "Hi", "body": "Hello"},
 			}
 		).encode("utf-8")
 		sig = hmac.new(secret.encode("utf-8"), body_bytes, hashlib.sha256).hexdigest()

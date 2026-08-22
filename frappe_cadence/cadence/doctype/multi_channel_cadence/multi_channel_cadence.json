@@ -12,7 +12,7 @@
 		"sender",
 		"listmonk_subscriber_id",
 		"listmonk_list_id",
-		"listmonk_sequence_id",
+		"listmonk_campaign_id",
 		"playbook_execution",
 		"column_break_4",
 		"start_date",
@@ -58,10 +58,10 @@
 			"read_only": 1
 		},
 		{
-			"fieldname": "listmonk_sequence_id",
+			"fieldname": "listmonk_campaign_id",
 			"fieldtype": "Int",
 			"hidden": 1,
-			"label": "Listmonk Sequence ID",
+			"label": "Listmonk Campaign ID",
 			"read_only": 1
 		},
 		{

@@ -7,18 +7,18 @@ from frappe import _
 from frappe.model.document import Document
 
 from frappe_cadence.integrations.listmonk import (
+	create_campaign,
 	create_list,
-	create_sequence,
 	ensure_listmonk_authorized,
+	update_campaign,
+	update_campaign_status,
 	update_list,
-	update_sequence,
-	update_sequence_status,
+)
+from frappe_cadence.integrations.listmonk import (
+	delete_campaign as api_delete_campaign,
 )
 from frappe_cadence.integrations.listmonk import (
 	delete_list as api_delete_list,
-)
-from frappe_cadence.integrations.listmonk import (
-	delete_sequence as api_delete_sequence,
 )
 
 
@@ -128,7 +128,7 @@ class Cadence(Document):
 	def on_update(self) -> None:
 		self.ensure_playbook()
 		frappe.enqueue(
-			"frappe_cadence.cadence.doctype.cadence.cadence.upsert_list_sequence",
+			"frappe_cadence.cadence.doctype.cadence.cadence.upsert_list_campaign",
 			queue="high",
 			cadence_name=self.name,
 		)
@@ -142,7 +142,7 @@ class Cadence(Document):
 		list_id = getattr(self, "listmonk_list_id", None)
 		if self.listmonk_id or list_id:
 			frappe.enqueue(
-				"frappe_cadence.cadence.doctype.cadence.cadence.delete_list_sequence",
+				"frappe_cadence.cadence.doctype.cadence.cadence.delete_list_campaign",
 				queue="high",
 				listmonk_id=self.listmonk_id,
 				listmonk_list_id=list_id,
@@ -185,7 +185,7 @@ def on_trash(doc, method: str | None = None) -> None:
 		doc.on_trash()
 
 
-def upsert_list_sequence(cadence_name: str) -> None:
+def upsert_list_campaign(cadence_name: str) -> None:
 	ensure_listmonk_authorized()
 
 	if not frappe.db.exists("Cadence", cadence_name):
@@ -193,7 +193,7 @@ def upsert_list_sequence(cadence_name: str) -> None:
 
 	cadence = frappe.get_doc("Cadence", cadence_name)
 	list_id = upsert_list(cadence)
-	upsert_sequence(cadence, list_id)
+	upsert_campaign(cadence, list_id)
 
 
 def upsert_list(cadence: Cadence) -> int:
@@ -219,45 +219,46 @@ def upsert_list(cadence: Cadence) -> int:
 	return int(list_id) if list_id else 0
 
 
-def upsert_sequence(cadence: Cadence, list_id: int | None = None) -> int:
+def upsert_campaign(cadence: Cadence, list_id: int | None = None) -> int:
 	status_str = "active" if cadence.enabled else "paused"
 	lists = [int(list_id)] if list_id else []
-	seq_payload = {
+	campaign_payload = {
 		"name": cadence.cadence_name or cadence.name,
 		"description": cadence.description or "",
 		"status": status_str,
 		"lists": lists,
+		"type": "sequence",
 	}
 
 	listmonk_id = cadence.get("listmonk_id")
 	if listmonk_id:
-		update_sequence(int(listmonk_id), seq_payload)
+		update_campaign(int(listmonk_id), campaign_payload)
 	else:
-		res = create_sequence(seq_payload)
+		res = create_campaign(campaign_payload)
 		if isinstance(res, dict) and res.get("id"):
 			listmonk_id = res["id"]
 			cadence.db_set("listmonk_id", listmonk_id)
 			cadence.listmonk_id = listmonk_id
 
 	if listmonk_id:
-		update_sequence_status(int(listmonk_id), status_str)
+		update_campaign_status(int(listmonk_id), status_str)
 
 	return int(listmonk_id) if listmonk_id else 0
 
 
-def delete_list_sequence(
+def delete_list_campaign(
 	listmonk_id: int | None = None,
 	listmonk_list_id: int | None = None,
 ) -> None:
 	ensure_listmonk_authorized()
 	if listmonk_id:
-		delete_sequence(int(listmonk_id))
+		delete_campaign(int(listmonk_id))
 	if listmonk_list_id:
 		delete_list(int(listmonk_list_id))
 
 
-def delete_sequence(listmonk_id: int) -> bool:
-	return api_delete_sequence(int(listmonk_id))
+def delete_campaign(listmonk_id: int) -> bool:
+	return api_delete_campaign(int(listmonk_id))
 
 
 def delete_list(listmonk_list_id: int) -> bool:

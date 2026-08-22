@@ -142,44 +142,42 @@ def get_list(list_id: int) -> dict[str, Any]:
 	return {}
 
 
-def create_sequence(sequence_data: dict[str, Any]) -> dict[str, Any]:
+def create_campaign(campaign_data: dict[str, Any]) -> dict[str, Any]:
 	payload = {
+		"type": "sequence",
 		"status": "active",
 		"description": "",
 		"lists": [],
-		"email_ids": [],
-		"waha_sessions": [],
-		**sequence_data,
+		**campaign_data,
 	}
-	return _make_request("POST", "/api/sequences", payload=payload)
+	return _make_request("POST", "/api/campaigns", payload=payload)
 
 
-def update_sequence(sequence_id: int, sequence_data: dict[str, Any]) -> dict[str, Any]:
+def update_campaign(campaign_id: int, campaign_data: dict[str, Any]) -> dict[str, Any]:
 	payload = {
+		"type": "sequence",
 		"status": "active",
 		"description": "",
 		"lists": [],
-		"email_ids": [],
-		"waha_sessions": [],
-		**sequence_data,
+		**campaign_data,
 	}
-	return _make_request("PUT", f"/api/sequences/{sequence_id}", payload=payload)
+	return _make_request("PUT", f"/api/campaigns/{campaign_id}", payload=payload)
 
 
-def update_sequence_status(sequence_id: int, status: str) -> dict[str, Any]:
+def update_campaign_status(campaign_id: int, status: str) -> dict[str, Any]:
 	payload = {
 		"status": status,
 	}
-	return _make_request("PUT", f"/api/sequences/{sequence_id}/status", payload=payload)
+	return _make_request("PUT", f"/api/campaigns/{campaign_id}/status", payload=payload)
 
 
-def delete_sequence(sequence_id: int) -> bool:
-	res = _make_request("DELETE", f"/api/sequences/{sequence_id}")
+def delete_campaign(campaign_id: int) -> bool:
+	res = _make_request("DELETE", f"/api/campaigns/{campaign_id}")
 	return bool(res)
 
 
-def get_sequence(sequence_id: int) -> dict[str, Any]:
-	res = _make_request("GET", f"/api/sequences/{sequence_id}")
+def get_campaign(campaign_id: int) -> dict[str, Any]:
+	res = _make_request("GET", f"/api/campaigns/{campaign_id}")
 	if isinstance(res, dict):
 		return res
 	return {}
@@ -221,15 +219,15 @@ def modify_subscriber_lists(
 	return bool(res)
 
 
-def modify_subscriber_sequences(
+def modify_subscriber_campaigns(
 	action: str,
 	subscriber_ids: list[int],
-	sequence_ids: list[int],
+	list_ids: list[int],
 	status: str = "confirmed",
 ) -> bool:
 	return modify_subscriber_lists(
 		action=action,
 		subscriber_ids=subscriber_ids,
-		list_ids=sequence_ids,
+		list_ids=list_ids,
 		status=status,
 	)

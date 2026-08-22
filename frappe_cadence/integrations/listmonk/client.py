@@ -169,7 +169,7 @@ class ListmonkClient:
 	def test_connection(self) -> bool:
 		try:
 			res = requests.get(
-				f"{self.base_url}/api/sequences",
+				f"{self.base_url}/api/campaigns",
 				headers=self._get_headers(),
 				timeout=10,
 			)
@@ -240,16 +240,24 @@ class ListmonkClient:
 
 	def update_list_status(self, list_id: int, status: str) -> dict[str, Any]:
 		payload = {
-			"name": f"Sequence {list_id}",
+			"name": f"List {list_id}",
 			"type": "public",
 			"optin": "single",
 			"status": status,
 		}
 		return self._request("PUT", f"/api/lists/{list_id}", payload=payload)
 
-	def update_sequence_status(self, sequence_id: int, status: str) -> dict[str, Any]:
+	def update_campaign_status(self, campaign_id: int, status: str) -> dict[str, Any]:
 		payload = {"status": status}
-		return self._request("PUT", f"/api/sequences/{sequence_id}/status", payload=payload)
+		return self._request("PUT", f"/api/campaigns/{campaign_id}/status", payload=payload)
+
+	def delete_campaign(self, campaign_id: int) -> bool:
+		res = self._request("DELETE", f"/api/campaigns/{campaign_id}")
+		return bool(res)
+
+	def get_campaign(self, campaign_id: int) -> dict[str, Any]:
+		res = self._request("GET", f"/api/campaigns/{campaign_id}")
+		return res if isinstance(res, dict) else {}
 
 	def delete_list(self, list_id: int) -> bool:
 		res = self._request("DELETE", f"/api/lists/{list_id}")
@@ -287,6 +295,11 @@ class ListmonkClient:
 	def create_campaign(self, req: CampaignCreateRequest | dict[str, Any]) -> CampaignResponse:
 		data = _dump_model(req)
 		res = self._request("POST", "/api/campaigns", payload=data)
+		return _validate_model(CampaignResponse, res)
+
+	def update_campaign(self, campaign_id: int, req: dict[str, Any]) -> CampaignResponse:
+		data = _dump_model(req, exclude_unset=True)
+		res = self._request("PUT", f"/api/campaigns/{campaign_id}", payload=data)
 		return _validate_model(CampaignResponse, res)
 
 	def send_transactional_email(self, req: TransactionalEmailRequest | dict[str, Any]) -> dict[str, Any]:

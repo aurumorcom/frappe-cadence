@@ -22,7 +22,7 @@ def resolve_user_bio(sender_user: str, cadence_name: str | None = None) -> str:
 	return f"Sales Representative ({user_name})"
 
 
-def add_subscriber_to_sequence(mcc_name: str) -> None:
+def add_subscriber_to_campaign(mcc_name: str) -> None:
 	ensure_listmonk_authorized()
 
 	if not frappe.db.exists("Multi Channel Cadence", mcc_name):
@@ -37,11 +37,11 @@ def add_subscriber_to_sequence(mcc_name: str) -> None:
 		return
 
 	cadence = frappe.get_doc("Cadence", mcc.cadence_name)
-	listmonk_sequence_id = cadence.listmonk_id
-	if not listmonk_sequence_id:
-		from frappe_cadence.jobs.cadence import upsert_sequence
+	listmonk_campaign_id = cadence.listmonk_id
+	if not listmonk_campaign_id:
+		from frappe_cadence.jobs.cadence import upsert_campaign
 
-		listmonk_sequence_id = upsert_sequence(cadence.name)
+		listmonk_campaign_id = upsert_campaign(cadence.name)
 		cadence.reload()
 
 	sender_user = mcc.sender or mcc.owner or frappe.session.user
@@ -73,11 +73,12 @@ def add_subscriber_to_sequence(mcc_name: str) -> None:
 		return
 
 	client = ListmonkClient()
+	list_id = cadence.listmonk_list_id or listmonk_campaign_id
 	payload = {
 		"email": lead.get("email_id") or lead.get("email") or "",
 		"name": lead.get("lead_name") or lead.get("first_name") or lead.name,
 		"status": "enabled",
-		"lists": [int(listmonk_sequence_id)] if listmonk_sequence_id else [],
+		"lists": [int(list_id)] if list_id else [],
 		"attribs": {
 			"user": user_dict,
 			"context": context_dict,
@@ -91,31 +92,36 @@ def add_subscriber_to_sequence(mcc_name: str) -> None:
 	client.update_subscriber(int(listmonk_subscriber_id), req)
 
 	mcc.db_set("listmonk_subscriber_id", int(listmonk_subscriber_id))
-	if listmonk_sequence_id:
-		mcc.db_set("listmonk_sequence_id", int(listmonk_sequence_id))
+	if listmonk_campaign_id:
+		mcc.db_set("listmonk_campaign_id", int(listmonk_campaign_id))
+	if cadence.listmonk_list_id:
+		mcc.db_set("listmonk_list_id", int(cadence.listmonk_list_id))
 	mcc.db_set("status", "Scheduled")
 
 
-def remove_subscriber_from_sequence(
+def remove_subscriber_from_campaign(
 	mcc_name: str,
 	listmonk_subscriber_id: int | None = None,
-	listmonk_sequence_id: int | None = None,
+	listmonk_campaign_id: int | None = None,
 ) -> None:
 	ensure_listmonk_authorized()
 	subscriber_id = listmonk_subscriber_id
 
-	if not subscriber_id or not listmonk_sequence_id:
-		if frappe.db.exists("Multi Channel Cadence", mcc_name):
-			mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
-			subscriber_id = subscriber_id or getattr(mcc, "listmonk_subscriber_id", None)
-			listmonk_sequence_id = listmonk_sequence_id or mcc.listmonk_sequence_id
+	target_list_id = None
+	if frappe.db.exists("Multi Channel Cadence", mcc_name):
+		mcc = frappe.get_doc("Multi Channel Cadence", mcc_name)
+		subscriber_id = subscriber_id or getattr(mcc, "listmonk_subscriber_id", None)
+		listmonk_campaign_id = listmonk_campaign_id or getattr(mcc, "listmonk_campaign_id", None)
+		target_list_id = getattr(mcc, "listmonk_list_id", None)
 
-	if subscriber_id and listmonk_sequence_id:
+	target_list_ids = [int(target_list_id)] if target_list_id else ([int(listmonk_campaign_id)] if listmonk_campaign_id else [])
+
+	if subscriber_id and target_list_ids:
 		client = ListmonkClient()
 		req = SubscriberListModifyRequest(
 			action="remove",
 			ids=[int(subscriber_id)],
-			target_list_ids=[int(listmonk_sequence_id)],
+			target_list_ids=target_list_ids,
 		)
 		client.modify_subscriber_lists(req)
 

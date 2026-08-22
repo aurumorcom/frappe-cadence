@@ -78,48 +78,48 @@ def get_list(list_id: int) -> dict[str, Any]:
 	return res if isinstance(res, dict) else {}
 
 
-def create_sequence(sequence_data: dict[str, Any]) -> dict[str, Any]:
+def create_campaign(campaign_data: dict[str, Any]) -> dict[str, Any]:
 	client = ListmonkClient()
 	payload = {
+		"type": "sequence",
 		"status": "active",
 		"description": "",
 		"lists": [],
-		"email_ids": [],
-		"waha_sessions": [],
-		**sequence_data,
+		"content_type": "richtext",
+		"subject": campaign_data.get("subject") or campaign_data.get("name") or "Campaign",
+		"body": campaign_data.get("body") or "",
+		**campaign_data,
 	}
-	res = client._request("POST", "/api/sequences", payload=payload)
-	return res if isinstance(res, dict) else {}
+	res = client.create_campaign(payload)
+	return res.model_dump() if hasattr(res, "model_dump") else (res if isinstance(res, dict) else {})
 
 
-def update_sequence(sequence_id: int, sequence_data: dict[str, Any]) -> dict[str, Any]:
+def update_campaign(campaign_id: int, campaign_data: dict[str, Any]) -> dict[str, Any]:
 	client = ListmonkClient()
 	payload = {
+		"type": "sequence",
 		"status": "active",
 		"description": "",
 		"lists": [],
-		"email_ids": [],
-		"waha_sessions": [],
-		**sequence_data,
+		**campaign_data,
 	}
-	res = client._request("PUT", f"/api/sequences/{sequence_id}", payload=payload)
-	return res if isinstance(res, dict) else {}
+	res = client.update_campaign(campaign_id, payload)
+	return res.model_dump() if hasattr(res, "model_dump") else (res if isinstance(res, dict) else {})
 
 
-def update_sequence_status(sequence_id: int, status: str) -> dict[str, Any]:
+def update_campaign_status(campaign_id: int, status: str) -> dict[str, Any]:
 	client = ListmonkClient()
-	return client.update_sequence_status(sequence_id, status)
+	return client.update_campaign_status(campaign_id, status)
 
 
-def delete_sequence(sequence_id: int) -> bool:
+def delete_campaign(campaign_id: int) -> bool:
 	client = ListmonkClient()
-	return client.delete_list(sequence_id)
+	return client.delete_campaign(campaign_id)
 
 
-def get_sequence(sequence_id: int) -> dict[str, Any]:
+def get_campaign(campaign_id: int) -> dict[str, Any]:
 	client = ListmonkClient()
-	res = client._request("GET", f"/api/sequences/{sequence_id}")
-	return res if isinstance(res, dict) else {}
+	return client.get_campaign(campaign_id)
 
 
 def get_webhooks() -> list[dict[str, Any]]:
@@ -153,32 +153,32 @@ def modify_subscriber_lists(
 	)
 
 
-def modify_subscriber_sequences(
-	action: str, subscriber_ids: list[int], sequence_ids: list[int], status: str = "confirmed"
+def modify_subscriber_campaigns(
+	action: str, subscriber_ids: list[int], list_ids: list[int], status: str = "confirmed"
 ) -> bool:
-	return modify_subscriber_lists(action=action, subscriber_ids=subscriber_ids, list_ids=sequence_ids, status=status)
+	return modify_subscriber_lists(action=action, subscriber_ids=subscriber_ids, list_ids=list_ids, status=status)
 
 
 __all__ = [
 	"ListmonkClient",
+	"create_campaign",
 	"create_list",
-	"create_sequence",
 	"create_subscriber",
 	"create_webhook",
+	"delete_campaign",
 	"delete_list",
-	"delete_sequence",
 	"delete_subscriber",
 	"delete_webhook",
 	"ensure_listmonk_authorized",
 	"ensure_user_bio_provisioned",
+	"get_campaign",
 	"get_list",
-	"get_sequence",
 	"get_webhooks",
+	"modify_subscriber_campaigns",
 	"modify_subscriber_lists",
-	"modify_subscriber_sequences",
+	"update_campaign",
+	"update_campaign_status",
 	"update_list",
-	"update_sequence",
-	"update_sequence_status",
 	"update_subscriber",
 	"update_webhook",
 ]

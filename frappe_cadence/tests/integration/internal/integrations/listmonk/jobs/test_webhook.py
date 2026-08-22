@@ -32,16 +32,16 @@ class TestWebhookInternalIntegration(FrappeTestCase):
 				"recipient": self.lead.name,
 				"status": "Scheduled",
 				"listmonk_subscriber_id": 8888,
-				"listmonk_sequence_id": 7777,
+				"listmonk_campaign_id": 7777,
 			}
 		).insert(ignore_permissions=True)
 
 	def test_process_webhook_payload_updates_db(self) -> None:
 		payload = {
-			"event": "sequence.step_executed",
+			"event": "campaign.step_executed",
 			"data": {
 				"subscriber_id": 8888,
-				"sequence_id": 7777,
+				"campaign_id": 7777,
 				"status": "step_executed",
 				"email": "wh_lead@example.com",
 			},

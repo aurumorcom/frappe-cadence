@@ -4,19 +4,19 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 
 from frappe_cadence.integrations.listmonk import (
+	create_campaign,
 	create_list,
-	create_sequence,
 	create_subscriber,
 	create_webhook,
+	delete_campaign,
 	delete_list,
-	delete_sequence,
 	delete_subscriber,
 	delete_webhook,
 	ensure_listmonk_authorized,
 	get_webhooks,
 	modify_subscriber_lists,
-	update_sequence,
-	update_sequence_status,
+	update_campaign,
+	update_campaign_status,
 	update_subscriber,
 	update_webhook,
 )
@@ -79,32 +79,33 @@ class TestListmonkIntegrations(FrappeTestCase):
 		res_delete = delete_subscriber(int(subscriber_id))
 		self.assertTrue(res_delete)
 
-	@cadence_vcr.use_cassette("integrations_sequences_crud.yaml")
-	def test_03_sequences_crud_lifecycle(self) -> None:
+	@cadence_vcr.use_cassette("integrations_campaigns_crud.yaml")
+	def test_03_campaigns_crud_lifecycle(self) -> None:
 		# Create
-		seq_payload = {
-			"name": "External Test Sequence",
+		campaign_payload = {
+			"name": "External Test Campaign",
 			"description": "Created during external integration testing",
+			"type": "sequence",
 		}
-		res_create = create_sequence(seq_payload)
+		res_create = create_campaign(campaign_payload)
 		self.assertTrue(isinstance(res_create, dict))
-		seq_id = res_create.get("id")
-		self.assertIsNotNone(seq_id)
+		campaign_id = res_create.get("id")
+		self.assertIsNotNone(campaign_id)
 
 		# Update
-		seq_update = {
-			"name": "Renamed External Test Sequence",
-			"description": "Updated sequence description",
+		campaign_update = {
+			"name": "Renamed External Test Campaign",
+			"description": "Updated campaign description",
 		}
-		res_update = update_sequence(int(seq_id), seq_update)
+		res_update = update_campaign(int(campaign_id), campaign_update)
 		self.assertTrue(isinstance(res_update, dict))
 
 		# Status update
-		res_status = update_sequence_status(int(seq_id), "active")
+		res_status = update_campaign_status(int(campaign_id), "active")
 		self.assertTrue(isinstance(res_status, dict))
 
 		# Delete
-		res_delete = delete_sequence(int(seq_id))
+		res_delete = delete_campaign(int(campaign_id))
 		self.assertTrue(res_delete)
 
 	@cadence_vcr.use_cassette("integrations_webhooks_crud.yaml")
@@ -142,13 +143,13 @@ class TestListmonkIntegrations(FrappeTestCase):
 		self.assertTrue(res_delete)
 
 	@cadence_vcr.use_cassette("integrations_modify_subscriber_lists.yaml")
-	def test_05_modify_subscriber_sequences(self) -> None:
-		# Setup subscriber, list, and sequence
-		unique_email = f"seq_test_{frappe.generate_hash(length=6)}@example.com"
-		c = create_subscriber({"email": unique_email, "name": "Seq Sub", "status": "enabled"})
+	def test_05_modify_subscriber_campaigns(self) -> None:
+		# Setup subscriber, list, and campaign
+		unique_email = f"campaign_test_{frappe.generate_hash(length=6)}@example.com"
+		c = create_subscriber({"email": unique_email, "name": "Campaign Sub", "status": "enabled"})
 		l = create_list({"name": "Enrollment Test List"})
 		cid, lid = c.get("id"), l.get("id")
-		s = create_sequence({"name": "Enrollment Test Sequence", "lists": [int(lid)]})
+		s = create_campaign({"name": "Enrollment Test Campaign", "lists": [int(lid)], "type": "sequence"})
 		sid = s.get("id")
 
 		try:
@@ -161,5 +162,5 @@ class TestListmonkIntegrations(FrappeTestCase):
 			self.assertTrue(res_remove)
 		finally:
 			delete_subscriber(int(cid))
-			delete_sequence(int(sid))
+			delete_campaign(int(sid))
 			delete_list(int(lid))

@@ -1,7 +1,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from frappe_cadence.cadence.doctype.cadence.cadence import delete_list_sequence, upsert_list_sequence
+from frappe_cadence.cadence.doctype.cadence.cadence import delete_list_campaign, upsert_list_campaign
 from frappe_cadence.tests.integration.external.conftest import (
 	cadence_vcr,
 	get_test_listmonk_config,
@@ -34,20 +34,20 @@ class TestCadence(FrappeTestCase):
 				"doctype": "Cadence",
 				"cadence_name": "External Integration Test Cadence",
 				"enabled": 1,
-				"description": "Sequence description for external test",
+				"description": "Campaign description for external test",
 			}
 		).insert(ignore_permissions=True, ignore_links=True)
 
 	@cadence_vcr.use_cassette("cadence_upsert_delete.yaml")
-	def test_upsert_and_delete_sequence_live_sync(self) -> None:
-		# Upsert list & sequence against live Listmonk API
-		upsert_list_sequence(self.cadence.name)
+	def test_upsert_and_delete_campaign_live_sync(self) -> None:
+		# Upsert list & campaign against live Listmonk API
+		upsert_list_campaign(self.cadence.name)
 		self.cadence.reload()
 		self.assertIsNotNone(self.cadence.listmonk_list_id)
 		self.assertIsNotNone(self.cadence.listmonk_id)
 
-		seq_id = self.cadence.listmonk_id
+		campaign_id = self.cadence.listmonk_id
 		list_id = self.cadence.listmonk_list_id
 
-		# Delete sequence & list against live Listmonk API
-		delete_list_sequence(listmonk_id=int(seq_id), listmonk_list_id=int(list_id))
+		# Delete campaign & list against live Listmonk API
+		delete_list_campaign(listmonk_id=int(campaign_id), listmonk_list_id=int(list_id))

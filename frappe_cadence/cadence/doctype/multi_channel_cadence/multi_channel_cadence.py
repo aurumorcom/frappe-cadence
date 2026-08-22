@@ -4,8 +4,8 @@ import frappe
 from frappe.model.document import Document
 
 from frappe_cadence.jobs.multi_channel_cadence import (
-	add_subscriber_to_sequence,
-	remove_subscriber_from_sequence,
+	add_subscriber_to_campaign,
+	remove_subscriber_from_campaign,
 )
 
 
@@ -42,15 +42,14 @@ class MultiChannelCadence(Document):
 	def on_trash(self) -> None:
 		subscriber_id = getattr(self, "listmonk_subscriber_id", None)
 		list_id = getattr(self, "listmonk_list_id", None)
-		sequence_id = getattr(self, "listmonk_sequence_id", None)
-		if subscriber_id and (list_id or sequence_id):
+		campaign_id = getattr(self, "listmonk_campaign_id", None)
+		if subscriber_id and (list_id or campaign_id):
 			frappe.enqueue(
-				"frappe_cadence.jobs.multi_channel_cadence.remove_subscriber_from_sequence",
+				"frappe_cadence.jobs.multi_channel_cadence.remove_subscriber_from_campaign",
 				queue="high",
 				mcc_name=self.name,
 				listmonk_subscriber_id=subscriber_id,
-				listmonk_list_id=list_id,
-				listmonk_sequence_id=sequence_id,
+				listmonk_campaign_id=campaign_id,
 			)
 
 

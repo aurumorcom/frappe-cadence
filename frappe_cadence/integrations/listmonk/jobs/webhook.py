@@ -46,7 +46,7 @@ def setup_webhook() -> None:
 		"subscriber.updated",
 		"contact.created",
 		"contact.updated",
-		"sequence.step_executed",
+		"campaign.step_executed",
 	]
 
 	res = None
@@ -123,7 +123,7 @@ def process_webhook_payload(payload: dict[str, Any]) -> dict[str, Any]:
 		"scheduled": "Scheduled",
 		"sent": "In Progress",
 		"step_executed": "In Progress",
-		"sequence.step_executed": "In Progress",
+		"campaign.step_executed": "In Progress",
 		"in_progress": "In Progress",
 		"replied": "Replied",
 		"completed": "Finished",
@@ -142,13 +142,13 @@ def process_webhook_payload(payload: dict[str, Any]) -> dict[str, Any]:
 		or payload.get("subscriber_id")
 		or payload.get("contact_id")
 	)
-	sequence_id = data.get("sequence_id") or payload.get("sequence_id")
+	campaign_id = data.get("campaign_id") or payload.get("campaign_id")
 
 	filters = {}
 	if subscriber_id:
 		filters["listmonk_subscriber_id"] = subscriber_id
-	if sequence_id:
-		filters["listmonk_sequence_id"] = sequence_id
+	if campaign_id:
+		filters["listmonk_campaign_id"] = campaign_id
 
 	if filters:
 		mcc_list = frappe.get_all("Multi Channel Cadence", filters=filters, fields=["name", "status"])
