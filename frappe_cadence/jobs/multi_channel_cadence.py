@@ -67,7 +67,9 @@ def add_subscriber_to_campaign(mcc_name: str) -> None:
 
 	deep_research_text = frappe.db.get_value("Deep Research", {"reference_doc": mcc.name}, "content")
 	if not deep_research_text:
-		deep_research_text = frappe.db.get_value("Deep Research", {"reference_doc": mcc.recipient}, "content") or ""
+		deep_research_text = (
+			frappe.db.get_value("Deep Research", {"reference_doc": mcc.recipient}, "content") or ""
+		)
 
 	deep_research_dict = {"content": deep_research_text}
 
@@ -124,7 +126,11 @@ def remove_subscriber_from_campaign(
 		listmonk_campaign_id = listmonk_campaign_id or getattr(mcc, "listmonk_campaign_id", None)
 		target_list_id = getattr(mcc, "listmonk_list_id", None)
 
-	target_list_ids = [int(target_list_id)] if target_list_id else ([int(listmonk_campaign_id)] if listmonk_campaign_id else [])
+	target_list_ids = (
+		[int(target_list_id)]
+		if target_list_id
+		else ([int(listmonk_campaign_id)] if listmonk_campaign_id else [])
+	)
 
 	if subscriber_id and target_list_ids:
 		client = ListmonkClient()
