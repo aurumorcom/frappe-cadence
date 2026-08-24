@@ -101,7 +101,7 @@ class TestListmonkIntegrations(FrappeTestCase):
 		self.assertTrue(isinstance(res_update, dict))
 
 		# Status update
-		res_status = update_campaign_status(int(campaign_id), "active")
+		res_status = update_campaign_status(int(campaign_id), "running")
 		self.assertTrue(isinstance(res_status, dict))
 
 		# Delete
