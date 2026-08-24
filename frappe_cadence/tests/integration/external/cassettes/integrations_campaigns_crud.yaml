@@ -1,6 +1,6 @@
 interactions:
 - request:
-    body: '{"type": "sequence", "status": "active", "description": "Created during external integration
+    body: '{"type": "sequence", "status": "running", "description": "Created during external integration
       testing", "lists": [], "name": "External Test Campaign"}'
     headers:
       Accept:
@@ -10,7 +10,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '167'
+      - '168'
       Content-Type:
       - application/json
       User-Agent:
@@ -20,7 +20,7 @@ interactions:
   response:
     body:
       string: '{"data":{"id":20,"created_at":"2026-08-15T14:20:32.958555Z","updated_at":"2026-08-15T14:20:32.958555Z","uuid":"6a943d26-58c5-4aee-9a40-df21957a98b7","name":"External
-        Test Campaign","description":"Created during external integration testing","status":"active","type":"sequence","lists":[]}}
+        Test Campaign","description":"Created during external integration testing","status":"running","type":"sequence","lists":[]}}
 
         '
     headers:
@@ -30,7 +30,7 @@ interactions:
       code: 200
       message: OK
 - request:
-    body: '{"type": "sequence", "status": "active", "description": "Updated campaign description", "lists":
+    body: '{"type": "sequence", "status": "running", "description": "Updated campaign description", "lists":
       [], "name": "Renamed External Test Campaign"}'
     headers:
       Accept:
@@ -40,7 +40,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '160'
+      - '161'
       Content-Type:
       - application/json
       User-Agent:
@@ -50,7 +50,7 @@ interactions:
   response:
     body:
       string: '{"data":{"id":20,"created_at":"2026-08-15T14:20:32.958555Z","updated_at":"2026-08-15T14:20:33.001464Z","uuid":"6a943d26-58c5-4aee-9a40-df21957a98b7","name":"Renamed
-        External Test Campaign","description":"Updated campaign description","status":"active","type":"sequence","lists":[]}}
+        External Test Campaign","description":"Updated campaign description","status":"running","type":"sequence","lists":[]}}
 
         '
     headers:
@@ -60,7 +60,7 @@ interactions:
       code: 200
       message: OK
 - request:
-    body: '{"status": "active"}'
+    body: '{"status": "running"}'
     headers:
       Accept:
       - '*/*'
@@ -69,7 +69,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '20'
+      - '21'
       Content-Type:
       - application/json
       User-Agent:
@@ -78,7 +78,7 @@ interactions:
     uri: https://listmonk-dev.aurumor.com/api/campaigns/20/status
   response:
     body:
-      string: '{"data":{"id":20,"status":"active"}}
+      string: '{"data":{"id":20,"status":"running"}}
 
         '
     headers:

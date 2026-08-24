@@ -165,7 +165,7 @@ def get_list(list_id: int) -> dict[str, Any]:
 def create_campaign(campaign_data: dict[str, Any]) -> dict[str, Any]:
 	payload = {
 		"type": "sequence",
-		"status": "active",
+		"status": "running",
 		"description": "",
 		"lists": [],
 		**campaign_data,
@@ -176,7 +176,7 @@ def create_campaign(campaign_data: dict[str, Any]) -> dict[str, Any]:
 def update_campaign(campaign_id: int, campaign_data: dict[str, Any]) -> dict[str, Any]:
 	payload = {
 		"type": "sequence",
-		"status": "active",
+		"status": "running",
 		"description": "",
 		"lists": [],
 		**campaign_data,

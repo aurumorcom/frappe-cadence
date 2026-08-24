@@ -75,9 +75,7 @@ class TestUserListmonkIdProvisioningFlowE2E(FrappeTestCase):
 
 	@patch("frappe_cadence.integrations.listmonk.jobs.user.ensure_listmonk_authorized")
 	@patch("frappe_cadence.integrations.listmonk.jobs.user.ListmonkClient")
-	def test_get_users_populates_listmonk_id(
-		self, mock_client_cls: MagicMock, mock_auth: MagicMock
-	) -> None:
+	def test_get_users_populates_listmonk_id(self, mock_client_cls: MagicMock, mock_auth: MagicMock) -> None:
 		client_inst = MagicMock()
 		client_inst.get_listmonk_users.return_value = [
 			{"id": 777, "email": self.user_email, "name": "E2E Sales Rep"}

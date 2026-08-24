@@ -220,7 +220,7 @@ def upsert_list(cadence: Cadence) -> int:
 
 
 def upsert_campaign(cadence: Cadence, list_id: int | None = None) -> int:
-	status_str = "active" if cadence.enabled else "paused"
+	status_str = "running" if cadence.enabled else "paused"
 	lists = [int(list_id)] if list_id else []
 	campaign_payload = {
 		"name": cadence.cadence_name or cadence.name,

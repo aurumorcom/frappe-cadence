@@ -8,18 +8,22 @@ from frappe_cadence.integrations.listmonk.jobs.user import get_users
 
 class TestUserJobInternalIntegration(FrappeTestCase):
 	def setUp(self) -> None:
+		self.gs_patcher = patch("frappe.utils.global_search.sync_value_in_queue")
+		self.gs_patcher.start()
 		self.user_email = f"int_user_{frappe.generate_hash(length=6)}@example.com"
-		self.test_user = frappe.get_doc(
-			{
-				"doctype": "User",
-				"email": self.user_email,
-				"first_name": "Integration",
-				"last_name": "User",
-				"send_welcome_email": 0,
-			}
-		).insert(ignore_permissions=True, ignore_links=True)
+		with patch("frappe.core.doctype.user.user.create_contact"):
+			self.test_user = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": self.user_email,
+					"first_name": "Integration",
+					"last_name": "User",
+					"send_welcome_email": 0,
+				}
+			).insert(ignore_permissions=True, ignore_links=True)
 
 	def tearDown(self) -> None:
+		self.gs_patcher.stop()
 		frappe.db.delete("User", {"email": self.user_email})
 
 	@patch("frappe_cadence.integrations.listmonk.jobs.user.ensure_listmonk_authorized")

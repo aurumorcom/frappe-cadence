@@ -64,7 +64,17 @@ class TestListmonkIntegrationUnit(FrappeTestCase):
 
 		res = create_subscriber({"email": "test@example.com"})
 		mock_request.assert_called_with("POST", "/api/subscribers", payload={"email": "test@example.com"})
-		self.assertEqual(res, {"id": 10, "email": "test@example.com", "name": "Test", "status": "enabled", "lists": [], "attribs": {}})
+		self.assertEqual(
+			res,
+			{
+				"id": 10,
+				"email": "test@example.com",
+				"name": "Test",
+				"status": "enabled",
+				"lists": [],
+				"attribs": {},
+			},
+		)
 
 		update_subscriber(10, {"name": "New Name"})
 		mock_request.assert_called_with("PUT", "/api/subscribers/10", payload={"name": "New Name"})
@@ -98,7 +108,7 @@ class TestListmonkIntegrationUnit(FrappeTestCase):
 			"/api/campaigns",
 			payload={
 				"type": "sequence",
-				"status": "active",
+				"status": "running",
 				"description": "",
 				"lists": [10],
 				"content_type": "richtext",
@@ -114,7 +124,7 @@ class TestListmonkIntegrationUnit(FrappeTestCase):
 			"/api/campaigns/5",
 			payload={
 				"type": "sequence",
-				"status": "active",
+				"status": "running",
 				"description": "",
 				"lists": [10],
 				"name": "Seq Updated",

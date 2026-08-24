@@ -13,7 +13,9 @@ from frappe_cadence.tests.integration.external.conftest import (
 class TestUserJobExternal(FrappeTestCase):
 	def setUp(self) -> None:
 		if not is_listmonk_live():
-			self.skipTest("LISTMONK service is not live or test configuration environment variables not provided")
+			self.skipTest(
+				"LISTMONK service is not live or test configuration environment variables not provided"
+			)
 
 		cfg = get_test_listmonk_config()
 		settings = frappe.get_doc("Listmonk Settings")
