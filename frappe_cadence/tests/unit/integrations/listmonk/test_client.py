@@ -149,3 +149,24 @@ class TestListmonkClient(unittest.TestCase):
 		req = TransactionalEmailRequest(subscriber_email="target@example.com", template_id=1)
 		res = self.client.send_transactional_email(req)
 		self.assertTrue(res)
+
+	@patch("requests.request")
+	def test_update_campaign_status_normalizes_active(self, mock_req: MagicMock) -> None:
+		mock_resp = MagicMock()
+		mock_resp.content = b'{"data": {"id": 5, "status": "running"}}'
+		mock_resp.json.return_value = {"data": {"id": 5, "status": "running"}}
+		mock_req.return_value = mock_resp
+
+		res = self.client.update_campaign_status(5, "active")
+		self.assertEqual(res, {"id": 5, "status": "running"})
+		mock_req.assert_called_once_with(
+			method="PUT",
+			url="https://listmonk.test.local/api/campaigns/5/status",
+			json={"status": "running"},
+			params=None,
+			headers={
+				"Authorization": "token crm:test_token_123",
+				"Content-Type": "application/json",
+			},
+			timeout=30,
+		)
