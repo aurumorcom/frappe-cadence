@@ -102,7 +102,7 @@ def create_campaign(campaign_data: dict[str, Any]) -> dict[str, Any]:
 	client = ListmonkClient()
 	payload = {
 		"type": "sequence",
-		"status": "active",
+		"status": "running",
 		"description": "",
 		"lists": [],
 		"content_type": "richtext",
@@ -118,7 +118,7 @@ def update_campaign(campaign_id: int, campaign_data: dict[str, Any]) -> dict[str
 	client = ListmonkClient()
 	payload = {
 		"type": "sequence",
-		"status": "active",
+		"status": "running",
 		"description": "",
 		"lists": [],
 		**campaign_data,
@@ -176,7 +176,9 @@ def modify_subscriber_lists(
 def modify_subscriber_campaigns(
 	action: str, subscriber_ids: list[int], list_ids: list[int], status: str = "confirmed"
 ) -> bool:
-	return modify_subscriber_lists(action=action, subscriber_ids=subscriber_ids, list_ids=list_ids, status=status)
+	return modify_subscriber_lists(
+		action=action, subscriber_ids=subscriber_ids, list_ids=list_ids, status=status
+	)
 
 
 __all__ = [

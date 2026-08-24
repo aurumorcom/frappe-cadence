@@ -260,7 +260,8 @@ class ListmonkClient:
 		return self._request("PUT", f"/api/lists/{list_id}", payload=payload)
 
 	def update_campaign_status(self, campaign_id: int, status: str) -> dict[str, Any]:
-		payload = {"status": status}
+		status_val = "running" if status == "active" else status
+		payload = {"status": status_val}
 		return self._request("PUT", f"/api/campaigns/{campaign_id}/status", payload=payload)
 
 	def delete_campaign(self, campaign_id: int) -> bool:
