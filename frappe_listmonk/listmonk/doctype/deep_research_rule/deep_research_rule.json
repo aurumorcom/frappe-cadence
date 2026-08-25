@@ -1,0 +1,100 @@
+{
+ "actions": [],
+ "creation": "2026-08-25 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rule_name",
+  "reference_doctype",
+  "enabled",
+  "priority",
+  "column_break_1",
+  "reference_playbook",
+  "filter_section",
+  "filter_condition",
+  "filter_condition_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "rule_name",
+   "fieldtype": "Data",
+   "label": "Rule Name",
+   "reqd": 1
+  },
+  {
+   "default": "CRM Lead",
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Doctype",
+   "options": "CRM Lead\nCRM Organization",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "default": "10",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "label": "Priority",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_playbook",
+   "fieldtype": "Link",
+   "label": "Reference Playbook",
+   "options": "Playbook"
+  },
+  {
+   "fieldname": "filter_section",
+   "fieldtype": "Section Break",
+   "label": "Filters"
+  },
+  {
+   "fieldname": "filter_condition",
+   "fieldtype": "Small Text",
+   "label": "Filter Condition (Python/AST Expression)",
+   "description": "Expression evaluated against doc, e.g. doc.designation in ['CTO', 'VP Engineering']"
+  },
+  {
+   "fieldname": "filter_condition_json",
+   "fieldtype": "Code",
+   "label": "Filter Condition JSON",
+   "options": "JSON",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Listmonk",
+ "name": "Deep Research Rule",
+ "naming_rule": "By fieldname",
+ "autoname": "field:rule_name",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "priority",
+ "sort_order": "ASC",
+ "states": []
+}
