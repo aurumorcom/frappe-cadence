@@ -1,0 +1,47 @@
+{
+ "app": "frappe_listmonk",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "calendar",
+ "items": [
+  {
+   "child": 0,
+   "label": "Listmonk Settings",
+   "link_to": "Listmonk Settings",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "List",
+   "link_to": "List",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Deep Research Rule",
+   "link_to": "Deep Research Rule",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Deep Research",
+   "link_to": "Deep Research",
+   "link_type": "DocType",
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "label": "Playbook Execution",
+   "link_to": "Playbook Execution",
+   "link_type": "DocType",
+   "type": "Link"
+  }
+ ],
+ "module": "Listmonk",
+ "name": "Listmonk",
+ "standard": 1,
+ "title": "Listmonk"
+}

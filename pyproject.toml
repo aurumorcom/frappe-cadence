@@ -1,9 +1,9 @@
 [project]
-name = "frappe_cadence"
+name = "frappe_listmonk"
 authors = [
     { name = "Aryan Singh", email = "aquiveal@gmail.com"}
 ]
-description = "Open-Source Cold Outreach & Sales Engagement Automation"
+description = "Listmonk Integration & Deep Research Automation for Frappe CRM"
 requires-python = ">=3.14"
 readme = "README.md"
 dynamic = ["version"]

@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-08-25 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "list_name",
+  "reference_doctype",
+  "listmonk_list_id",
+  "enabled",
+  "type",
+  "optin",
+  "column_break_1",
+  "tags"
+ ],
+ "fields": [
+  {
+   "fieldname": "list_name",
+   "fieldtype": "Data",
+   "label": "List Name",
+   "reqd": 1
+  },
+  {
+   "default": "CRM Lead",
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "label": "Reference Doctype",
+   "options": "CRM Lead\nCRM Organization",
+   "reqd": 1
+  },
+  {
+   "fieldname": "listmonk_list_id",
+   "fieldtype": "Int",
+   "label": "Listmonk List ID",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "default": "public",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "public\nprivate"
+  },
+  {
+   "default": "single",
+   "fieldname": "optin",
+   "fieldtype": "Select",
+   "label": "Optin",
+   "options": "single\ndouble"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tags",
+   "fieldtype": "Data",
+   "label": "Tags (Comma Separated)"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-08-25 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Listmonk",
+ "name": "List",
+ "naming_rule": "By fieldname",
+ "autoname": "field:list_name",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
