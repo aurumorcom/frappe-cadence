@@ -7,12 +7,10 @@
  "field_order": [
   "list_name",
   "reference_doctype",
-  "listmonk_list_id",
+  "listmonk_id",
   "enabled",
-  "type",
-  "optin",
-  "column_break_1",
-  "tags"
+  "filter_condition",
+  "filter_condition_json"
  ],
  "fields": [
   {
@@ -30,9 +28,9 @@
    "reqd": 1
   },
   {
-   "fieldname": "listmonk_list_id",
+   "fieldname": "listmonk_id",
    "fieldtype": "Int",
-   "label": "Listmonk List ID",
+   "label": "Listmonk ID",
    "read_only": 1
   },
   {
@@ -42,27 +40,17 @@
    "label": "Enabled"
   },
   {
-   "default": "public",
-   "fieldname": "type",
-   "fieldtype": "Select",
-   "label": "Type",
-   "options": "public\nprivate"
+   "fieldname": "filter_condition",
+   "fieldtype": "Code",
+   "label": "Filter Condition",
+   "options": "Python"
   },
   {
-   "default": "single",
-   "fieldname": "optin",
-   "fieldtype": "Select",
-   "label": "Optin",
-   "options": "single\ndouble"
-  },
-  {
-   "fieldname": "column_break_1",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "tags",
-   "fieldtype": "Data",
-   "label": "Tags (Comma Separated)"
+   "fieldname": "filter_condition_json",
+   "fieldtype": "Code",
+   "hidden": 1,
+   "label": "Filter Condition JSON",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
