@@ -107,7 +107,7 @@ def upsert_subscriber(reference_doctype: str, reference_name: str) -> None:
 
 	# Construct flat attribs (entity fields + deep_research object, NO user object)
 	clean_entity_dict = {
-		k: v
+		k: (v.isoformat() if hasattr(v, "isoformat") else v)
 		for k, v in doc_dict.items()
 		if not isinstance(v, (list, dict)) and k not in ["password", "api_secret"]
 	}
@@ -277,7 +277,7 @@ def update_subscriber_campaign_subscriber(playbook_execution_name: str) -> None:
 	target_doc = frappe.get_doc(reference_doctype, crm_id)
 	doc_dict = target_doc.as_dict()
 	clean_entity_dict = {
-		k: v
+		k: (v.isoformat() if hasattr(v, "isoformat") else v)
 		for k, v in doc_dict.items()
 		if not isinstance(v, (list, dict)) and k not in ["password", "api_secret"]
 	}
