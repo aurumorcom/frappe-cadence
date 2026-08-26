@@ -1,7 +1,7 @@
 # C3: Component Diagram
 
 ## 🎯 Component Architecture
-This document details the internal DocType models, controller components, integration handlers, and relationship cardinalities within [`frappe_cadence`](apps/frappe_cadence/frappe_cadence/hooks.py:1).
+This document details the internal DocType models, controller components, integration handlers, and relationship cardinalities within [`frappe_listmonk`](apps/frappe_listmonk/frappe_listmonk/hooks.py:1).
 
 ## 📊 Component ERD
 
@@ -11,7 +11,8 @@ erDiagram
     Cadence ||--o{ UserBio : "overrides_bio"
     CRMLead ||--o{ MultiChannelCadence : "enrolled_as_recipient"
     MultiChannelCadence ||--o| DeepResearch : "context_attached"
-    DeepResearch ||--o{ DeepResearchHistory : "tracks_revisions"
+    DeepResearch ||--o{ DeepResearchSource : "sources"
+    DeepResearchSource }|--|| Source : "references"
     MultiChannelCadence ||--o| PlaybookExecution : "triggers"
     HistoryGroup ||--o{ HistoryGroupHistory : "contains_items"
     HistoryGroupHistory }|--|| History : "references_record"
@@ -73,15 +74,24 @@ erDiagram
         string name PK
         string reference_doctype
         string reference_doc
-        string content
+        string rule FK
+        string summary
     }
 
-    DeepResearchHistory {
+    DeepResearchSource {
         string name PK
         string parent FK
-        datetime timestamp
-        string user FK
-        string content_snapshot
+        string source FK
+        string reference_doctype
+        string reference_name
+        string url
+    }
+
+    Source {
+        string name PK
+        string reference_doctype
+        string reference_name
+        string url
     }
 
     History {
@@ -136,8 +146,9 @@ erDiagram
 - **MultiChannelCadence**: State-machine managing document tracking each prospect's lifecycle from `Draft` through `Enriching`, `Provisioning`, `Scheduled`, `In Progress`, and terminal states (`Replied`, `Finished`, `Opted Out`, `Failed`).
 - **CRMLead**: Lead record representing the prospect, carrying demographic data, enrichment flags, and Listmonk subscriber ID pointers.
 - **UserBio**: Personalization profile providing sender identity bios customized per sales rep and specific outreach cadence.
-- **DeepResearch**: Structured dossier and research notes collected during playbook enrichment, with immutable revision history.
-- **DeepResearchHistory**: Child table recording point-in-time snapshots of research content whenever updated.
+- **DeepResearch**: Structured dossier and AI research summary collected during playbook enrichment, attached with source references.
+- **DeepResearchSource**: Child table linking research source records and reference URLs to a DeepResearch document.
+- **Source**: Standalone reference DocType storing web source URLs and linked entity metadata.
 - **History**: Granular log of crawled web pages, markdown content, and screenshot attachments associated with CRM documents.
 - **HistoryGroup**: Aggregate container bundling multiple history items for a target URL.
 - **HistoryGroupHistory**: Child table joining history items into a HistoryGroup.

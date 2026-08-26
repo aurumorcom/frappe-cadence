@@ -1,12 +1,12 @@
 # Introduction and Goals
 
 ## Requirements Overview
-[`frappe_cadence`](apps/frappe_cadence/frappe_cadence/hooks.py:1) is an enterprise cold outreach and sales engagement automation engine built on top of the Frappe Framework. It automates multi-step prospect communication workflows, coordinates AI/playbook-driven research and enrichment, distributes outbound communications across sales teams using configurable routing rules, synchronizes with the external Listmonk mailing engine, and tracks live engagement metrics in Frappe CRM.
+[`frappe_listmonk`](apps/frappe_listmonk/frappe_listmonk/hooks.py:1) is an enterprise cold outreach and sales engagement automation engine built on top of the Frappe Framework. It automates multi-step prospect communication workflows, coordinates AI/playbook-driven research and enrichment, distributes outbound communications across sales teams using configurable routing rules, synchronizes with the external Listmonk mailing engine, and tracks live engagement metrics in Frappe CRM.
 
 ### Core Functional Capabilities
-- **Automated Lead Qualification**: Real-time evaluation of [`CRM Lead`](apps/frappe_cadence/frappe_cadence/cadence/doctype/crm_lead/crm_lead.py:6) records against [`Cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence/cadence.py:10) assignment conditions parsed via Abstract Syntax Trees (AST).
+- **Automated Lead Qualification**: Real-time evaluation of `CRM Lead` records against Cadence assignment conditions parsed via Abstract Syntax Trees (AST).
 - **Intelligent Sales Rep Routing**: Multi-tenant workload distribution supporting `Round Robin` and `Load Balancing` algorithms across sales representatives.
-- **Automated Playbook Enrichment**: Decoupled asynchronous enrichment via [`Playbook Execution`](apps/frappe_cadence/frappe_cadence/cadence/doctype/playbook_execution/playbook_execution.py:7) to generate research dossiers prior to outreach delivery.
+- **Automated Playbook Enrichment**: Decoupled asynchronous enrichment via `Playbook Execution` to generate research dossiers prior to outreach delivery.
 - **Bi-directional Listmonk Synchronization**: Native REST integration for subscriber provisioning, sequence list subscriptions, and transactional message dispatch.
 - **Real-Time Webhook Processing**: Secure HMAC-SHA256 authenticated webhook receiver updating engagement states (`In Progress`, `Replied`, `Finished`, `Opted Out`, `Failed`).
 
@@ -14,10 +14,10 @@
 
 | Priority | Quality Goal | Target Metric / Scenario |
 | :--- | :--- | :--- |
-| 1 | Idempotency & Safety | Zero duplicate enrollments of a [`CRM Lead`](apps/frappe_cadence/frappe_cadence/cadence/doctype/crm_lead/crm_lead.py:6) into the same [`Cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence/cadence.py:10). |
-| 2 | High Asynchronous Throughput | Background batch processing via [`frappe_controller`](apps/frappe_cadence/frappe_cadence/hooks.py:8) handling >5,000 leads evaluated per minute. |
+| 1 | Idempotency & Safety | Zero duplicate enrollments of a `CRM Lead` into the same Cadence. |
+| 2 | High Asynchronous Throughput | Background batch processing via `frappe_controller` handling >5,000 leads evaluated per minute. |
 | 3 | Resilience & Fault Tolerance | External Listmonk HTTP timeouts auto-retried with exponential backoff without losing sequence state. |
-| 4 | Auditability & History | Immutable snapshot versioning in [`Deep Research History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research_history/deep_research_history.json:37) and interaction logging in [`History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/history/history.py:10). |
+| 4 | Auditability & History | Structured research summaries and source references in [`Deep Research`](apps/frappe_listmonk/frappe_listmonk/listmonk/doctype/deep_research/deep_research.json:1) and interaction logging in `History`. |
 
 ## Stakeholders
 

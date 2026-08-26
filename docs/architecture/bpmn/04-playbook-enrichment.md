@@ -14,7 +14,7 @@ flowchart TD
     
     PlaybookResult -- Running --> SetEnriching[Update MCC Status to 'Enriching']
     PlaybookResult -- Failed / Error --> SetMCCFailed[Update MCC Status to 'Failed']
-    PlaybookResult -- Completed --> SaveResearchContext[Save Dossier in Deep Research & Revision History]
+    PlaybookResult -- Completed --> SaveResearchContext[Save Summary & Sources in Deep Research]
     
     SetEnriching --> RunPlaybook
     SetMCCFailed --> TerminateEnrichment([Outreach Halted - End])
@@ -24,9 +24,9 @@ flowchart TD
 
 ## 📝 Workflow Step Descriptions
 
-1. **Check Playbook Configuration**: Evaluates whether the referenced [`Cadence`](apps/frappe_cadence/frappe_cadence/cadence/doctype/cadence/cadence.py:10) specifies an active `reference_playbook`.
-2. **Create Playbook Execution**: Instantiates [`Playbook Execution`](apps/frappe_cadence/frappe_cadence/cadence/doctype/playbook_execution/playbook_execution.py:7) linking the Multi Channel Cadence record.
+1. **Check Playbook Configuration**: Evaluates whether the referenced Cadence specifies an active `reference_playbook`.
+2. **Create Playbook Execution**: Instantiates `Playbook Execution` linking the Multi Channel Cadence record.
 3. **Execute Playbook**: External worker processes research tasks and crawls company/contact intelligence.
 4. **State Handling**: Updates Multi Channel Cadence status to `Enriching` during execution or `Failed` on unrecoverable errors.
-5. **Persist Research Context**: Saves research dossiers into [`Deep Research`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research/deep_research.py:6) and triggers revision history capture in [`Deep Research History`](apps/frappe_cadence/frappe_cadence/cadence/doctype/deep_research_history/deep_research_history.json:37).
+5. **Persist Research Context**: Saves research summaries and source references into [`Deep Research`](apps/frappe_listmonk/frappe_listmonk/listmonk/doctype/deep_research/deep_research.py:6).
 6. **Transition to Provisioning**: Moves Multi Channel Cadence status to `Provisioning` to signal readiness for sequence synchronization.

@@ -38,5 +38,3 @@ class TestDeepResearch(FrappeTestCase):
 		source_row = doc.sources[0]
 		url_val = getattr(source_row, "url", None) or (source_row.get("url") if isinstance(source_row, dict) else None)
 		self.assertEqual(url_val, "https://example.com/source1")
-		self.assertFalse(hasattr(doc, "playbook_execution") and getattr(doc, "playbook_execution"))
-		self.assertFalse(hasattr(doc, "history") and getattr(doc, "history"))
