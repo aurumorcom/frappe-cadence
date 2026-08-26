@@ -256,8 +256,7 @@ def update_subscriber_campaign_subscriber(playbook_execution_name: str) -> None:
 			"reference_doctype": reference_doctype,
 			"reference_doc": crm_id,
 			"rule": rule_name,
-			"playbook_execution": playbook_execution_name,
-			"content": output_content,
+			"summary": output_content,
 		}
 	)
 	research_doc.insert(ignore_permissions=True)

@@ -6,10 +6,8 @@
 	"engine": "InnoDB",
 	"field_order": [
 		"reference_doctype",
-		"reference_doc",
-		"rule",
-		"summary",
-		"sources"
+		"reference_name",
+		"url"
 	],
 	"fields": [
 		{
@@ -20,29 +18,18 @@
 			"options": "DocType"
 		},
 		{
-			"fieldname": "reference_doc",
+			"fieldname": "reference_name",
 			"fieldtype": "Dynamic Link",
 			"in_list_view": 1,
-			"label": "Reference Document",
+			"label": "Reference Name",
 			"options": "reference_doctype"
 		},
 		{
-			"fieldname": "rule",
-			"fieldtype": "Link",
+			"fieldname": "url",
+			"fieldtype": "Data",
 			"in_list_view": 1,
-			"label": "Deep Research Rule",
-			"options": "Deep Research Rule"
-		},
-		{
-			"fieldname": "summary",
-			"fieldtype": "Text Editor",
-			"label": "Summary"
-		},
-		{
-			"fieldname": "sources",
-			"fieldtype": "Table",
-			"label": "Sources",
-			"options": "Deep Research Source"
+			"label": "URL",
+			"options": "URL"
 		}
 	],
 	"index_web_pages_for_search": 1,
@@ -50,7 +37,7 @@
 	"modified": "2026-08-25 10:00:00.000000",
 	"modified_by": "Administrator",
 	"module": "Listmonk",
-	"name": "Deep Research",
+	"name": "Source",
 	"naming_rule": "Random",
 	"owner": "Administrator",
 	"permissions": [
