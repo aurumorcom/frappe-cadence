@@ -12,8 +12,14 @@ def _evaluate_ast_condition(condition_str: str, doc_dict: dict[str, Any]) -> boo
 	if not condition_str or not condition_str.strip():
 		return True
 	try:
-		# Expose doc in safe environment
-		eval_globals = {"doc": frappe._dict(doc_dict)}
+		# Expose doc and frappe utilities in safe environment
+		eval_globals = {
+			"doc": frappe._dict(doc_dict),
+			"today": frappe.utils.today,
+			"now": frappe.utils.now,
+			"cint": frappe.utils.cint,
+			"flt": frappe.utils.flt,
+		}
 		return bool(frappe.safe_eval(condition_str, eval_globals))
 	except Exception as exc:
 		frappe.logger("listmonk").warning(f"AST condition evaluation error: {exc}")
