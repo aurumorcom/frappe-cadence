@@ -11,7 +11,7 @@ class TestListmonkAuthorizationE2E(FrappeTestCase):
 	def setUpClass(cls) -> None:
 		super().setUpClass()
 		frappe.db.sql(
-			"UPDATE `tabDocType` SET module='Listmonk' WHERE name IN ('Listmonk Settings', 'Deep Research', 'Deep Research Rule', 'List', 'CRM Lead List', 'CRM Organization List')"
+			"UPDATE `tabDocType` SET module='Listmonk' WHERE name IN ('Listmonk Settings', 'Deep Research', 'Deep Research Rule', 'Source', 'Deep Research Source', 'List', 'CRM Lead List', 'CRM Organization List')"
 		)
 		frappe.db.commit()
 		frappe.clear_cache()

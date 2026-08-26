@@ -1,7 +1,12 @@
 import unittest
 
-import frappe
-from frappe.tests.utils import FrappeTestCase
+try:
+	import frappe
+	from frappe.tests.utils import FrappeTestCase
+except ImportError:
+
+	class FrappeTestCase(unittest.TestCase):  # type: ignore[no-redef]
+		pass
 
 
 class TestDeepResearchRule(FrappeTestCase):
