@@ -8,10 +8,11 @@ from frappe.model.document import Document
 
 class List(Document):
 	def validate(self) -> None:
-		if self.filter_condition and self.filter_condition.strip():
+		filter_condition = self.get("filter_condition")
+		if filter_condition and filter_condition.strip():
 			try:
-				ast.parse(self.filter_condition)
-				self.filter_condition_json = json.dumps({"condition": self.filter_condition})
+				ast.parse(filter_condition)
+				self.filter_condition_json = json.dumps({"condition": filter_condition})
 			except Exception as exc:
 				frappe.throw(_("Invalid filter condition: {0}").format(exc), frappe.ValidationError)
 		else:
