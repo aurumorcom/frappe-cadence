@@ -8,10 +8,8 @@ class TestListSchemas(unittest.TestCase):
 		req = ListCreateRequest(
 			name="Outreach List",
 			crm_id="LIST-00001",
-			type="public",
-			optin="single",
-			tags=["sales", "tech"],
 		)
 		dump = req.model_dump()
 		self.assertEqual(dump["crm_id"], "LIST-00001")
-		self.assertEqual(len(dump["tags"]), 2)
+		self.assertEqual(dump["type"], "private")
+		self.assertEqual(dump["optin"], "single")
