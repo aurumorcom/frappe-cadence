@@ -14,8 +14,11 @@ class TestSubscriberJobUnit(FrappeTestCase):
 		self.assertFalse(_evaluate_ast_condition("doc.status == 'Unqualified'", doc_dict))
 
 	@patch("frappe_listmonk.jobs.subscriber.ensure_listmonk_authorized")
+	@patch("frappe_listmonk.client.ListmonkClient.create_subscriber")
 	@patch("frappe_listmonk.client.ListmonkClient.update_subscriber")
-	def test_upsert_subscriber_ast_list_enrollment(self, mock_update_sub, mock_auth) -> None:
+	def test_upsert_subscriber_ast_list_enrollment(self, mock_update_sub, mock_create_sub, mock_auth) -> None:
+		mock_create_sub.return_value = frappe._dict({"id": 505})
+
 		# Create AST List
 		list_doc = frappe.get_doc(
 			{
@@ -40,8 +43,8 @@ class TestSubscriberJobUnit(FrappeTestCase):
 
 		upsert_subscriber("CRM Lead", lead.name)
 
-		mock_update_sub.assert_called_once()
-		payload = mock_update_sub.call_args[0][1]
+		mock_create_sub.assert_called_once()
+		payload = mock_create_sub.call_args[0][0]
 		self.assertIn(303, payload["lists"])
 
 		frappe.delete_doc("CRM Lead", lead.name, force=True)
