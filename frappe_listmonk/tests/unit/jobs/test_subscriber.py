@@ -8,9 +8,9 @@ from frappe_listmonk.jobs.subscriber import _evaluate_ast_condition, upsert_subs
 
 class TestSubscriberJobUnit(FrappeTestCase):
 	def test_ast_condition_evaluator(self) -> None:
-		doc_dict = {"status": "Qualified", "annual_revenue": 500000}
+		doc_dict = {"status": "Qualified", "annual_revenue": "500000"}
 		self.assertTrue(_evaluate_ast_condition("doc.status == 'Qualified'", doc_dict))
-		self.assertTrue(_evaluate_ast_condition("doc.annual_revenue > 100000", doc_dict))
+		self.assertTrue(_evaluate_ast_condition("cint(doc.annual_revenue) > 100000", doc_dict))
 		self.assertFalse(_evaluate_ast_condition("doc.status == 'Unqualified'", doc_dict))
 
 	@patch("frappe_listmonk.jobs.subscriber.ensure_listmonk_authorized")
