@@ -18,7 +18,7 @@ def sync_all_crm_users() -> None:
 		email = (lm_user.get("email") or "").lower()
 		lm_id = lm_user.get("id")
 		if email in user_map and lm_id:
-			frappe.db.set_value("User", user_map[email], "listmonk_user_id", lm_id, update_modified=False)
+			frappe.db.set_value("User", user_map[email], "listmonk_id", lm_id, update_modified=False)
 
 
 def update_user(user_name: str) -> None:
@@ -37,5 +37,5 @@ def update_user(user_name: str) -> None:
 		if isinstance(lm_user, dict) and (lm_user.get("email") or "").lower() == doc.email.lower():
 			lm_id = lm_user.get("id")
 			if lm_id:
-				doc.db_set("listmonk_user_id", lm_id, update_modified=False)
+				doc.db_set("listmonk_id", lm_id, update_modified=False)
 			break

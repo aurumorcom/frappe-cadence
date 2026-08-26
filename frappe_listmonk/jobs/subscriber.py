@@ -58,8 +58,24 @@ def upsert_subscriber(reference_doctype: str, reference_name: str) -> None:
 	name = doc_dict.get("lead_name") or doc_dict.get("organization_name") or doc_dict.get("name") or email
 	phone = doc_dict.get("phone") or doc_dict.get("mobile_no") or doc_dict.get("phone_number")
 
-	# Gather Listmonk list IDs from child table
+	# Gather Listmonk list IDs via AST filter condition evaluation and manual child table
 	list_ids: list[int] = []
+
+	enabled_lists = frappe.get_all(
+		"List",
+		filters={"enabled": 1, "reference_doctype": reference_doctype},
+		fields=["name", "listmonk_id", "filter_condition"],
+	)
+	for l_doc in enabled_lists:
+		lm_id = l_doc.get("listmonk_id")
+		if not lm_id:
+			continue
+		cond = l_doc.get("filter_condition")
+		if cond and cond.strip():
+			if _evaluate_ast_condition(cond, doc_dict):
+				if int(lm_id) not in list_ids:
+					list_ids.append(int(lm_id))
+
 	child_table_field = "crm_lead_list" if reference_doctype == "CRM Lead" else "crm_organization_list"
 	lists_child = doc_dict.get(child_table_field) or []
 
@@ -67,8 +83,9 @@ def upsert_subscriber(reference_doctype: str, reference_name: str) -> None:
 		list_name = row.get("list")
 		if list_name and frappe.db.exists("List", list_name):
 			list_doc = frappe.get_doc("List", list_name)
-			if list_doc.enabled and list_doc.listmonk_list_id:
-				list_ids.append(int(list_doc.listmonk_list_id))
+			if list_doc.enabled and list_doc.listmonk_id:
+				if int(list_doc.listmonk_id) not in list_ids:
+					list_ids.append(int(list_doc.listmonk_id))
 
 	# Query latest Deep Research for this entity if available
 	deep_research_data = None

@@ -23,37 +23,35 @@ def upsert_list(list_name: str) -> None:
 	if not doc.enabled:
 		return
 
-	tags = [t.strip() for t in (doc.tags or "").split(",") if t.strip()]
 	payload = {
 		"name": doc.list_name or doc.name,
 		"crm_id": doc.name,
-		"type": doc.type or "public",
-		"optin": doc.optin or "single",
-		"tags": tags,
+		"type": "private",
+		"optin": "single",
 	}
 
 	client = ListmonkClient()
-	if doc.listmonk_list_id:
-		res = client.update_list(doc.listmonk_list_id, payload)
+	if doc.listmonk_id:
+		res = client.update_list(doc.listmonk_id, payload)
 	else:
 		# Check if already exists on Listmonk
 		existing = client.find_list_by_name(doc.list_name or doc.name)
 		if existing and "id" in existing:
-			doc.db_set("listmonk_list_id", existing["id"], update_modified=False)
+			doc.db_set("listmonk_id", existing["id"], update_modified=False)
 			res = client.update_list(existing["id"], payload)
 		else:
 			res = client.create_list(payload)
 
 	if hasattr(res, "id") and res.id:
-		doc.db_set("listmonk_list_id", res.id, update_modified=False)
+		doc.db_set("listmonk_id", res.id, update_modified=False)
 
 
-def delete_list(list_name: str, listmonk_list_id: int | None = None) -> None:
+def delete_list(list_name: str, listmonk_id: int | None = None) -> None:
 	ensure_listmonk_authorized()
-	if not listmonk_list_id:
+	if not listmonk_id:
 		return
 	client = ListmonkClient()
-	client.delete_list(listmonk_list_id)
+	client.delete_list(listmonk_id)
 
 
 def evaluate_doc_for_list(reference_doctype: str, reference_name: str) -> None:
