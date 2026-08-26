@@ -30,7 +30,7 @@
 			"fieldname": "rule",
 			"fieldtype": "Link",
 			"in_list_view": 1,
-			"label": "Deep Research Rule",
+			"label": "Rule",
 			"options": "Deep Research Rule"
 		},
 		{

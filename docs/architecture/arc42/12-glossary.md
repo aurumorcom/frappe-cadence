@@ -7,8 +7,8 @@
 | **AST (Abstract Syntax Tree)** | A tree representation of Python source code parsed via `ast.parse()`, used in Cadence to safely compile dynamic condition strings without `eval()`. |
 | **Cadence** | A defined sequence and rule set for multi-step automated sales outreach campaigns. |
 | **CRM Lead** | A prospect entity in Frappe CRM containing demographic, communication, and enrichment details. |
-| **Deep Research** | A document storing AI-researched dossiers, background intelligence, and point-in-time company data attached to a lead. |
-| **Deep Research History** | Child table recording versioned snapshots of Deep Research records over time. |
+| **Deep Research** | A document storing AI-researched summaries, background intelligence, and source references attached to a lead. |
+| **Deep Research Source** | Child table linking research source records and reference URLs to a Deep Research document. |
 | **FastStream Worker** | Background asynchronous worker managed by `frappe_controller` executing decoupled tasks. |
 | **History** | Persistent audit log containing web crawling archives, extracted markdown, and screenshot images. |
 | **History Group** | An aggregate grouping container organizing multiple History records under a target URL. |
@@ -19,4 +19,5 @@
 | **Playbook Execution** | Runtime execution instance tracking the status and output of an active research Playbook. |
 | **Round Robin** | An assignment rule rotating leads sequentially across a list of sales representatives. |
 | **Load Balancing** | An assignment rule dynamically assigning new leads to the sales representative with the lowest count of active outreach instances. |
+| **Source** | Standalone reference DocType storing web source URLs and linked entity metadata. |
 | **User Bio** | A personalized sender biography configured per sales representative and optionally customized per cadence. |
