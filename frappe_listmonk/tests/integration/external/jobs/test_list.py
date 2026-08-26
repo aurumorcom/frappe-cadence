@@ -46,8 +46,10 @@ class TestListJobExternal(FrappeTestCase):
 		mock_create_list.assert_called_once()
 		args = mock_create_list.call_args[0][0]
 		self.assertEqual(args["crm_id"], doc.name)
+		self.assertEqual(args["type"], "private")
+		self.assertEqual(args["optin"], "single")
 
 		doc.reload()
-		self.assertEqual(doc.listmonk_list_id, 10)
+		self.assertEqual(doc.listmonk_id, 10)
 
 		frappe.delete_doc("List", doc.name, force=True)

@@ -1,3 +1,4 @@
+import ast
 import json
 
 import frappe
@@ -7,11 +8,14 @@ from frappe.model.document import Document
 
 class DeepResearchRule(Document):
 	def before_save(self) -> None:
-		if self.filter_condition:
+		if self.filter_condition and self.filter_condition.strip():
 			try:
+				ast.parse(self.filter_condition)
 				self.filter_condition_json = json.dumps({"condition": self.filter_condition})
 			except Exception as exc:
 				frappe.throw(_("Invalid filter condition: {0}").format(exc), frappe.ValidationError)
+		else:
+			self.filter_condition_json = None
 
 	def on_update(self) -> None:
 		self.ensure_playbook()
